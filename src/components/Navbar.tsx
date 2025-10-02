@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Moon, Sun } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
 const Navbar = () => {
@@ -18,22 +18,38 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Scroll automatique vers le haut à chaque changement de page
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth' // Animation fluide
+    });
+  }, [location.pathname]);
+
+  const handleLinkClick = () => {
+    setIsOpen(false);
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-midnight dark:bg-black shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="flex items-center space-x-2">
-  <img src="/mideessi.png" alt="Logo Mideessi" className="w-12 h-12 object-contain mr-2" />
-
-  <span className="text-2xl font-bold text-white"></span>
-</Link>
-
+          <Link 
+            to="/" 
+            className="flex items-center space-x-2"
+            onClick={handleLinkClick}
+          >
+            <img src="/mideessi.png" alt="Logo Mideessi" className="w-12 h-12 object-contain mr-2" />
+            <span className="text-2xl font-bold text-white"></span>
+          </Link>
 
           <div className="hidden md:flex items-center space-x-8">
             {links.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
+                onClick={handleLinkClick}
                 className={`text-sm font-medium transition-colors ${
                   isActive(link.to)
                     ? 'text-gold'
@@ -86,7 +102,7 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                onClick={() => setIsOpen(false)}
+                onClick={handleLinkClick}
                 className={`block px-3 py-2 rounded-md text-base font-medium ${
                   isActive(link.to)
                     ? 'bg-white/10 text-gold'

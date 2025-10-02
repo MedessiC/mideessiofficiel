@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { Calendar, User, ArrowLeft } from 'lucide-react';
+import SEO from '../components/SEO';
 import { blogPosts } from '../data/blogPosts';
 
 const BlogPost = () => {
@@ -30,6 +31,13 @@ const BlogPost = () => {
 
   return (
     <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
+      <SEO
+        title={`${post.title} | Blog MIDEESSI`}
+        description={post.excerpt}
+        image={post.image}
+        type="article"
+        keywords={['MIDEESSI', 'blog', 'article', 'technologie', 'innovation']}
+      />
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Link
           to="/blog"
