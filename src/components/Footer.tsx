@@ -8,16 +8,11 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-  <img
-    src="/mideessi.png"
-    alt="Logo Mideessi"
-    className="h-16 w-auto sm:h-20 md:h-24 lg:h-28 object-contain mx-auto mb-4"
-  />
-  <p className="text-gray-300 text-sm text-center">
-    Nous sommes indépendants. Solutions d'automatisation et d'intelligence artificielle pour une communauté innovante.
-  </p>
-</div>
-
+            <h3 className="text-2xl font-bold text-gold mb-4">MIDEESSI</h3>
+            <p className="text-gray-300 text-sm">
+              Nous sommes indépendants. Solutions d'automatisation et d'intelligence artificielle pour une communauté innovante.
+            </p>
+          </div>
 
           <div>
             <h4 className="text-lg font-semibold mb-4">Liens rapides</h4>
