@@ -85,7 +85,7 @@ const NewHome = () => {
       subtitle: 'De l\'agriculture au commerce, de l\'éducation à la santé, nous innovons là où le Bénin en a besoin.'
     },
     {
-      image: '/hero3.jpg',
+      image: '/hero3.png',
       badge: 'Souveraineté technologique',
       title: 'Consommons béninois',
       description: 'Nous refusons la dépendance technologique et bâtissons notre souveraineté numérique avec fierté.',
