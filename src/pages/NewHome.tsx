@@ -1,36 +1,53 @@
-import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingUp, Shield, Zap, Users, Award, CheckCircle, Building2, Heart, Lightbulb, HandHeart, Globe } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import SEO from '../components/SEO';
 import { supabase, BlogPost } from '../lib/supabase';
 
+// Skeleton pour les articles à la une
+const FeaturedPostSkeleton = () => (
+  <div className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden border border-corporate-200 dark:border-gray-700 animate-pulse">
+    <div className="h-48 bg-corporate-200 dark:bg-gray-700" />
+    <div className="p-6 space-y-3">
+      <div className="h-4 bg-corporate-200 dark:bg-gray-700 rounded w-1/3" />
+      <div className="h-6 bg-corporate-200 dark:bg-gray-700 rounded w-full" />
+      <div className="space-y-2">
+        <div className="h-3 bg-corporate-200 dark:bg-gray-700 rounded w-full" />
+        <div className="h-3 bg-corporate-200 dark:bg-gray-700 rounded w-4/5" />
+      </div>
+    </div>
+  </div>
+);
+
 const NewHome = () => {
   const [featuredPosts, setFeaturedPosts] = useState<BlogPost[]>([]);
-  const [latestPosts, setLatestPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBlogPosts = async () => {
+    fetchBlogPosts();
+  }, []);
+
+  const fetchBlogPosts = async () => {
+    try {
+      setLoading(true);
+
+      // Requête optimisée : seulement les champs nécessaires
       const { data: featured } = await supabase
         .from('blog_posts')
-        .select('*')
+        .select('id, slug, title, excerpt, image_url, published_at')
         .eq('is_published', true)
         .eq('is_featured', true)
         .order('published_at', { ascending: false })
-        .limit(3);
+        .limit(3); // Limite stricte à 3 articles
 
-      const { data: latest } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('is_published', true)
-        .order('published_at', { ascending: false })
-        .limit(4);
-
-      if (featured) setFeaturedPosts(featured);
-      if (latest) setLatestPosts(latest);
-    };
-
-    fetchBlogPosts();
-  }, []);
+      if (featured) {
+        setFeaturedPosts(featured);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des articles:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const stats = [
     { value: '1', label: 'Secteur par mois' },
@@ -79,6 +96,7 @@ const NewHome = () => {
         keywords={['MIDEESSI', 'Bénin', 'innovation', 'technologie béninoise', 'souveraineté', 'Dahomey', 'Cotonou']}
       />
 
+      {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-midnight via-navy to-steel text-white py-20 md:py-32">
         <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:32px_32px]" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -97,19 +115,19 @@ const NewHome = () => {
                 Nous concevons, fabriquons et innovons avec nos idées, notre savoir-faire et notre intelligence collective béninoise.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link
-                  to="/contact"
+                <a
+                  href="/contact"
                   className="inline-flex items-center justify-center px-8 py-4 bg-white text-midnight font-bold rounded-lg hover:bg-gray-100 transition-all transform hover:scale-105"
                 >
                   Rejoignez le mouvement
                   <ArrowRight className="ml-2 w-5 h-5" />
-                </Link>
-                <Link
-                  to="/projects"
+                </a>
+                <a
+                  href="/projects"
                   className="inline-flex items-center justify-center px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-lg hover:bg-white/10 transition-all"
                 >
                   Nos créations
-                </Link>
+                </a>
               </div>
             </div>
             <div className="relative">
@@ -118,6 +136,8 @@ const NewHome = () => {
               <img
                 src="https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=800"
                 alt="Innovation technologique béninoise"
+                loading="eager"
+                decoding="async"
                 className="relative rounded-lg shadow-2xl"
               />
             </div>
@@ -125,6 +145,7 @@ const NewHome = () => {
         </div>
       </section>
 
+      {/* Stats Section */}
       <section className="py-16 bg-corporate-50 dark:bg-gray-800 border-y border-corporate-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -142,6 +163,7 @@ const NewHome = () => {
         </div>
       </section>
 
+      {/* Services Section */}
       <section className="py-20 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -173,6 +195,7 @@ const NewHome = () => {
         </div>
       </section>
 
+      {/* Values Section */}
       <section className="py-20 bg-gradient-to-br from-corporate-50 to-white dark:from-gray-800 dark:to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -198,18 +221,19 @@ const NewHome = () => {
               <p className="text-gray-300 mb-6">
                 Chaque solution MIDEESSI est un acte d'amour pour notre pays. Nous refusons la dépendance technologique et œuvrons pour la souveraineté numérique béninoise et africaine. Du Dahomey au Bénin, l'esprit d'indépendance perdure.
               </p>
-              <Link
-                to="/about"
-                className="inline-flex items-center text-blue-400 hover:text-blue-300 font-semibold"
+              <a
+                href="/about"
+                className="inline-flex items-center text-blue-400 hover:text-blue-300 font-semibold group"
               >
                 Découvrir notre manifeste
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </a>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Process Section */}
       <section className="py-20 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -251,7 +275,8 @@ const NewHome = () => {
         </div>
       </section>
 
-      {featuredPosts.length > 0 && (
+      {/* Featured Posts Section - Optimisée */}
+      {(loading || featuredPosts.length > 0) && (
         <section className="py-20 bg-corporate-50 dark:bg-gray-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-end mb-12">
@@ -263,64 +288,88 @@ const NewHome = () => {
                   Nos dernières réflexions et actualités du mouvement
                 </p>
               </div>
-              <Link
-                to="/blog"
-                className="hidden md:inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold"
+              <a
+                href="/blog"
+                className="hidden md:inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold group"
               >
                 Voir tous les articles
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </a>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-              {featuredPosts.map((post) => (
-                <Link
-                  key={post.id}
-                  to={`/blog/${post.slug}`}
-                  className="group bg-white dark:bg-gray-900 rounded-lg overflow-hidden hover:shadow-xl transition-all border border-corporate-200 dark:border-gray-700"
-                >
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={post.image_url}
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <span className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
-                        À la une
+              {loading ? (
+                // Skeletons pendant le chargement
+                <>
+                  <FeaturedPostSkeleton />
+                  <FeaturedPostSkeleton />
+                  <FeaturedPostSkeleton />
+                </>
+              ) : (
+                // Articles réels
+                featuredPosts.map((post, index) => (
+                  <a
+                    key={post.id}
+                    href={`/blog/${post.slug}`}
+                    className="group bg-white dark:bg-gray-900 rounded-lg overflow-hidden hover:shadow-xl transition-all border border-corporate-200 dark:border-gray-700"
+                    style={{
+                      animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`
+                    }}
+                  >
+                    <div className="relative h-48 overflow-hidden bg-corporate-100 dark:bg-gray-700">
+                      <img
+                        src={post.image_url}
+                        alt={post.title}
+                        loading={index === 0 ? "eager" : "lazy"}
+                        decoding="async"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                      <div className="absolute top-4 left-4">
+                        <span className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-lg">
+                          À la une
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <div className="text-sm text-corporate-500 dark:text-corporate-400 mb-2 font-medium">
+                        {new Date(post.published_at).toLocaleDateString('fr-FR', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </div>
+                      <h3 className="text-xl font-bold text-midnight dark:text-white mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                        {post.title}
+                      </h3>
+                      <p className="text-corporate-600 dark:text-corporate-300 text-sm line-clamp-2 mb-3">
+                        {post.excerpt}
+                      </p>
+                      <span className="inline-flex items-center text-blue-600 font-semibold text-sm group-hover:gap-2 transition-all">
+                        Lire l'article
+                        <ArrowRight className="ml-1 w-3 h-3" />
                       </span>
                     </div>
-                  </div>
-                  <div className="p-6">
-                    <div className="text-sm text-corporate-500 dark:text-corporate-400 mb-2">
-                      {new Date(post.published_at).toLocaleDateString('fr-FR', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </div>
-                    <h3 className="text-xl font-bold text-midnight dark:text-white mb-2 group-hover:text-blue-600 transition-colors">
-                      {post.title}
-                    </h3>
-                    <p className="text-corporate-600 dark:text-corporate-300 text-sm line-clamp-2">
-                      {post.excerpt}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                  </a>
+                ))
+              )}
             </div>
             <div className="md:hidden text-center">
-              <Link
-                to="/blog"
-                className="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold"
+              <a
+                href="/blog"
+                className="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold group"
               >
                 Voir tous les articles
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </a>
             </div>
           </div>
         </section>
       )}
 
+      {/* CTA Section */}
       <section className="py-20 bg-midnight dark:bg-corporate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -339,28 +388,43 @@ const NewHome = () => {
               <p className="text-gray-300 mb-6">
                 Que vous soyez jeune béninois, entrepreneur local, membre de la diaspora ou partenaire africain, vous avez votre place dans ce mouvement. Créons ensemble l'excellence béninoise.
               </p>
-              <Link
-                to="/contact"
+              <a
+                href="/contact"
                 className="inline-flex items-center justify-center w-full px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
               >
                 Contactez-nous
                 <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
+              </a>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Quote Section */}
       <section className="py-12 bg-blue-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-2xl font-bold mb-2">
             « Du Dahomey au Bénin, l'esprit d'indépendance perdure. »
           </p>
           <p className="text-lg">
-            MIDEESSI SARL-U - Fondé en 2025, Cotonou, République du Bénin
+            MIDEESSI - Fondé en 2025, Cotonou, République du Bénin
           </p>
         </div>
       </section>
+
+      {/* Styles pour les animations */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
