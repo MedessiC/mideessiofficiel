@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BookOpen, Plus, Edit2, Trash2, Save, X, ExternalLink,
-  Eye, Calendar, Tag, Star, Users
+  Eye, Calendar, Tag, Star, Users, Loader
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -22,12 +23,13 @@ type Book = {
 };
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [books, setBooks] = useState<Book[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
   const [formData, setFormData] = useState<Book>({
     id: null,
     title: '',
@@ -65,21 +67,62 @@ const AdminDashboard = () => {
   ];
 
   useEffect(() => {
-    fetchBooks();
+    checkAuth();
   }, []);
 
-  const fetchBooks = async () => {
-    const { data, error } = await supabase
-      .from('books')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const checkAuth = async () => {
+    try {
+      setIsAuthenticating(true);
+      
+      // Vérifier si l'utilisateur est connecté
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.log('Non authentifié, redirection vers login...');
+        navigate('/admin/login');
+        return;
+      }
 
-    if (error) {
-      console.error('Erreur lors du chargement des livres :', error.message);
-      return;
+      // Vérifier si l'utilisateur est admin
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (adminError || !adminData) {
+        console.log('Pas un admin, déconnexion et redirection...');
+        await supabase.auth.signOut();
+        navigate('/admin/login');
+        return;
+      }
+
+      // Si tout est OK, charger les données
+      console.log('Authentification réussie, chargement des données...');
+      await fetchBooks();
+      setIsAuthenticating(false);
+    } catch (err) {
+      console.error('Erreur lors de la vérification:', err);
+      navigate('/admin/login');
     }
+  };
 
-    if (data) setBooks(data);
+  const fetchBooks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('books')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erreur lors du chargement des livres :', error.message);
+        return;
+      }
+
+      if (data) setBooks(data);
+    } catch (err) {
+      console.error('Erreur:', err);
+    }
   };
 
   const handleSubmit = async () => {
@@ -93,7 +136,6 @@ const AdminDashboard = () => {
 
     try {
       if (editingBook) {
-        // Mise à jour d'un PDF existant
         const { error: updateError } = await supabase
           .from('books')
           .update({
@@ -113,11 +155,9 @@ const AdminDashboard = () => {
           .eq('id', editingBook.id);
 
         if (updateError) throw updateError;
-
         setBooks(books.map(b => b.id === editingBook.id ? { ...formData, id: editingBook.id } : b));
         alert('PDF mis à jour avec succès !');
       } else {
-        // Création d'un nouveau PDF
         const { data, error: insertError } = await supabase
           .from('books')
           .insert([{
@@ -142,7 +182,7 @@ const AdminDashboard = () => {
       }
 
       resetForm();
-      fetchBooks(); // Rafraîchir la liste
+      await fetchBooks();
     } catch (err: any) {
       console.error('Erreur lors de la publication :', err);
       alert(`Erreur: ${err.message || 'Erreur lors de la publication'}`);
@@ -150,7 +190,7 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
-  
+
   const handleDelete = async (id: number) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')) return;
 
@@ -192,6 +232,20 @@ const AdminDashboard = () => {
     setEditingBook(null);
     setShowForm(false);
   };
+
+  // Afficher un loader pendant la vérification de l'authentification
+  if (isAuthenticating) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400 font-semibold">
+            Vérification de l'authentification...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -295,7 +349,6 @@ const AdminDashboard = () => {
                       ))}
                     </select>
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Couleur de couverture *
@@ -337,7 +390,6 @@ const AdminDashboard = () => {
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Semaine d'ajout *
@@ -393,7 +445,6 @@ const AdminDashboard = () => {
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Étudiants
@@ -406,7 +457,6 @@ const AdminDashboard = () => {
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Nouveau ?
@@ -427,10 +477,20 @@ const AdminDashboard = () => {
               <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={handleSubmit}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors"
+                  disabled={loading}
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-lg transition-colors"
                 >
-                  <Save className="w-5 h-5" />
-                  {editingBook ? 'Mettre à jour' : 'Publier'}
+                  {loading ? (
+                    <>
+                      <Loader className="w-5 h-5 animate-spin" />
+                      En cours...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      {editingBook ? 'Mettre à jour' : 'Publier'}
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={resetForm}
@@ -450,7 +510,6 @@ const AdminDashboard = () => {
               PDFs Publiés ({books.length})
             </h2>
           </div>
-
           {books.length === 0 ? (
             <div className="p-12 text-center">
               <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -464,7 +523,6 @@ const AdminDashboard = () => {
                     <div className={`w-20 h-20 rounded-lg bg-gradient-to-br ${book.coverColor} flex items-center justify-center flex-shrink-0`}>
                       <BookOpen className="w-10 h-10 text-white" />
                     </div>
-
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
@@ -500,7 +558,6 @@ const AdminDashboard = () => {
                             </span>
                           </div>
                         </div>
-
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <a
                             href={book.articleUrl}
@@ -527,7 +584,7 @@ const AdminDashboard = () => {
                             <Edit2 className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => handleDelete(book.id)}
+                            onClick={() => book.id && handleDelete(book.id)}
                             className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-5 h-5" />

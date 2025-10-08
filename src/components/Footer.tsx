@@ -10,7 +10,7 @@ const Footer = () => {
           <div>
             
             <img
-    src="/mideessi.png"
+    src="/mideessi.webp"
     alt="Logo Mideessi"
     className="h-16 w-auto sm:h-20 md:h-24 lg:h-28 object-contain mx-auto mb-4"
   />
