@@ -111,7 +111,7 @@ const Home = () => {
             </p>
             
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-8 md:mb-12 text-gray-100 max-w-4xl mx-auto leading-relaxed font-light px-4">
-              Un mouvement d'indépendance technologique né au Bénin. Chaque mois, un secteur. Une immersion terrain. 
+              Un mouvement d'indépendance technologique né au Bénin. Chaque trimestre, un secteur. Une immersion terrain. 
               Des solutions <span className="text-gold font-bold">100% béninoises</span>, créées avec le peuple, pour le peuple.
             </p>
             
@@ -184,10 +184,10 @@ const Home = () => {
               <Sparkles className="w-8 h-8 text-gold" />
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-midnight dark:text-white mb-4 leading-tight">
-              Notre Processus Mensuel
+              Notre Processus Trimestriel
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto px-2 sm:px-0">
-              Chaque mois, nous choisissons un secteur et créons des solutions nées du terrain
+              Chaque trimestre, nous choisissons un secteur et créons des solutions nées du terrain
             </p>
           </div>
 
@@ -281,7 +281,7 @@ const Home = () => {
               Solutions en Développement
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-200 max-w-3xl mx-auto px-2 sm:px-0">
-              Notre calendrier 2025 : un secteur par mois, des solutions adaptées aux réalités béninoises
+              Notre calendrier 2025 : un secteur par trimestre, des solutions adaptées aux réalités béninoises
             </p>
           </div>
 

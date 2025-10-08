@@ -42,6 +42,11 @@ const Footer = () => {
                   Blog
                 </a>
               </li>
+              <a href='/learn' className="text-gray-300 hover:text-gold transition-colors">
+              <li>
+                  Apprendre
+              </li>
+              </a>
             </ul>
           </div>
 

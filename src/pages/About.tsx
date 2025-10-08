@@ -60,8 +60,8 @@ const About = () => {
     },
     { 
       year: '2025', 
-      event: 'Modèle sectoriel mensuel', 
-      description: 'Lancement du modèle unique : chaque mois, un secteur, une immersion, une solution concrète.' 
+      event: 'Modèle sectoriel Trimestriel', 
+      description: 'Lancement du modèle unique : chaque trimestre, un secteur, une immersion, une solution concrète.' 
     },
     { 
       year: '2025-2035', 
@@ -167,7 +167,7 @@ const About = () => {
           </div>
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-lg">
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed text-center">
-              Chaque mois, nous sélectionnons un secteur de la vie quotidienne (santé, finance, éducation, agriculture, mobilité, commerce). 
+              Chaque trimestre, nous sélectionnons un secteur de la vie quotidienne (santé, finance, éducation, agriculture, mobilité, commerce). 
               Notre démarche est résolument <span className="font-bold text-gold">ancrée dans la réalité du terrain</span>. 
               Nous sommes <span className="font-semibold">proches du peuple</span>, nous travaillons <span className="font-semibold">pour le peuple</span>, 
               pour le Bénin, pour l'Afrique et pour le monde.
@@ -176,11 +176,11 @@ const About = () => {
         </div>
       </section>
 
-      {/* Notre Processus Mensuel */}
+      {/* Notre Processus Trimestriel */}
       <section className="py-20 bg-white dark:bg-gray-900">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">Notre Processus Mensuel</h2>
+            <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">Notre Processus Trimestriel</h2>
             <div className="w-20 h-1 bg-gold mx-auto rounded-full"></div>
             <p className="text-gray-600 dark:text-gray-300 mt-4 text-lg">
               Innovation par l'immersion : nous créons des solutions qui répondent aux vrais besoins
@@ -330,7 +330,7 @@ const About = () => {
               </div>
               <div className="text-center p-6 bg-gold/10 rounded-xl border border-gold/30">
                 <div className="text-4xl font-bold text-gold mb-2">12</div>
-                <div className="text-sm text-gray-300">Solutions par an, une par mois</div>
+                <div className="text-sm text-gray-300">Solutions par an, une par trimestre</div>
               </div>
               <div className="text-center p-6 bg-gold/10 rounded-xl border border-gold/30">
                 <div className="text-4xl font-bold text-gold mb-2">∞</div>

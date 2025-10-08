@@ -71,21 +71,21 @@ const NewHome = () => {
 
   const heroSlides = [
     {
-      image: '/hero1.png',
+      image: '/hero1.webp',
       badge: 'Mouvement d\'indépendance technologique',
       title: 'Nous sommes indépendants',
       description: 'MIDEESSI est un mouvement d\'indépendance technologique né au cœur du Bénin, héritier de l\'esprit du Dahomey.',
       subtitle: 'Nous concevons, fabriquons et innovons avec nos idées, notre savoir-faire et notre intelligence collective béninoise.'
     },
     {
-      image: '/hero2.png',
+      image: '/hero2.webp',
       badge: 'Innovation 100% béninoise',
       title: 'Du terrain aux solutions',
-      description: 'Chaque mois, nous nous immergeons dans un nouveau secteur pour créer des solutions adaptées aux réalités béninoises.',
+      description: 'Chaque trimestre, nous nous immergeons dans un nouveau secteur pour créer des solutions adaptées aux réalités béninoises.',
       subtitle: 'De l\'agriculture au commerce, de l\'éducation à la santé, nous innovons là où le Bénin en a besoin.'
     },
     {
-      image: '/hero3.png',
+      image: '/hero3.webp',
       badge: 'Souveraineté technologique',
       title: 'Consommons béninois',
       description: 'Nous refusons la dépendance technologique et bâtissons notre souveraineté numérique avec fierté.',
@@ -205,7 +205,7 @@ const NewHome = () => {
   };
 
   const stats = [
-    { value: 1, label: 'Secteur par mois', icon: TrendingUp },
+    { value: 1, label: 'Secteur par trimestre', icon: TrendingUp },
     { value: 100, label: 'Béninois', suffix: '%', icon: Award },
     { value: 5, label: 'Étapes terrain', icon: Shield },
     { value: 2025, label: 'Année de fondation', icon: Building2 },
@@ -425,7 +425,7 @@ const NewHome = () => {
               <div className="h-1 w-20 bg-[#ffd700] mx-auto"></div>
             </div>
             <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Chaque mois, nous sélectionnons un secteur et nous immergeons sur le terrain pour créer des solutions adaptées aux besoins réels
+              Chaque trimestre, nous sélectionnons un secteur et nous immergeons sur le terrain pour créer des solutions adaptées aux besoins réels
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -616,7 +616,7 @@ const NewHome = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 drop-shadow-lg">
-              Notre processus mensuel
+              Notre processus Trimestriel
             </h2>
             <div className="h-1 w-24 bg-[#ffd700] mx-auto mb-4"></div>
             <p className="text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed">

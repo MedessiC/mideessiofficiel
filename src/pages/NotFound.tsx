@@ -67,7 +67,7 @@ const NotFound = () => {
           <div className="relative hidden lg:block">
             <div className="relative z-10 max-w-md mx-auto">
               <img
-                src="/404-image.png"
+                src="/404-image.webp"
                 alt="Page non trouvée"
                 className="rounded-lg shadow-2xl w-full h-auto object-contain"
               />
@@ -81,7 +81,7 @@ const NotFound = () => {
           <div className="relative lg:hidden mt-8">
             <div className="relative z-10 max-w-sm mx-auto">
               <img
-                src="/404-image.png"
+                src="/404-image.webp"
                 alt="Page non trouvée"
                 className="rounded-lg shadow-xl w-full h-auto object-contain"
               />

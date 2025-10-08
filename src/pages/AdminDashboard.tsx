@@ -88,6 +88,10 @@ const AdminDashboard = () => {
       </div>
     );
   }
+const handlePublishPDF = () => {
+  // Exemple : ouvrir une page d'upload ou de publication
+  navigate("/admin/pdfeditor");
+};
 
   return (
     <div className="min-h-screen pt-16 bg-corporate-50 dark:bg-gray-900">
@@ -113,10 +117,18 @@ const AdminDashboard = () => {
               onClick={handleLogout}
               className="inline-flex items-center px-4 py-3 bg-corporate-200 dark:bg-corporate-800 hover:bg-corporate-300 dark:hover:bg-corporate-700 text-corporate-700 dark:text-corporate-200 font-semibold rounded-lg transition-colors"
             >
+              
               <LogOut className="w-5 h-5 mr-2" />
               Déconnexion
             </button>
           </div>
+          <button
+            onClick={handlePublishPDF}
+            className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors"
+          >
+            <FileText className="w-5 h-5 mr-2" />
+            Publier PDF
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

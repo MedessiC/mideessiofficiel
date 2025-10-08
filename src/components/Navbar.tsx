@@ -9,6 +9,7 @@ const Navbar = () => {
   const links = [
     { href: '/', label: 'Accueil' },
     { href: '/about', label: 'À propos' },
+        { href: '/learn', label: 'Apprendre' },
     { href: '/projects', label: 'Solutions' },
     { href: '/blog', label: 'Blog' },
     { href: '/contact', label: 'Contact' },
@@ -23,15 +24,13 @@ const Navbar = () => {
   // Initialiser le thème au chargement
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
-    const autoMode = localStorage.getItem('autoMode') !== 'false'; // Activé par défaut
+    const autoMode = localStorage.getItem('autoMode') !== 'false';
     
     let shouldBeDark = false;
     
     if (savedTheme && !autoMode) {
-      // Si l'utilisateur a choisi manuellement un thème
       shouldBeDark = savedTheme === 'dark';
     } else {
-      // Mode automatique basé sur l'heure
       shouldBeDark = isNightTime();
     }
     
@@ -43,7 +42,6 @@ const Navbar = () => {
       document.documentElement.classList.remove('dark');
     }
 
-    // Vérifier l'heure toutes les minutes pour ajuster automatiquement
     if (autoMode) {
       const interval = setInterval(() => {
         const nightTime = isNightTime();
@@ -55,18 +53,17 @@ const Navbar = () => {
             document.documentElement.classList.remove('dark');
           }
         }
-      }, 60000); // Vérifier chaque minute
+      }, 60000);
 
       return () => clearInterval(interval);
     }
-  }, []);
+  }, [isDark]);
 
   // Fonction pour changer le thème
   const toggleTheme = () => {
     const newTheme = !isDark;
     setIsDark(newTheme);
     
-    // Désactiver le mode automatique quand l'utilisateur clique manuellement
     localStorage.setItem('autoMode', 'false');
     
     if (newTheme) {
@@ -99,7 +96,7 @@ const Navbar = () => {
     };
   }, [isOpen]);
 
-  const isActive = (path: string) => {
+  const isActive = (path) => {
     if (typeof window !== 'undefined') {
       return window.location.pathname === path;
     }
@@ -117,13 +114,35 @@ const Navbar = () => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo avec animation hover */}
+            {/* Logo avec animation hover et changement selon le thème */}
             <a
               href="/"
               className="flex items-center space-x-2 group"
             >
-              <div className="relative">
-                <img src="/mideessi.png" alt="Logo Mideessi" className="w-12 h-12 object-contain mr-2" />
+              <div className="relative w-12 h-12">
+                {/* Logo clair (visible en mode light) */}
+                <img 
+                  src="/mideessi-light.webp" 
+                  alt="Logo Mideessi" 
+                  className={`absolute inset-0 w-full h-full object-contain transition-all duration-500 ${
+                    isDark 
+                      ? 'opacity-0 scale-90 rotate-180' 
+                      : 'opacity-100 scale-100 rotate-0'
+                  }`}
+                />
+                
+                {/* Logo sombre (visible en mode dark) */}
+                <img 
+                  src="/mideessi.webp" 
+                  alt="Logo Mideessi" 
+                  className={`absolute inset-0 w-full h-full object-contain transition-all duration-500 ${
+                    isDark 
+                      ? 'opacity-100 scale-100 rotate-0' 
+                      : 'opacity-0 scale-90 -rotate-180'
+                  }`}
+                />
+                
+                {/* Effet de glow au survol */}
                 <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300" />
               </div>
             </a>
@@ -145,11 +164,9 @@ const Navbar = () => {
                   >
                     {link.label}
                   </span>
-                  {/* Indicateur de page active */}
                   {isActive(link.href) && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 animate-[slideIn_0.3s_ease-out]" />
                   )}
-                  {/* Effet hover */}
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                 </a>
               ))}
@@ -233,7 +250,6 @@ const Navbar = () => {
           isOpen ? 'visible' : 'invisible'
         }`}
       >
-        {/* Overlay avec blur */}
         <div
           className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
             isOpen ? 'opacity-100' : 'opacity-0'
@@ -241,7 +257,6 @@ const Navbar = () => {
           onClick={() => setIsOpen(false)}
         />
 
-        {/* Panel du menu */}
         <div
           className={`absolute top-16 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-2xl transition-transform duration-300 ${
             isOpen ? 'translate-y-0' : '-translate-y-full'
@@ -275,7 +290,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Styles pour l'animation slideIn */}
       <style>{`
         @keyframes slideIn {
           from {

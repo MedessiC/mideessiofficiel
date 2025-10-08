@@ -1,39 +1,170 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" prefix="og: https://ogp.me/ns#">
   <head>
+    <!-- Encodage et viewport -->
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="author" content="Coovi Medessi" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Titre optimisé SEO (50-60 caractères) -->
+    <title>MIDEESSI - Innovation Technologique & Automatisation en Afrique | Solutions Digitales</title>
+    
+    <!-- Meta description optimisée (150-160 caractères) -->
+    <meta name="description" content="MIDEESSI conçoit des solutions technologiques innovantes pour l'Afrique : automatisation intelligente, développement web & mobile, IA et transformation digitale. Créateurs indépendants." />
+    
+    <!-- Mots-clés (moins important mais utile) -->
+    <meta name="keywords" content="innovation technologique afrique, automatisation entreprise, solutions digitales, développement web afrique, IA intelligence artificielle, transformation digitale, startup tech africaine, MIDEESSI" />
+    
+    <!-- Informations d'auteur et copyright -->
+    <meta name="author" content="Coovi Medessi - MIDEESSI" />
+    <meta name="creator" content="MIDEESSI Team" />
+    <meta name="publisher" content="MIDEESSI" />
+    <meta name="copyright" content="© 2025 MIDEESSI. Tous droits réservés." />
+    
+    <!-- Robots et indexation -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="bingbot" content="index, follow" />
+    
+    <!-- Vérification Google Search Console -->
     <meta name="google-site-verification" content="LlD0vlgXKf_JFvC0gYFdS_m92jEW9zfs1RU8z-9Ba4w" />
-
-    <!-- Titre et description -->
-    <title>MIDEESSI – Nous sommes indépendants</title>
-    <meta name="description" content="MIDEESSI propulse l'Afrique vers l'avenir : solutions technologiques, automatisation et innovation locale, conçues par des créateurs indépendants." />
-
-    <!-- Open Graph / Social Sharing -->
-    <meta property="og:title" content="MIDEESSI – Nous sommes indépendants, nous inventons le futur" />
-    <meta property="og:description" content="Solutions technologiques, automatisation et innovation locale pour propulser l'Afrique vers l'avenir." />
+    
+    <!-- Langue et géolocalisation -->
+    <meta name="language" content="French" />
+    <meta name="geo.region" content="BJ" />
+    <meta name="geo.placename" content="Cotonou, Bénin" />
+    <meta name="geo.position" content="6.3703;2.3912" />
+    <meta name="ICBM" content="6.3703, 2.3912" />
+    
+    <!-- URL canonique (évite le duplicate content) -->
+    <link rel="canonical" href="https://www.mideessi.com/" />
+    
+    <!-- Langues alternatives (si multilingue) -->
+    <link rel="alternate" hreflang="fr" href="https://www.mideessi.com/" />
+    <link rel="alternate" hreflang="x-default" href="https://www.mideessi.com/" />
+    
+    <!-- Open Graph / Facebook (optimisé) -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://mideessi.netlify.app" />
-
-    <!-- Twitter Card -->
+    <meta property="og:site_name" content="MIDEESSI" />
+    <meta property="og:title" content="MIDEESSI - Innovation Technologique & Automatisation en Afrique" />
+    <meta property="og:description" content="Solutions technologiques innovantes : automatisation intelligente, développement web & mobile, IA et transformation digitale pour propulser l'Afrique vers l'avenir." />
+    <meta property="og:url" content="https://www.mideessi.com/" />
+    <meta property="og:image" content="https://www.mideessi.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="MIDEESSI - Innovation Technologique en Afrique" />
+    <meta property="og:locale" content="fr_FR" />
+    
+    <!-- Twitter Card (optimisé) -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="MIDEESSI – Nous sommes indépendants, nous inventons le futur" />
-    <meta name="twitter:description" content="Solutions technologiques, automatisation et innovation locale pour propulser l'Afrique vers l'avenir." />
-
-    <!-- Favicon -->
+    <meta name="twitter:site" content="@mideessi" />
+    <meta name="twitter:creator" content="@coovimedessi" />
+    <meta name="twitter:title" content="MIDEESSI - Innovation Technologique & Automatisation en Afrique" />
+    <meta name="twitter:description" content="Solutions technologiques innovantes pour propulser l'Afrique : automatisation, IA, développement web & mobile." />
+    <meta name="twitter:image" content="https://www.mideessi.com/twitter-image.jpg" />
+    <meta name="twitter:image:alt" content="MIDEESSI - Solutions Tech Africaines" />
+    
+    <!-- Apple Touch Icon & Favicons (toutes tailles) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/vite.svg" type="image/svg+xml" />
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="msapplication-TileColor" content="#000000" />
+    
+    <!-- Preconnect pour améliorer la vitesse -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    
+    <!-- Fonts optimisées avec display=swap -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet" />
-
+    
+    <!-- Schema.org JSON-LD pour les rich snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "MIDEESSI",
+      "url": "https://www.mideessi.com",
+      "logo": "https://www.mideessi.com/logo.png",
+      "description": "MIDEESSI conçoit des solutions technologiques innovantes pour l'Afrique : automatisation intelligente, développement web & mobile, IA et transformation digitale.",
+      "foundingDate": "2024",
+      "founder": {
+        "@type": "Person",
+        "name": "Coovi Medessi"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Cotonou",
+        "addressRegion": "Littoral",
+        "addressCountry": "BJ"
+      },
+      "sameAs": [
+        "https://twitter.com/mideessi",
+        "https://linkedin.com/company/mideessi",
+        "https://facebook.com/mideessi"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Service",
+        "availableLanguage": ["French", "English"]
+      }
+    }
+    </script>
+    
+    <!-- Schema.org WebSite pour la recherche -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "MIDEESSI",
+      "url": "https://www.mideessi.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.mideessi.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
+    <!-- Breadcrumb Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Accueil",
+        "item": "https://www.mideessi.com"
+      }]
+    }
+    </script>
+    
+    <!-- Optimisation performance -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@300;400;600&display=swap" />
+    
   </head>
-  <body>
-    <div id="root" role="main"></div>
+  <body itemscope itemtype="https://schema.org/WebPage">
+    <!-- Skip to main content pour l'accessibilité -->
+    <a href="#main-content" class="skip-to-main" style="position:absolute;left:-9999px;z-index:999;">Aller au contenu principal</a>
+    
+    <!-- Main content -->
+    <div id="root" role="main" aria-label="Contenu principal"></div>
+    <main id="main-content"></main>
 
-    <!-- Script principal -->
+    <!-- Script principal avec defer pour optimiser le chargement -->
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Noscript fallback -->
+    <noscript>
+      <div style="text-align:center;padding:50px;">
+        <h1>MIDEESSI - Innovation Technologique en Afrique</h1>
+        <p>JavaScript est requis pour afficher ce site. Veuillez activer JavaScript dans votre navigateur.</p>
+      </div>
+    </noscript>
   </body>
 </html>
