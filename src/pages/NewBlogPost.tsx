@@ -1,23 +1,23 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Calendar, User, ArrowLeft, Tag, Eye, Share2, Clock, Facebook, Twitter, Linkedin, Link as LinkIcon, Check } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Calendar, User, ArrowLeft, Tag, Eye, Share2, Clock, Facebook, Twitter, Linkedin, Link as LinkIcon, Check, Bookmark, Heart, MessageCircle } from 'lucide-react';
 import SEO from '../components/SEO';
 import { supabase, BlogPost } from '../lib/supabase';
 
 // Skeleton pour le chargement
 const PostSkeleton = () => (
-  <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-pulse">
-    <div className="h-6 bg-corporate-200 dark:bg-gray-700 rounded w-32 mb-8" />
-    <div className="space-y-4 mb-8">
-      <div className="h-4 bg-corporate-200 dark:bg-gray-700 rounded w-24" />
-      <div className="h-12 bg-corporate-200 dark:bg-gray-700 rounded w-full" />
-      <div className="h-6 bg-corporate-200 dark:bg-gray-700 rounded w-3/4" />
+  <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-pulse">
+    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-full w-40 mb-10" />
+    <div className="space-y-6 mb-10">
+      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-32" />
+      <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-2xl w-full" />
+      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-xl w-3/4" />
     </div>
-    <div className="h-96 bg-corporate-200 dark:bg-gray-700 rounded-lg mb-8" />
-    <div className="space-y-3">
-      <div className="h-4 bg-corporate-200 dark:bg-gray-700 rounded w-full" />
-      <div className="h-4 bg-corporate-200 dark:bg-gray-700 rounded w-full" />
-      <div className="h-4 bg-corporate-200 dark:bg-gray-700 rounded w-3/4" />
+    <div className="h-[500px] bg-gray-200 dark:bg-gray-700 rounded-3xl mb-10" />
+    <div className="space-y-4">
+      {[...Array(8)].map((_, i) => (
+        <div key={i} className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full" style={{ width: `${Math.random() * 30 + 70}%` }} />
+      ))}
     </div>
   </div>
 );
@@ -30,6 +30,8 @@ const NewBlogPost = () => {
   const [readingProgress, setReadingProgress] = useState(0);
   const [copied, setCopied] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [liked, setLiked] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -134,14 +136,14 @@ const NewBlogPost = () => {
         // Titres
         if (paragraph.startsWith('## ')) {
           return (
-            <h2 key={index} className="text-3xl font-bold text-midnight dark:text-white mt-8 mb-4">
+            <h2 key={index} className="text-3xl md:text-4xl font-bold text-midnight dark:text-white mt-12 mb-6 leading-tight">
               {paragraph.replace('## ', '')}
             </h2>
           );
         }
         if (paragraph.startsWith('### ')) {
           return (
-            <h3 key={index} className="text-2xl font-bold text-midnight dark:text-white mt-6 mb-3">
+            <h3 key={index} className="text-2xl md:text-3xl font-bold text-midnight dark:text-white mt-10 mb-5 leading-tight">
               {paragraph.replace('### ', '')}
             </h3>
           );
@@ -151,13 +153,25 @@ const NewBlogPost = () => {
         if (paragraph.startsWith('- ')) {
           const items = paragraph.split('\n');
           return (
-            <ul key={index} className="list-disc list-inside space-y-2 my-4">
+            <ul key={index} className="space-y-3 my-6 pl-4">
               {items.map((item, i) => (
-                <li key={i} className="text-corporate-700 dark:text-corporate-200">
-                  {item.replace('- ', '')}
+                <li key={i} className="flex items-start gap-3 text-gray-700 dark:text-gray-200 text-lg leading-relaxed">
+                  <span className="w-2 h-2 bg-yellow-400 rounded-full mt-2.5 flex-shrink-0"></span>
+                  <span>{item.replace('- ', '')}</span>
                 </li>
               ))}
             </ul>
+          );
+        }
+
+        // Citations
+        if (paragraph.startsWith('> ')) {
+          return (
+            <blockquote key={index} className="my-8 pl-6 border-l-4 border-yellow-400 bg-gradient-to-r from-yellow-50 to-transparent dark:from-yellow-900/20 dark:to-transparent py-4 pr-6 rounded-r-2xl">
+              <p className="text-xl italic text-gray-700 dark:text-gray-200 leading-relaxed">
+                {paragraph.replace('> ', '')}
+              </p>
+            </blockquote>
           );
         }
 
@@ -165,32 +179,44 @@ const NewBlogPost = () => {
         const imgMatch = paragraph.match(/!\[([^\]]*)\]\(([^)]+)\)/);
         if (imgMatch) {
           return (
-            <div key={index} className="my-8">
-              <img
-                src={imgMatch[2]}
-                alt={imgMatch[1]}
-                loading="lazy"
-                className="w-full rounded-lg shadow-lg"
-              />
+            <figure key={index} className="my-10">
+              <div className="rounded-3xl overflow-hidden shadow-2xl">
+                <img
+                  src={imgMatch[2]}
+                  alt={imgMatch[1]}
+                  loading="lazy"
+                  className="w-full"
+                />
+              </div>
               {imgMatch[1] && (
-                <p className="text-sm text-corporate-500 dark:text-corporate-400 text-center mt-2 italic">
+                <figcaption className="text-sm text-gray-500 dark:text-gray-400 text-center mt-4 italic">
                   {imgMatch[1]}
-                </p>
+                </figcaption>
               )}
-            </div>
+            </figure>
+          );
+        }
+
+        // Code blocks
+        if (paragraph.startsWith('```')) {
+          const codeContent = paragraph.replace(/```\w*\n?/, '').replace(/```$/, '');
+          return (
+            <pre key={index} className="my-8 p-6 bg-gray-900 rounded-2xl overflow-x-auto shadow-lg">
+              <code className="text-sm text-gray-100 font-mono">{codeContent}</code>
+            </pre>
           );
         }
 
         // Liens et formatage inline
         let formattedText = paragraph
-          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:text-blue-700 underline" target="_blank" rel="noopener noreferrer">$1</a>');
+          .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-midnight dark:text-yellow-400">$1</strong>')
+          .replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>')
+          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-yellow-400 hover:text-yellow-500 font-medium underline decoration-2 underline-offset-2" target="_blank" rel="noopener noreferrer">$1</a>');
 
         return (
           <p
             key={index}
-            className="text-lg text-corporate-700 dark:text-corporate-200 leading-relaxed mb-4"
+            className="text-lg md:text-xl text-gray-700 dark:text-gray-200 leading-relaxed mb-6"
             dangerouslySetInnerHTML={{ __html: formattedText }}
           />
         );
@@ -208,20 +234,23 @@ const NewBlogPost = () => {
   if (!post) {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center bg-white dark:bg-gray-900">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-midnight dark:text-white mb-4">
+        <div className="text-center px-4">
+          <div className="w-24 h-24 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-8">
+            <ArrowLeft className="w-12 h-12 text-midnight" />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-midnight dark:text-white mb-4">
             Article introuvable
           </h1>
-          <p className="text-lg text-corporate-600 dark:text-corporate-300 mb-8">
+          <p className="text-lg text-gray-600 dark:text-gray-300 mb-10 max-w-md mx-auto">
             L'article que vous recherchez n'existe pas ou a été supprimé.
           </p>
-          <a
-            href="/blog"
-            className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
+          <Link
+            to="/blog"
+            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-midnight font-bold rounded-full transition-all transform hover:scale-105 shadow-lg"
           >
             <ArrowLeft className="mr-2 w-5 h-5" />
             Retour au blog
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -235,31 +264,60 @@ const NewBlogPost = () => {
         image={post.image_url}
         type="article"
         keywords={post.tags}
+        article={{
+          publishedTime: post.published_at,
+          modifiedTime: post.updated_at || post.published_at,
+          author: post.author,
+          section: post.category,
+          tags: post.tags,
+        }}
       />
 
       {/* Barre de progression de lecture */}
-      <div className="fixed top-16 left-0 right-0 h-1 bg-corporate-100 dark:bg-gray-800 z-50">
+      <div className="fixed top-16 left-0 right-0 h-1.5 bg-gray-100 dark:bg-gray-800 z-50">
         <div
-          className="h-full bg-blue-600 transition-all duration-150"
+          className="h-full bg-gradient-to-r from-yellow-400 to-yellow-500 transition-all duration-150 shadow-lg"
           style={{ width: `${readingProgress}%` }}
         />
       </div>
 
-      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <a
-          href="/blog"
-          className="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold mb-8 group"
+      {/* Boutons flottants (mobile) */}
+      <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-40 md:hidden">
+        <button
+          onClick={handleShare}
+          className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-500 text-midnight rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform"
         >
-          <ArrowLeft className="mr-2 w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Retour au blog
-        </a>
+          <Share2 className="w-6 h-6" />
+        </button>
+        <button
+          onClick={() => setBookmarked(!bookmarked)}
+          className={`w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all ${
+            bookmarked 
+              ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-midnight scale-110' 
+              : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:scale-110'
+          }`}
+        >
+          <Bookmark className={`w-6 h-6 ${bookmarked ? 'fill-current' : ''}`} />
+        </button>
+      </div>
 
-        <header className="mb-8">
-          <div className="flex flex-wrap items-center gap-4 text-sm text-corporate-500 dark:text-corporate-400 mb-6">
-            <span className="px-3 py-1 bg-blue-600 text-white rounded-full font-semibold shadow-sm">
+      <article className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Bouton retour */}
+        <Link
+          to="/blog"
+          className="inline-flex items-center gap-2 px-6 py-3 text-gray-600 dark:text-gray-300 hover:text-midnight dark:hover:text-white font-semibold mb-10 group hover:bg-gray-50 dark:hover:bg-gray-800 rounded-full transition-all"
+        >
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          Retour au blog
+        </Link>
+
+        {/* En-tête de l'article */}
+        <header className="mb-12">
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <span className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-midnight rounded-full font-bold text-sm shadow-md">
               {post.category}
             </span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
               <Calendar className="w-4 h-4" />
               {new Date(post.published_at).toLocaleDateString('fr-FR', {
                 year: 'numeric',
@@ -267,160 +325,216 @@ const NewBlogPost = () => {
                 day: 'numeric',
               })}
             </span>
-            <span className="flex items-center gap-1">
-              <User className="w-4 h-4" />
-              {post.author}
+            <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+              <Clock className="w-4 h-4" />
+              {calculateReadingTime(post.content)} min
             </span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
               <Eye className="w-4 h-4" />
               {post.views || 0} vues
             </span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              {calculateReadingTime(post.content)} min de lecture
-            </span>
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-bold text-midnight dark:text-white mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-bold text-midnight dark:text-white mb-8 leading-tight">
             {post.title}
           </h1>
 
-          <p className="text-xl text-corporate-600 dark:text-corporate-300 leading-relaxed">
+          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
             {post.excerpt}
           </p>
+
+          {/* Info auteur */}
+          <div className="flex items-center justify-between py-6 border-y-2 border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
+                <User className="w-7 h-7 text-midnight" />
+              </div>
+              <div>
+                <p className="font-bold text-midnight dark:text-white text-lg">{post.author}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Auteur</p>
+              </div>
+            </div>
+
+            {/* Actions desktop */}
+            <div className="hidden md:flex items-center gap-3">
+              <button
+                onClick={() => setLiked(!liked)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold transition-all ${
+                  liked 
+                    ? 'bg-red-50 dark:bg-red-900/20 text-red-600' 
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${liked ? 'fill-current' : ''}`} />
+                <span className="text-sm">{liked ? 'Aimé' : "J'aime"}</span>
+              </button>
+              <button
+                onClick={() => setBookmarked(!bookmarked)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold transition-all ${
+                  bookmarked 
+                    ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600' 
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                <Bookmark className={`w-5 h-5 ${bookmarked ? 'fill-current' : ''}`} />
+                <span className="text-sm">{bookmarked ? 'Enregistré' : 'Enregistrer'}</span>
+              </button>
+              <div className="relative">
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-midnight font-bold rounded-full transition-all shadow-md"
+                >
+                  <Share2 className="w-5 h-5" />
+                  <span className="text-sm">Partager</span>
+                </button>
+
+                {shareMenuOpen && (
+                  <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-200 dark:border-gray-700 py-2 z-10 animate-fadeIn">
+                    <button
+                      onClick={() => shareOnSocial('facebook')}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-700 dark:text-gray-200 transition-colors"
+                    >
+                      <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                        <Facebook className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="font-medium">Facebook</span>
+                    </button>
+                    <button
+                      onClick={() => shareOnSocial('twitter')}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-700 dark:text-gray-200 transition-colors"
+                    >
+                      <div className="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center">
+                        <Twitter className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="font-medium">Twitter</span>
+                    </button>
+                    <button
+                      onClick={() => shareOnSocial('linkedin')}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-700 dark:text-gray-200 transition-colors"
+                    >
+                      <div className="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center">
+                        <Linkedin className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="font-medium">LinkedIn</span>
+                    </button>
+                    <button
+                      onClick={copyToClipboard}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-700 dark:text-gray-200 border-t-2 border-gray-200 dark:border-gray-600 transition-colors"
+                    >
+                      <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+                        {copied ? <Check className="w-5 h-5 text-white" /> : <LinkIcon className="w-5 h-5 text-white" />}
+                      </div>
+                      <span className="font-medium">{copied ? 'Lien copié !' : 'Copier le lien'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </header>
 
-        <div className="relative h-96 rounded-lg overflow-hidden mb-8 shadow-xl">
-          <img
-            src={post.image_url}
-            alt={post.title}
-            loading="eager"
-            className="w-full h-full object-cover"
-          />
+        {/* Image principale */}
+        <div className="relative rounded-3xl overflow-hidden mb-12 shadow-2xl">
+          <div className="aspect-video bg-gray-100 dark:bg-gray-800">
+            <img
+              src={post.image_url}
+              alt={post.title}
+              loading="eager"
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
 
-        <div className="flex items-center justify-between py-4 border-y border-corporate-200 dark:border-gray-700 mb-8">
-          <div className="flex flex-wrap items-center gap-2">
-            <Tag className="w-4 h-4 text-corporate-500" />
-            {post.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-corporate-100 dark:bg-gray-800 text-corporate-700 dark:text-corporate-300 text-sm rounded-full hover:bg-corporate-200 dark:hover:bg-gray-700 transition-colors"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          
-          <div className="relative">
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+        {/* Tags */}
+        <div className="flex flex-wrap items-center gap-3 py-6 mb-8">
+          <Tag className="w-5 h-5 text-yellow-400" />
+          {post.tags.map((tag, index) => (
+            <span
+              key={index}
+              className="px-4 py-2 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-full hover:bg-gradient-to-br hover:from-yellow-400 hover:to-yellow-500 hover:text-midnight transition-all cursor-pointer border-2 border-gray-200 dark:border-gray-700 hover:border-yellow-400"
             >
-              <Share2 className="w-4 h-4" />
-              Partager
-            </button>
-
-            {shareMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-corporate-200 dark:border-gray-700 py-2 z-10">
-                <button
-                  onClick={() => shareOnSocial('facebook')}
-                  className="w-full px-4 py-2 text-left hover:bg-corporate-50 dark:hover:bg-gray-700 flex items-center gap-2 text-corporate-700 dark:text-corporate-200"
-                >
-                  <Facebook className="w-4 h-4" />
-                  Facebook
-                </button>
-                <button
-                  onClick={() => shareOnSocial('twitter')}
-                  className="w-full px-4 py-2 text-left hover:bg-corporate-50 dark:hover:bg-gray-700 flex items-center gap-2 text-corporate-700 dark:text-corporate-200"
-                >
-                  <Twitter className="w-4 h-4" />
-                  Twitter
-                </button>
-                <button
-                  onClick={() => shareOnSocial('linkedin')}
-                  className="w-full px-4 py-2 text-left hover:bg-corporate-50 dark:hover:bg-gray-700 flex items-center gap-2 text-corporate-700 dark:text-corporate-200"
-                >
-                  <Linkedin className="w-4 h-4" />
-                  LinkedIn
-                </button>
-                <button
-                  onClick={copyToClipboard}
-                  className="w-full px-4 py-2 text-left hover:bg-corporate-50 dark:hover:bg-gray-700 flex items-center gap-2 text-corporate-700 dark:text-corporate-200 border-t border-corporate-200 dark:border-gray-600"
-                >
-                  {copied ? <Check className="w-4 h-4 text-green-600" /> : <LinkIcon className="w-4 h-4" />}
-                  {copied ? 'Copié !' : 'Copier le lien'}
-                </button>
-              </div>
-            )}
-          </div>
+              #{tag}
+            </span>
+          ))}
         </div>
 
         {/* Contenu formaté */}
-        <div className="prose prose-lg dark:prose-invert max-w-none mb-12">
+        <div className="prose prose-xl dark:prose-invert max-w-none mb-16">
           {formatContent(post.content)}
         </div>
 
         {/* Call to action */}
-        <div className="my-12 p-8 bg-gradient-to-br from-blue-50 to-corporate-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border border-blue-200 dark:border-gray-700">
-          <h3 className="text-2xl font-bold text-midnight dark:text-white mb-4">
+        <div className="my-16 p-8 md:p-12 bg-gradient-to-br from-midnight via-blue-900 to-midnight dark:from-gray-800 dark:to-gray-900 rounded-3xl border-2 border-yellow-400 shadow-2xl">
+          <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Vous avez aimé cet article ?
           </h3>
-          <p className="text-corporate-600 dark:text-corporate-300 mb-6">
-            Rejoignez le mouvement MIDEESSI et restez informé de nos dernières innovations et actualités.
+          <div className="w-20 h-1 bg-yellow-400 rounded-full mb-6"></div>
+          <p className="text-lg text-gray-200 mb-8 leading-relaxed max-w-2xl">
+            Rejoignez le mouvement MIDEESSI et restez informé de nos dernières innovations et actualités technologiques.
           </p>
           <div className="flex flex-wrap gap-4">
-            <a
-              href="/contact"
-              className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
+            <Link
+              to="/contact"
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-midnight font-bold rounded-full transition-all transform hover:scale-105 shadow-lg"
             >
               Nous contacter
-            </a>
-            <a
-              href="/blog"
-              className="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-800 hover:bg-corporate-50 dark:hover:bg-gray-700 text-corporate-700 dark:text-corporate-200 font-semibold rounded-lg border border-corporate-200 dark:border-gray-600 transition-colors"
+            </Link>
+            <Link
+              to="/blog"
+              className="inline-flex items-center px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-bold rounded-full border-2 border-white/30 transition-all"
             >
               Plus d'articles
-            </a>
+            </Link>
           </div>
         </div>
 
         {/* Articles similaires */}
         {relatedPosts.length > 0 && (
-          <section className="mt-16 pt-8 border-t border-corporate-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold text-midnight dark:text-white mb-6">
-              Articles similaires
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <section className="mt-20 pt-12 border-t-2 border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="w-12 h-12 bg-yellow-400/20 rounded-2xl flex items-center justify-center">
+                <MessageCircle className="w-6 h-6 text-yellow-400" />
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-midnight dark:text-white">
+                Articles similaires
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
               {relatedPosts.map((relatedPost, index) => (
-                <a
+                <Link
                   key={relatedPost.id}
-                  href={`/blog/${relatedPost.slug}`}
-                  className="group bg-corporate-50 dark:bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl transition-all border border-corporate-200 dark:border-gray-700"
+                  to={`/blog/${relatedPost.slug}`}
+                  className="group bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-500 border-2 border-gray-200 dark:border-gray-700 hover:border-yellow-400 dark:hover:border-yellow-400 transform hover:-translate-y-1"
                   style={{
                     animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`
                   }}
                 >
-                  <div className="relative h-40 overflow-hidden bg-corporate-100 dark:bg-gray-700">
+                  <div className="relative h-48 overflow-hidden bg-gray-100 dark:bg-gray-700">
                     <img
                       src={relatedPost.image_url}
                       alt={relatedPost.title}
                       loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-midnight/60 via-transparent to-transparent"></div>
                   </div>
-                  <div className="p-4">
-                    <div className="text-xs text-corporate-500 dark:text-corporate-400 mb-2">
-                      {new Date(relatedPost.published_at).toLocaleDateString('fr-FR')}
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>{new Date(relatedPost.published_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                      <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                      <span className="px-2 py-0.5 bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 rounded-full font-semibold">
+                        {relatedPost.category}
+                      </span>
                     </div>
-                    <h3 className="font-bold text-midnight dark:text-white mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                    <h3 className="text-lg font-bold text-midnight dark:text-white mb-2 group-hover:text-yellow-400 transition-colors line-clamp-2 leading-tight">
                       {relatedPost.title}
                     </h3>
-                    <p className="text-sm text-corporate-600 dark:text-corporate-300 line-clamp-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
                       {relatedPost.excerpt}
                     </p>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           </section>
@@ -438,6 +552,19 @@ const NewBlogPost = () => {
             opacity: 1;
             transform: translateY(0);
           }
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
         }
       `}</style>
     </div>
