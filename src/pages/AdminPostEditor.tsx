@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Save, ArrowLeft, Eye, Upload, Image as ImageIcon, AlertCircle, Check, Copy, Trash2 } from 'lucide-react';
+import { Save, ArrowLeft, Eye, Image as ImageIcon, AlertCircle, Check, Copy, Trash2 } from 'lucide-react';
 import { supabase, BlogPost, BlogCategory } from '../lib/supabase';
+import SEOAnalyzer from '../components/SEOAnalyzer';
 
 const AdminPostEditor = () => {
   const navigate = useNavigate();
@@ -20,11 +21,14 @@ const AdminPostEditor = () => {
     tags: '',
     is_featured: false,
     is_published: false,
+    // Nouveaux champs SEO
+    meta_title: '',
+    meta_description: '',
+    focus_keyword: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [preview, setPreview] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
@@ -41,7 +45,7 @@ const AdminPostEditor = () => {
     // Calculer statistiques de contenu
     const words = formData.content.trim().split(/\s+/).filter(Boolean).length;
     const chars = formData.content.length;
-    const time = Math.ceil(words / 200); // 200 mots par minute
+    const time = Math.ceil(words / 200);
     
     setWordCount(words);
     setCharCount(chars);
@@ -67,7 +71,6 @@ const AdminPostEditor = () => {
   }, [formData.slug]);
 
   useEffect(() => {
-    // Prévisualiser l'image
     if (formData.image_url) {
       setImagePreview(formData.image_url);
     }
@@ -120,6 +123,10 @@ const AdminPostEditor = () => {
         tags: data.tags.join(', '),
         is_featured: data.is_featured,
         is_published: data.is_published,
+        // Nouveaux champs SEO
+        meta_title: data.meta_title || '',
+        meta_description: data.meta_description || '',
+        focus_keyword: data.focus_keyword || '',
       });
     }
   };
@@ -222,6 +229,10 @@ const AdminPostEditor = () => {
         is_featured: formData.is_featured,
         is_published: formData.is_published,
         published_at: formData.is_published ? new Date().toISOString() : null,
+        // Nouveaux champs SEO
+        meta_title: formData.meta_title || null,
+        meta_description: formData.meta_description || null,
+        focus_keyword: formData.focus_keyword || null,
       };
 
       if (isEdit) {
@@ -587,9 +598,19 @@ const AdminPostEditor = () => {
             </div>
           </div>
 
-          {/* Sidebar - Statistiques et aide */}
+          {/* Sidebar - SEO, Statistiques et Aide */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Statistiques */}
+            {/* Analyseur SEO - LE PLUS IMPORTANT */}
+            <SEOAnalyzer
+              postId={isEdit ? id : undefined}
+              title={formData.title}
+              excerpt={formData.excerpt}
+              content={formData.content}
+              tags={formData.tags.split(',').map(t => t.trim()).filter(Boolean)}
+              imageUrl={formData.image_url}
+            />
+
+            {/* Statistiques de contenu */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-corporate-200 dark:border-gray-700 p-6">
               <h3 className="text-lg font-bold text-midnight dark:text-white mb-4">
                 📊 Statistiques
@@ -606,6 +627,71 @@ const AdminPostEditor = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-corporate-600 dark:text-corporate-300">Temps de lecture:</span>
                   <span className="text-sm font-bold text-midnight dark:text-white">{readingTime} min</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Champs SEO avancés */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-corporate-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-bold text-midnight dark:text-white mb-4">
+                🎯 SEO Avancé
+              </h3>
+              
+              <div className="space-y-4">
+                {/* Meta Title personnalisé */}
+                <div>
+                  <label className="block text-sm font-semibold text-corporate-700 dark:text-corporate-200 mb-2">
+                    Titre SEO <span className="text-xs font-normal">({formData.meta_title.length}/60)</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="meta_title"
+                    value={formData.meta_title}
+                    onChange={handleChange}
+                    maxLength={60}
+                    className="w-full px-3 py-2 bg-corporate-50 dark:bg-gray-700 border border-corporate-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-midnight dark:text-white text-sm"
+                    placeholder="Titre optimisé pour Google..."
+                  />
+                  <p className="mt-1 text-xs text-corporate-500 dark:text-corporate-400">
+                    Laissez vide pour utiliser le titre principal
+                  </p>
+                </div>
+
+                {/* Meta Description personnalisée */}
+                <div>
+                  <label className="block text-sm font-semibold text-corporate-700 dark:text-corporate-200 mb-2">
+                    Description SEO <span className="text-xs font-normal">({formData.meta_description.length}/160)</span>
+                  </label>
+                  <textarea
+                    name="meta_description"
+                    value={formData.meta_description}
+                    onChange={handleChange}
+                    maxLength={160}
+                    rows={3}
+                    className="w-full px-3 py-2 bg-corporate-50 dark:bg-gray-700 border border-corporate-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-midnight dark:text-white text-sm"
+                    placeholder="Description optimisée pour les résultats Google..."
+                  />
+                  <p className="mt-1 text-xs text-corporate-500 dark:text-corporate-400">
+                    Laissez vide pour utiliser l'extrait
+                  </p>
+                </div>
+
+                {/* Mot-clé principal */}
+                <div>
+                  <label className="block text-sm font-semibold text-corporate-700 dark:text-corporate-200 mb-2">
+                    Mot-clé principal
+                  </label>
+                  <input
+                    type="text"
+                    name="focus_keyword"
+                    value={formData.focus_keyword}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 bg-corporate-50 dark:bg-gray-700 border border-corporate-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-midnight dark:text-white text-sm"
+                    placeholder="Ex: marketing digital"
+                  />
+                  <p className="mt-1 text-xs text-corporate-500 dark:text-corporate-400">
+                    Le mot-clé principal à optimiser dans cet article
+                  </p>
                 </div>
               </div>
             </div>
@@ -634,23 +720,29 @@ const AdminPostEditor = () => {
               </div>
             </div>
 
-            {/* Recommandations SEO */}
+            {/* Recommandations SEO améliorées */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-corporate-200 dark:border-gray-700 p-6">
               <h3 className="text-lg font-bold text-midnight dark:text-white mb-4">
                 🎯 SEO Tips
               </h3>
               <ul className="space-y-2 text-sm text-corporate-600 dark:text-corporate-300">
-                <li className={wordCount >= 300 ? 'text-green-600' : ''}>
-                  {wordCount >= 300 ? '✓' : '○'} Au moins 300 mots
+                <li className={wordCount >= 300 ? 'text-green-600 dark:text-green-400' : ''}>
+                  {wordCount >= 300 ? '✓' : '○'} Au moins 300 mots ({wordCount}/300)
                 </li>
-                <li className={formData.excerpt.length >= 150 ? 'text-green-600' : ''}>
-                  {formData.excerpt.length >= 150 ? '✓' : '○'} Extrait de 150+ caractères
+                <li className={formData.excerpt.length >= 150 ? 'text-green-600 dark:text-green-400' : ''}>
+                  {formData.excerpt.length >= 150 ? '✓' : '○'} Extrait de 150+ caractères ({formData.excerpt.length}/150)
                 </li>
-                <li className={formData.tags.split(',').length >= 3 ? 'text-green-600' : ''}>
-                  {formData.tags.split(',').filter(Boolean).length >= 3 ? '✓' : '○'} Au moins 3 tags
+                <li className={formData.tags.split(',').filter(Boolean).length >= 3 ? 'text-green-600 dark:text-green-400' : ''}>
+                  {formData.tags.split(',').filter(Boolean).length >= 3 ? '✓' : '○'} Au moins 3 tags ({formData.tags.split(',').filter(Boolean).length}/3)
                 </li>
-                <li className={formData.image_url ? 'text-green-600' : ''}>
+                <li className={formData.image_url ? 'text-green-600 dark:text-green-400' : ''}>
                   {formData.image_url ? '✓' : '○'} Image mise en avant
+                </li>
+                <li className={formData.meta_title.length > 0 ? 'text-green-600 dark:text-green-400' : ''}>
+                  {formData.meta_title.length > 0 ? '✓' : '○'} Titre SEO personnalisé
+                </li>
+                <li className={formData.focus_keyword.length > 0 ? 'text-green-600 dark:text-green-400' : ''}>
+                  {formData.focus_keyword.length > 0 ? '✓' : '○'} Mot-clé principal défini
                 </li>
               </ul>
             </div>
