@@ -1,1 +1,14 @@
 /*    /index.html   200
+# Redirection pour les crawlers de réseaux sociaux
+# Ces user-agents seront redirigés vers le serveur SEO
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=facebookexternalhit/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Facebot/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Twitterbot/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=LinkedInBot/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=WhatsApp/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Slackbot/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Discordbot/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Pinterest/*
+
+# Pour tous les autres, servir le SPA React
+/*  /index.html  200
