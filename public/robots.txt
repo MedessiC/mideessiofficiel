@@ -1,0 +1,98 @@
+# robots.txt - MIDEESSI.com
+# Mis à jour: Octobre 2025
+
+# ========================================
+# RÈGLES POUR TOUS LES ROBOTS
+# ========================================
+User-agent: *
+
+# Autoriser toutes les pages publiques
+Allow: /
+Allow: /about
+Allow: /learn
+Allow: /projects
+Allow: /blog
+Allow: /blog/*
+Allow: /contact
+
+# Interdire les pages d'administration
+Disallow: /admin/
+Disallow: /admin/*
+
+# Interdire les API endpoints (si présents)
+Disallow: /api/
+
+# Interdire les fichiers temporaires et de build
+Disallow: /*.json$
+Disallow: /node_modules/
+Disallow: /dist/
+
+# ========================================
+# RÈGLES SPÉCIFIQUES GOOGLE
+# ========================================
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Crawl-delay: 0
+
+# Googlebot Images
+User-agent: Googlebot-Image
+Allow: /
+Disallow: /admin/
+
+# ========================================
+# RÈGLES SPÉCIFIQUES BING
+# ========================================
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Crawl-delay: 1
+
+# ========================================
+# BLOQUER LES MAUVAIS BOTS
+# ========================================
+
+# Bloqueur de scraper agressif
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Bloquer les bots de spam
+User-agent: spbot
+Disallow: /
+
+User-agent: EmailCollector
+Disallow: /
+
+User-agent: EmailSiphon
+Disallow: /
+
+User-agent: EmailWolf
+Disallow: /
+
+# ========================================
+# SITEMAPS
+# ========================================
+
+# Sitemap principal (format XML)
+Sitemap: https://mideessi.com/sitemap.xml
+
+# Sitemap alternatif (format texte pour Bing)
+Sitemap: https://mideessi.com/sitemap.txt
+
+# ========================================
+# INFORMATIONS
+# ========================================
+# Site: MIDEESSI
+# Description: Innovation Technologique & Apprentissage
+# Contact: mideessitmp@gmail.com
+# Location: Bénin, Afrique
+# ========================================

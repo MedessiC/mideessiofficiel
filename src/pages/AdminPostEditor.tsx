@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft, Eye, Image as ImageIcon, AlertCircle, Check, Copy, Trash2 } from 'lucide-react';
 import { supabase, BlogPost, BlogCategory } from '../lib/supabase';
 import SEOAnalyzer from '../components/SEOAnalyzer';
-
+import { submitUrlToGoogle, pingGoogleSitemap } from '../lib/googleIndexing';
 const AdminPostEditor = () => {
   const navigate = useNavigate();
   const { id } = useParams();
