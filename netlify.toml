@@ -1,0 +1,115 @@
+# Configuration Netlify pour MIDEESSI
+
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+# Variables d'environnement pour le build
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirections pour les crawlers de réseaux sociaux
+# Les crawlers verront le contenu du serveur Render
+# MAIS l'URL restera mideessi.com
+
+[[redirects]]
+  from = "/blog/:slug"
+  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  status = 200
+  force = false
+  conditions = {User-Agent = ["facebookexternalhit*"]}
+
+[[redirects]]
+  from = "/blog/:slug"
+  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  status = 200
+  force = false
+  conditions = {User-Agent = ["Facebot*"]}
+
+[[redirects]]
+  from = "/blog/:slug"
+  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  status = 200
+  force = false
+  conditions = {User-Agent = ["Twitterbot*"]}
+
+[[redirects]]
+  from = "/blog/:slug"
+  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  status = 200
+  force = false
+  conditions = {User-Agent = ["LinkedInBot*"]}
+
+[[redirects]]
+  from = "/blog/:slug"
+  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  status = 200
+  force = false
+  conditions = {User-Agent = ["WhatsApp*"]}
+
+[[redirects]]
+  from = "/blog/:slug"
+  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  status = 200
+  force = false
+  conditions = {User-Agent = ["Slackbot*"]}
+
+[[redirects]]
+  from = "/blog/:slug"
+  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  status = 200
+  force = false
+  conditions = {User-Agent = ["Discordbot*"]}
+
+[[redirects]]
+  from = "/blog/:slug"
+  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  status = 200
+  force = false
+  conditions = {User-Agent = ["Pinterest*"]}
+
+[[redirects]]
+  from = "/blog/:slug"
+  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  status = 200
+  force = false
+  conditions = {User-Agent = ["Googlebot*"]}
+
+[[redirects]]
+  from = "/blog/:slug"
+  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  status = 200
+  force = false
+  conditions = {User-Agent = ["bingbot*"]}
+
+# Pour tous les autres visiteurs (navigateurs normaux)
+# Servir le SPA React
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers de sécurité
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Headers pour les images (cache long)
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

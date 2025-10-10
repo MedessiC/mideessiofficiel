@@ -1,4 +1,4 @@
-// server.js (Version ES6 Modules)
+// server.js (Version ES6 Modules) - Optimisé pour Render + Netlify Proxy
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
@@ -10,20 +10,23 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Configuration Supabase
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY;
+// Configuration Supabase avec fallback pour les variables d'environnement
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const SITE_URL = process.env.SITE_URL || 'https://mideessi.com';
 
 // Vérifier que les variables sont chargées
 console.log('🔍 Vérification des variables d\'environnement:');
-console.log('SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? '✅ Défini' : '❌ Manquant');
-console.log('SUPABASE_KEY:', process.env.VITE_SUPABASE_ANON_KEY ? '✅ Défini' : '❌ Manquant');
+console.log('SUPABASE_URL:', SUPABASE_URL ? '✅ Défini' : '❌ Manquant');
+console.log('SUPABASE_KEY:', SUPABASE_KEY ? '✅ Défini' : '❌ Manquant');
+console.log('SITE_URL:', SITE_URL);
 
-if (!SUPABASE_URL || SUPABASE_URL === 'METTEZ_VOTRE_URL_ICI') {
+if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('\n❌ ERREUR: Variables d\'environnement non configurées!');
-  console.error('📝 Créez un fichier .env à la racine avec:');
-  console.error('SUPABASE_URL=votre_url');
-  console.error('SUPABASE_ANON_KEY=votre_clé\n');
+  console.error('📝 Sur Render, ajoutez ces variables d\'environnement:');
+  console.error('SUPABASE_URL=votre_url_supabase');
+  console.error('SUPABASE_ANON_KEY=votre_clé_supabase');
+  console.error('SITE_URL=https://mideessi.com\n');
   process.exit(1);
 }
 
@@ -80,13 +83,14 @@ function generateOGHtml(post, siteUrl) {
   ).join('\n  ') || '';
 
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" prefix="og: https://ogp.me/ns#">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title} | Blog MIDEESSI</title>
   <meta name="description" content="${excerpt}">
   <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="author" content="${author}">
   
   <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
   <meta property="og:type" content="article">
@@ -123,9 +127,9 @@ function generateOGHtml(post, siteUrl) {
   <link rel="canonical" href="${siteUrl}/blog/${post.slug}">
   
   <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/x-icon" href="${siteUrl}/favicon.ico">
   
-  <!-- Structured Data -->
+  <!-- Structured Data JSON-LD -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -148,7 +152,9 @@ function generateOGHtml(post, siteUrl) {
       "url": "${siteUrl}",
       "logo": {
         "@type": "ImageObject",
-        "url": "${siteUrl}/logo.png"
+        "url": "${siteUrl}/logo.png",
+        "width": 200,
+        "height": 200
       }
     },
     "datePublished": "${post.published_at}",
@@ -160,15 +166,6 @@ function generateOGHtml(post, siteUrl) {
   }
   </script>
   
-  <!-- Redirection immédiate pour crawlers -->
-  <meta http-equiv="refresh" content="0;url=/blog/${post.slug}">
-  <script>
-    // Redirection JavaScript (backup)
-    if (!/bot|crawler|spider|crawling/i.test(navigator.userAgent)) {
-      window.location.href = '/blog/${post.slug}';
-    }
-  </script>
-  
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -176,40 +173,150 @@ function generateOGHtml(post, siteUrl) {
       margin: 50px auto;
       padding: 20px;
       line-height: 1.6;
+      background: #f8f9fa;
     }
-    img { max-width: 100%; height: auto; border-radius: 8px; }
-    h1 { color: #191970; margin-bottom: 10px; }
-    .meta { color: #666; font-size: 14px; margin-bottom: 20px; }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    img { 
+      max-width: 100%; 
+      height: auto; 
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    h1 { 
+      color: #191970; 
+      margin-bottom: 10px;
+      font-size: 2.5em;
+      line-height: 1.2;
+    }
+    .meta { 
+      color: #666; 
+      font-size: 14px; 
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    .excerpt {
+      font-size: 1.2em;
+      color: #333;
+      line-height: 1.6;
+      margin: 20px 0;
+    }
+    .loading {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      margin-top: 30px;
+    }
   </style>
 </head>
 <body>
-  <h1>${title}</h1>
-  <div class="meta">Par ${author} • ${category}</div>
-  <img src="${imageUrl}" alt="${title}">
-  <p>${excerpt}</p>
-  <p><em>Chargement de l'article complet...</em></p>
+  <div class="container">
+    <h1>${title}</h1>
+    <div class="meta">Par ${author} • ${category} • ${new Date(post.published_at).toLocaleDateString('fr-FR')}</div>
+    <img src="${imageUrl}" alt="${title}">
+    <p class="excerpt">${excerpt}</p>
+    <p class="loading">📱 Chargement de l'article complet...</p>
+  </div>
 </body>
 </html>`;
 }
 
-// Middleware pour logger les requêtes
+// Trust proxy (important pour Netlify/Render)
+app.set('trust proxy', true);
+
+// Middleware CORS pour Netlify
 app.use((req, res, next) => {
-  const userAgent = req.headers['user-agent'] || 'Unknown';
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  console.log(`User-Agent: ${userAgent.substring(0, 100)}...`);
+  res.header('Access-Control-Allow-Origin', 'https://mideessi.com');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
 
+// Middleware pour logger les requêtes
+app.use((req, res, next) => {
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  const forwarded = req.headers['x-forwarded-for'] || req.ip;
+  console.log(`\n${new Date().toISOString()}`);
+  console.log(`📍 ${req.method} ${req.path}`);
+  console.log(`🌍 IP: ${forwarded}`);
+  console.log(`🤖 User-Agent: ${userAgent.substring(0, 80)}...`);
+  next();
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    service: 'MIDEESSI SEO Server',
+    supabase: SUPABASE_URL ? 'connected' : 'disconnected'
+  });
+});
+
+// Route racine
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>MIDEESSI SEO Server</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          max-width: 600px;
+          margin: 100px auto;
+          padding: 40px;
+          text-align: center;
+          background: #f8f9fa;
+        }
+        .box {
+          background: white;
+          padding: 40px;
+          border-radius: 12px;
+          box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+        h1 { color: #191970; margin-bottom: 20px; }
+        p { color: #666; line-height: 1.6; }
+        .status { 
+          display: inline-block;
+          padding: 8px 16px;
+          background: #28a745;
+          color: white;
+          border-radius: 20px;
+          font-size: 14px;
+          margin-top: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="box">
+        <h1>🚀 MIDEESSI SEO Server</h1>
+        <p>Serveur de génération de meta-tags Open Graph pour les articles de blog.</p>
+        <p>Ce serveur est utilisé automatiquement par Netlify pour les crawlers de réseaux sociaux.</p>
+        <div class="status">✅ Opérationnel</div>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
 // Route spéciale pour les articles de blog
-app.get('/blog/:slug', async (req, res, next) => {
+app.get('/blog/:slug', async (req, res) => {
   const userAgent = req.headers['user-agent'] || '';
   const { slug } = req.params;
 
-  console.log(`\n📄 Article demandé: /blog/${slug}`);
+  console.log(`\n📄 Article demandé: ${slug}`);
   
   // Si c'est un crawler de réseau social
   if (isSocialCrawler(userAgent)) {
-    console.log(`🔍 Crawler détecté! Génération du HTML statique...`);
+    console.log(`🔍 Crawler détecté! Génération du HTML...`);
     
     try {
       // Récupérer l'article depuis Supabase
@@ -222,51 +329,87 @@ app.get('/blog/:slug', async (req, res, next) => {
 
       if (error) {
         console.error('❌ Erreur Supabase:', error.message);
-        throw error;
+        return res.status(404).send(`
+          <!DOCTYPE html>
+          <html><head><title>Article introuvable</title></head>
+          <body><h1>❌ Article non trouvé</h1><p>Erreur: ${error.message}</p></body>
+          </html>
+        `);
       }
 
       if (post) {
         console.log(`✅ Article trouvé: "${post.title}"`);
         console.log(`🖼️  Image: ${post.image_url}`);
+        console.log(`📅 Publié: ${post.published_at}`);
         
-        const siteUrl = process.env.SITE_URL || 'https://mideessi.com';
-        const html = generateOGHtml(post, siteUrl);
+        const html = generateOGHtml(post, SITE_URL);
         
         res.set('Content-Type', 'text/html; charset=utf-8');
         res.set('Cache-Control', 'public, max-age=3600'); // Cache 1h
         return res.send(html);
       } else {
         console.log(`⚠️  Article non trouvé: ${slug}`);
+        return res.status(404).send(`
+          <!DOCTYPE html>
+          <html><head><title>Article introuvable</title></head>
+          <body><h1>❌ Article non trouvé</h1></body>
+          </html>
+        `);
       }
     } catch (error) {
-      console.error('❌ Erreur lors de la récupération:', error);
+      console.error('❌ Erreur:', error);
+      return res.status(500).send(`
+        <!DOCTYPE html>
+        <html><head><title>Erreur serveur</title></head>
+        <body><h1>❌ Erreur serveur</h1><p>${error.message}</p></body>
+        </html>
+      `);
     }
   } else {
-    console.log(`👤 Visiteur normal, servir React App`);
+    // Visiteur normal : rediriger vers le site principal
+    console.log(`👤 Visiteur normal → Redirection vers mideessi.com`);
+    return res.redirect(301, `${SITE_URL}/blog/${slug}`);
   }
-
-  // Pour les visiteurs normaux, continuer vers React
-  next();
 });
 
-// Servir les fichiers statiques du build Vite
-const distPath = path.join(__dirname, 'dist');
-console.log(`📁 Dossier dist: ${distPath}`);
-app.use(express.static(distPath));
-
-// Fallback: toutes les autres routes servent index.html (pour React Router)
+// Toutes les autres routes
 app.use((req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+  console.log(`⚠️  Route inconnue: ${req.path}`);
+  res.status(404).send(`
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8">
+      <title>404 - Page non trouvée</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          max-width: 600px;
+          margin: 100px auto;
+          padding: 40px;
+          text-align: center;
+        }
+        h1 { color: #191970; }
+        a { color: #FFD700; text-decoration: none; }
+      </style>
+    </head>
+    <body>
+      <h1>🔍 Page non trouvée</h1>
+      <p>Cette route n'existe pas sur le serveur SEO MIDEESSI.</p>
+      <p><a href="${SITE_URL}">← Retour au site principal</a></p>
+    </body>
+    </html>
+  `);
 });
 
 // Démarrer le serveur
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`\n🚀 ========================================`);
-  console.log(`🚀 Serveur MIDEESSI démarré avec succès!`);
+  console.log(`🚀 Serveur MIDEESSI SEO démarré!`);
   console.log(`🚀 ========================================`);
-  console.log(`📍 URL: http://localhost:${PORT}`);
-  console.log(`📁 Dossier: ${distPath}`);
-  console.log(`🔗 Supabase: ${process.env.VITE_SUPABASE_URL? '✅ Connecté' : '❌ Non configuré'}`);
+  console.log(`📍 Port: ${PORT}`);
+  console.log(`🔗 Supabase: ${SUPABASE_URL ? '✅ Connecté' : '❌ Non configuré'}`);
+  console.log(`🌍 Site principal: ${SITE_URL}`);
   console.log(`🚀 ========================================\n`);
 });
