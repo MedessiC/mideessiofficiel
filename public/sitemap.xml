@@ -1,70 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
-        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
-
-  <!-- ================================================ -->
-  <!-- SITE MIDEESSI.COM - 6 PAGES PRINCIPALES -->
-  <!-- Généré automatiquement le 10/10/2025 -->
-  <!-- ================================================ -->
-
-  <!-- Page d'accueil -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mideessi.com/</loc>
-    <lastmod>2025-10-10T07:52:49.407Z</lastmod>
+    <lastmod>2025-10-10T08:15:56.661Z</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
+    <priority>1.00</priority>
   </url>
-
-  <!-- À propos -->
   <url>
     <loc>https://mideessi.com/about</loc>
-    <lastmod>2025-10-10T07:52:49.407Z</lastmod>
+    <lastmod>2025-10-10T08:15:56.661Z</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.80</priority>
   </url>
-
-  <!-- Apprendre -->
   <url>
     <loc>https://mideessi.com/learn</loc>
-    <lastmod>2025-10-10T07:52:49.407Z</lastmod>
+    <lastmod>2025-10-10T08:15:56.661Z</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.70</priority>
   </url>
-
-  <!-- Projets -->
   <url>
     <loc>https://mideessi.com/projects</loc>
-    <lastmod>2025-10-10T07:52:49.407Z</lastmod>
+    <lastmod>2025-10-10T08:15:56.661Z</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.90</priority>
   </url>
-
-  <!-- Blog -->
   <url>
     <loc>https://mideessi.com/blog</loc>
-    <lastmod>2025-10-10T07:52:49.407Z</lastmod>
+    <lastmod>2025-10-10T08:15:56.661Z</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.9</priority>
+    <priority>0.95</priority>
   </url>
-
-  <!-- Contact -->
   <url>
     <loc>https://mideessi.com/contact</loc>
-    <lastmod>2025-10-10T07:52:49.407Z</lastmod>
+    <lastmod>2025-10-10T08:15:56.661Z</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.75</priority>
   </url>
-
-  <!-- ================================================ -->
-  <!-- ARTICLES DU BLOG (1 articles publiés) -->
-  <!-- ================================================ -->
-
   <url>
     <loc>https://mideessi.com/blog/termux-transformer-un-smartphone-android-en-terminal-linux</loc>
     <lastmod>2025-10-09T15:39:31.623Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
   </url>
-
 </urlset>
