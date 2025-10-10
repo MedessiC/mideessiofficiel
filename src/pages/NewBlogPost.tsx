@@ -97,16 +97,22 @@ const NewBlogPost = () => {
   };
 
   const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: post?.title,
-        text: post?.excerpt,
-        url: window.location.href,
-      });
-    } else {
-      setShareMenuOpen(!shareMenuOpen);
-    }
-  };
+  const shareUrl = `${window.location.origin}/share/${post?.slug}`;
+
+  if (navigator.share) {
+    navigator.share({
+      title: post?.title || 'MIDEESSI',
+      text: post?.excerpt || 'Découvrez cet article sur MIDEESSI',
+      url: shareUrl,
+    }).catch((error) => {
+      console.error('Erreur lors du partage:', error);
+      setShareMenuOpen(true); // fallback si l’API échoue
+    });
+  } else {
+    setShareMenuOpen(true); // fallback pour navigateurs non compatibles
+  }
+};
+
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(window.location.href);
