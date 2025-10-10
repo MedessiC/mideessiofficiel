@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -16,7 +15,6 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminPostEditor from './pages/AdminPostEditor';
 import AdminPdfs from './pages/AdminPdfs';
-
 function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -31,11 +29,12 @@ function AppContent() {
           <Route path="/projects" element={<Projects />} />
           <Route path="/blog" element={<NewBlog />} />
           <Route path="/blog/:slug" element={<NewBlogPost />} />
-          <Route path="/learn" element={<Learn />} />
+          <Route path ="/learn" element={<Learn />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/pdfeditor" element={<AdminPdfs />} />
+
           <Route path="/admin/post/:id" element={<AdminPostEditor />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -48,13 +47,11 @@ function AppContent() {
 
 function App() {
   return (
-    <HelmetProvider>
-      <ThemeProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </ThemeProvider>
-    </HelmetProvider>
+    <ThemeProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </ThemeProvider>
   );
 }
 
