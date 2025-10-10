@@ -8,82 +8,92 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Redirections pour les crawlers de réseaux sociaux
-# Les crawlers verront le contenu du serveur Render
-# MAIS l'URL restera mideessi.com
+# IMPORTANT : Les redirections avec conditions User-Agent
+# Pour les crawlers de réseaux sociaux, proxy vers le serveur SEO Render
+# L'URL reste mideessi.com mais le contenu vient de Render
 
+# Facebook
 [[redirects]]
-  from = "/blog/:slug"
-  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
   status = 200
-  force = false
-  conditions = {User-Agent = ["facebookexternalhit*"]}
+  force = true
+  conditions = {User-Agent = ["facebookexternalhit*", "Facebot*"]}
 
+# Twitter
 [[redirects]]
-  from = "/blog/:slug"
-  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
   status = 200
-  force = false
-  conditions = {User-Agent = ["Facebot*"]}
-
-[[redirects]]
-  from = "/blog/:slug"
-  to = "https://mideessi-seo.onrender.com/blog/:slug"
-  status = 200
-  force = false
+  force = true
   conditions = {User-Agent = ["Twitterbot*"]}
 
+# LinkedIn
 [[redirects]]
-  from = "/blog/:slug"
-  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
   status = 200
-  force = false
+  force = true
   conditions = {User-Agent = ["LinkedInBot*"]}
 
+# WhatsApp
 [[redirects]]
-  from = "/blog/:slug"
-  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
   status = 200
-  force = false
+  force = true
   conditions = {User-Agent = ["WhatsApp*"]}
 
+# Slack
 [[redirects]]
-  from = "/blog/:slug"
-  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
   status = 200
-  force = false
+  force = true
   conditions = {User-Agent = ["Slackbot*"]}
 
+# Discord
 [[redirects]]
-  from = "/blog/:slug"
-  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
   status = 200
-  force = false
+  force = true
   conditions = {User-Agent = ["Discordbot*"]}
 
+# Pinterest
 [[redirects]]
-  from = "/blog/:slug"
-  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
   status = 200
-  force = false
+  force = true
   conditions = {User-Agent = ["Pinterest*"]}
 
+# Google
 [[redirects]]
-  from = "/blog/:slug"
-  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
   status = 200
-  force = false
+  force = true
   conditions = {User-Agent = ["Googlebot*"]}
 
+# Bing
 [[redirects]]
-  from = "/blog/:slug"
-  to = "https://mideessi-seo.onrender.com/blog/:slug"
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
   status = 200
-  force = false
+  force = true
   conditions = {User-Agent = ["bingbot*"]}
 
-# Pour tous les autres visiteurs (navigateurs normaux)
-# Servir le SPA React
+# Telegram
+[[redirects]]
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
+  status = 200
+  force = true
+  conditions = {User-Agent = ["TelegramBot*"]}
+
+# Pour TOUS les autres visiteurs (navigateurs normaux)
+# Servir le SPA React normalement
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -98,7 +108,12 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Headers pour les images (cache long)
+# Cache pour les assets statiques
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 [[headers]]
   for = "/*.jpg"
   [headers.values]
