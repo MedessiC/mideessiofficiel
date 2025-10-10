@@ -18,7 +18,7 @@ interface SEOProps {
 
 const SEO = ({
   title = 'MIDEESSI - Nous sommes indépendant',
-  description = 'MIDEESSI est une startup béninoise dédiée à l’autonomie numérique. Nous créons des solutions d’automatisation, d’apprentissage et d’intelligence artificielle accessibles à tous. Notre mission : rendre la technologie simple, utile et locale.',
+  description = 'MIDEESSI est une startup béninoise dédiée à l\'autonomie numérique. Nous créons des solutions d\'automatisation, d\'apprentissage et d\'intelligence artificielle accessibles à tous. Notre mission : rendre la technologie simple, utile et locale.',
   image = '/og-image.jpg',
   type = 'website',
   keywords = [
@@ -38,7 +38,29 @@ const SEO = ({
   const location = useLocation();
   const siteUrl = 'https://mideessi.com';
   const fullUrl = `${siteUrl}${location.pathname}`;
-  const fullImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
+  
+  // Gestion intelligente de l'URL de l'image
+  // Si l'image vient d'un hébergeur externe (Pexels, Unsplash, Imgur, etc.)
+  // elle sera utilisée directement. Sinon, on ajoute le domaine du site.
+  let fullImage = '';
+  if (image) {
+    // Si l'image est déjà une URL complète avec http:// ou https://
+    // (cas des images hébergées sur Pexels, Unsplash, Imgur, etc.)
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+      fullImage = image;
+    } 
+    // Si l'image commence par / (image locale sur votre serveur)
+    else if (image.startsWith('/')) {
+      fullImage = `${siteUrl}${image}`;
+    }
+    // Sinon, ajouter le domaine avec un /
+    else {
+      fullImage = `${siteUrl}/${image}`;
+    }
+  } else {
+    // Image par défaut si aucune image n'est fournie
+    fullImage = `${siteUrl}/og-image.jpg`;
+  }
 
   useEffect(() => {
     const seoTitle = title.length > 60 ? title.substring(0, 57) + '...' : title;
@@ -60,7 +82,7 @@ const SEO = ({
       { name: 'geo.position', content: '6.3703;2.3912' },
       { name: 'ICBM', content: '6.3703, 2.3912' },
 
-      // Open Graph
+      // Open Graph (Facebook, LinkedIn, WhatsApp, Messenger, etc.)
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
       { property: 'og:type', content: type },
@@ -68,20 +90,24 @@ const SEO = ({
       { property: 'og:site_name', content: 'MIDEESSI' },
       { property: 'og:locale', content: 'fr_FR' },
       { property: 'og:locale:alternate', content: 'en_US' },
+      
+      // IMAGES OPEN GRAPH - CRITIQUES pour Facebook, LinkedIn, WhatsApp
       { property: 'og:image', content: fullImage },
       { property: 'og:image:secure_url', content: fullImage },
-      { property: 'og:image:alt', content: 'MIDEESSI - Startup tech africaine' },
+      { property: 'og:image:type', content: 'image/jpeg' },
+      { property: 'og:image:alt', content: title },
       { property: 'og:image:width', content: '1200' },
       { property: 'og:image:height', content: '630' },
 
-      // Twitter / X
+      // Twitter / X Card - Images
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:site', content: '@mideessi' },
       { name: 'twitter:creator', content: '@mideessi' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
       { name: 'twitter:image', content: fullImage },
-      { name: 'twitter:image:alt', content: 'MIDEESSI - Communauté tech du Bénin' },
+      { name: 'twitter:image:alt', content: title },
+      { name: 'twitter:domain', content: 'mideessi.com' },
 
       // Mobile & PWA
       { name: 'theme-color', content: '#191970' },
@@ -137,7 +163,7 @@ const SEO = ({
     }
     canonicalLink.setAttribute('href', fullUrl);
 
-    // JSON-LD
+    // JSON-LD Structure Data
     const structuredData =
       type === 'article' && article
         ? {
@@ -145,7 +171,12 @@ const SEO = ({
             '@type': 'BlogPosting',
             headline: title,
             description,
-            image: fullImage,
+            image: {
+              '@type': 'ImageObject',
+              url: fullImage,
+              width: 1200,
+              height: 630
+            },
             author: {
               '@type': 'Organization',
               name: article.author || 'MIDEESSI',
@@ -155,7 +186,12 @@ const SEO = ({
               '@type': 'Organization',
               name: 'MIDEESSI',
               url: siteUrl,
-              logo: { '@type': 'ImageObject', url: `${siteUrl}/logo.png` },
+              logo: { 
+                '@type': 'ImageObject', 
+                url: `${siteUrl}/logo.png`,
+                width: 200,
+                height: 200
+              },
             },
             datePublished: article.publishedTime || new Date().toISOString(),
             dateModified: article.modifiedTime || new Date().toISOString(),
@@ -170,7 +206,7 @@ const SEO = ({
             url: siteUrl,
             logo: `${siteUrl}/logo.png`,
             description:
-              'MIDEESSI est une startup tech béninoise qui inspire, forme et crée. Nous développons des solutions locales d’automatisation et d’intelligence artificielle pour libérer le potentiel des jeunes africains.',
+              'MIDEESSI est une startup tech béninoise qui inspire, forme et crée. Nous développons des solutions locales d\'automatisation et d\'intelligence artificielle pour libérer le potentiel des jeunes africains.',
             address: {
               '@type': 'PostalAddress',
               addressLocality: 'Cotonou',
