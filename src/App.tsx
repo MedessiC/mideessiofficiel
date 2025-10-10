@@ -15,6 +15,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminPostEditor from './pages/AdminPostEditor';
 import AdminPdfs from './pages/AdminPdfs';
+import ShareRedirect from './pages/ShareRedirect';
 function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -34,7 +35,7 @@ function AppContent() {
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/pdfeditor" element={<AdminPdfs />} />
-
+          <Route path="/share/:slug" element={<ShareRedirect />} />
           <Route path="/admin/post/:id" element={<AdminPostEditor />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
