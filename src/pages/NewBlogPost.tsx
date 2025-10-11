@@ -97,8 +97,10 @@ const NewBlogPost = () => {
   };
 
   const handleShare = () => {
-  const shareUrl = `${window.location.origin}/share/${post?.slug}`;
-
+  // Utiliser le domaine de partage pour les crawlers
+  // Les visiteurs normaux seront redirigés vers mideessi.com
+  const shareUrl = `https://share.mideessi.com/blog/${post?.slug}`;
+  
   if (navigator.share) {
     navigator.share({
       title: post?.title || 'MIDEESSI',
@@ -106,7 +108,7 @@ const NewBlogPost = () => {
       url: shareUrl,
     }).catch((error) => {
       console.error('Erreur lors du partage:', error);
-      setShareMenuOpen(true); // fallback si l’API échoue
+      setShareMenuOpen(true); // fallback si l'API échoue
     });
   } else {
     setShareMenuOpen(true); // fallback pour navigateurs non compatibles
@@ -114,26 +116,32 @@ const NewBlogPost = () => {
 };
 
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  // Fonction pour copier le lien de partage
+const copyToClipboard = () => {
+  const shareUrl = `https://share.mideessi.com/blog/${post?.slug}`;
+  navigator.clipboard.writeText(shareUrl);
+  setCopied(true);
+  setTimeout(() => setCopied(false), 2000);
+};
+
+
+  // Fonction pour partager sur les réseaux sociaux
+const shareOnSocial = (platform: string) => {
+  const shareUrl = encodeURIComponent(`https://share.mideessi.com/blog/${post?.slug}`);
+  const title = encodeURIComponent(post?.title || '');
+  
+  const urls: Record<string, string> = {
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
+    twitter: `https://twitter.com/intent/tweet?url=${shareUrl}&text=${title}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`,
+    whatsapp: `https://wa.me/?text=${title}%20${shareUrl}`,
+    telegram: `https://t.me/share/url?url=${shareUrl}&text=${title}`,
   };
 
-  const shareOnSocial = (platform: string) => {
-    const url = encodeURIComponent(window.location.href);
-    const title = encodeURIComponent(post?.title || '');
-    
-    const urls: Record<string, string> = {
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
-      twitter: `https://twitter.com/intent/tweet?url=${url}&text=${title}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`,
-    };
-
-    if (urls[platform]) {
-      window.open(urls[platform], '_blank', 'width=600,height=400');
-    }
-  };
+  if (urls[platform]) {
+    window.open(urls[platform], '_blank', 'width=600,height=400');
+  }
+};
 
   const formatContent = (content: string) => {
     return content
