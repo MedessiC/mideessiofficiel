@@ -41,20 +41,19 @@ const Contact = () => {
     {
       icon: <Phone className="w-6 h-6 text-gold" />,
       title: 'Téléphone',
-      content: '+229 XX XX XX XX',
-      link: null,
+      content: '+229 01 64 40 96 91',
+      link: 'tel:+2290164409691',
     },
     {
       icon: <MapPin className="w-6 h-6 text-gold" />,
       title: 'Localisation',
       content: 'Cotonou, Bénin',
-      link: null,
+      link: 'https://www.google.com/maps/place/Cotonou,+B%C3%A9nin',
     },
   ];
 
   const socialLinks = [
-    { icon: <Facebook className="w-6 h-6" />, url: 'https://facebook.com', label: 'Facebook' },
-    { icon: <Linkedin className="w-6 h-6" />, url: 'https://linkedin.com', label: 'LinkedIn' },
+    { icon: <Facebook className="w-6 h-6" />, url: 'https://web.facebook.com/profile.php?id=61578393594703', label: 'Facebook' },
     { icon: <Github className="w-6 h-6" />, url: 'https://github.com', label: 'GitHub' },
   ];
 
