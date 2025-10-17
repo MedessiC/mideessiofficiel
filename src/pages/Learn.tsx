@@ -184,7 +184,8 @@ const Learn = () => {
       </section>
 
       {/* Search & Filter Section */}
-      <section id="pdfs" className="bg-white dark:bg-gray-800 shadow-lg border-b-2 border-yellow-400 sticky top-0 z-40">
+      <section id="pdfs" className="bg-white dark:bg-gray-800 shadow-lg border-b-2 border-yellow-400 z-40">
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex flex-col gap-3 sm:gap-4">
             <div className="flex gap-2 sm:gap-3 items-center">
