@@ -104,10 +104,6 @@ const Learn = () => {
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-yellow-400 text-gray-900 font-bold px-4 py-2 sm:px-6 rounded-full mb-4 sm:mb-6 animate-bounce text-sm sm:text-base">
-              <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Nouveau PDF chaque semaine !</span>
-            </div>
             
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold mb-4 sm:mb-6 tracking-tight">
               MIDEESSI <span className="text-yellow-400">Learn</span>

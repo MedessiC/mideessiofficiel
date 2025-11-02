@@ -3,44 +3,7 @@ import ProjectCard from '../components/ProjectCard';
 import SEO from '../components/SEO';
 
 const Projects = () => {
-  const projects = [
-    {
-      title: 'Organisateur de Fichiers Automatique',
-      description: 'Un outil intelligent qui trie, organise et renomme vos fichiers automatiquement selon vos règles personnalisées. Gagnez des heures précieuses chaque semaine.',
-      status: 'Disponible',
-      icon: <FolderTree className="w-6 h-6 text-gold" />,
-    },
-    {
-      title: 'Application Essor',
-      description: 'Plateforme collaborative de gestion de projets conçue pour les communautés technologiques. Suivez vos objectifs, coordonnez vos équipes et réalisez vos ambitions.',
-      status: 'En cours',
-      icon: <Rocket className="w-6 h-6 text-gold" />,
-    },
-    {
-      title: 'Application Tcha-Tcha',
-      description: 'Solution de communication en temps réel optimisée pour les équipes distribuées. Messagerie instantanée, partage de fichiers et collaboration fluide.',
-      status: 'En cours',
-      icon: <MessageSquare className="w-6 h-6 text-gold" />,
-    },
-    {
-      title: 'Assistant IA Personnel',
-      description: 'Un assistant intelligent qui apprend de vos habitudes et vous aide à automatiser vos tâches quotidiennes. Productivité maximale avec un effort minimal.',
-      status: 'En développement',
-      icon: <Bot className="w-6 h-6 text-gold" />,
-    },
-    {
-      title: 'Générateur de Code Intelligent',
-      description: 'Outil basé sur l\'IA pour générer du code de qualité professionnelle. Accélérez votre développement tout en maintenant les meilleures pratiques.',
-      status: 'Planifié',
-      icon: <FileCode className="w-6 h-6 text-gold" />,
-    },
-    {
-      title: 'Optimiseur de Processus',
-      description: 'Analysez et optimisez vos workflows avec notre intelligence artificielle. Identifiez les goulets d\'étranglement et améliorez votre efficacité opérationnelle.',
-      status: 'Planifié',
-      icon: <Sparkles className="w-6 h-6 text-gold" />,
-    },
-  ];
+  
 
   const statusColors: { [key: string]: string } = {
     'Disponible': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
@@ -100,16 +63,9 @@ const Projects = () => {
           </div>
 
           {/* Projects Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project, index) => (
-              <div 
-                key={index} 
-                className="group transform transition-all duration-300 hover:scale-105 hover:-translate-y-2"
-              >
-                <ProjectCard {...project} />
-              </div>
-            ))}
-          </div>
+         
+          
+          
         </div>
       </section>
 
