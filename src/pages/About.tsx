@@ -236,17 +236,22 @@ const About = () => {
             <div className="w-20 h-1 bg-gold mx-auto rounded-full"></div>
           </div>
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl shadow-2xl p-10 md:p-12 border-2 border-gold/20">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="relative">
-                <div className="w-40 h-40 bg-gradient-to-br from-gold via-yellow-500 to-yellow-600 rounded-full flex items-center justify-center shadow-2xl">
-                  <span className="text-6xl font-bold text-midnight">CM</span>
+            <div className="flex flex-col lg:flex-row items-center gap-12">
+              <div className="relative group flex-shrink-0">
+                <div className="relative w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-gold/30 transition-all duration-500 group-hover:ring-gold/60 group-hover:shadow-gold/20">
+                  <img 
+                    src="https://mideessi.com/medessicoovi.webp" 
+                    alt="Coovi MEDESSI"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-midnight/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 </div>
-                <div className="absolute -bottom-3 -right-3 w-16 h-16 bg-midnight dark:bg-white rounded-full flex items-center justify-center shadow-xl">
-                  <Flag className="text-gold w-8 h-8" />
+                <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-midnight dark:bg-white rounded-full flex items-center justify-center shadow-xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12">
+                  <Flag className="text-gold w-10 h-10" />
                 </div>
               </div>
               <div className="flex-1 text-center md:text-left">
-                <h3 className="text-3xl font-bold text-midnight dark:text-white mb-2">Coovi MEDESSI</h3>
+                <h3 className="text-3xl font-bold text-midnight dark:text-white mb-2">Coovi Medessi</h3>
                 <p className="text-gold font-semibold text-lg mb-2">Fondateur & Gérant</p>
                 <p className="text-gray-500 dark:text-gray-400 mb-6 flex items-center justify-center md:justify-start gap-2">
                   <MapPin className="w-4 h-4" /> Cotonou, Bénin (ex-Dahomey)
