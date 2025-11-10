@@ -240,7 +240,7 @@ const About = () => {
               <div className="relative group flex-shrink-0">
                 <div className="relative w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-gold/30 transition-all duration-500 group-hover:ring-gold/60 group-hover:shadow-gold/20">
                   <img 
-                    src="https://mideessi.com/medessicoovi.webp" 
+                    src="medessicoovi.webp" 
                     alt="Coovi MEDESSI"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
