@@ -73,39 +73,41 @@ const About = () => {
   return (
     <div className="min-h-screen pt-16 bg-gray-50 dark:bg-gray-900">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-midnight via-blue-900 to-midnight dark:from-black dark:via-gray-900 dark:to-black text-white py-24 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-midnight via-blue-900 to-midnight dark:from-black dark:via-gray-900 dark:to-black text-white py-12 md:py-20 lg:py-24 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-gold rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-green-500 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-10 right-5 md:top-20 md:right-10 w-40 h-40 md:w-72 md:h-72 bg-gold rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-10 -left-5 md:bottom-20 md:left-10 w-48 h-48 md:w-96 md:h-96 bg-green-500 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <Flag className="w-10 h-10 text-gold" />
-            <h1 className="text-5xl md:text-6xl font-bold text-center tracking-tight">
-              À propos de <span className="text-gold">MIDEESSI</span>
-            </h1>
-          </div>
-          <p className="text-xl md:text-2xl text-center text-gray-200 max-w-4xl mx-auto font-light leading-relaxed">
-            Un mouvement d'indépendance technologique né au Bénin, héritier de l'esprit du Dahomey.
-          </p>
-          <div className="mt-8 flex justify-center">
-            <div className="inline-block bg-gold/10 backdrop-blur-sm border-2 border-gold rounded-full px-8 py-3">
-              <p className="text-lg font-bold text-gold">
-                « Nous sommes indépendants »
-              </p>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 md:gap-3 mb-4 md:mb-6">
+              <Flag className="w-6 h-6 md:w-10 md:h-10 text-gold" />
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold tracking-tight">
+                À propos de <span className="text-gold">MIDEESSI</span>
+              </h1>
+            </div>
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 max-w-4xl mx-auto font-light leading-relaxed px-2">
+              Un mouvement d'indépendance technologique né au Bénin, héritier de l'esprit du Dahomey.
+            </p>
+            <div className="mt-6 md:mt-8 flex justify-center">
+              <div className="inline-block bg-gold/10 backdrop-blur-sm border-2 border-gold rounded-full px-6 md:px-8 py-2.5 md:py-3">
+                <p className="text-base md:text-lg font-bold text-gold">
+                  « Nous sommes indépendants »
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Notre Essence */}
-      <section className="py-20 bg-white dark:bg-gray-900">
+      <section className="py-12 md:py-16 lg:py-20 bg-white dark:bg-gray-900">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">Notre Essence</h2>
-            <div className="w-20 h-1 bg-gold mx-auto rounded-full"></div>
+          <div className="text-center mb-8 md:mb-12 lg:mb-16">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-midnight dark:text-white mb-3 md:mb-4">Notre Essence</h2>
+            <div className="w-12 sm:w-16 md:w-20 h-1 bg-gold mx-auto rounded-full"></div>
           </div>
-          <div className="space-y-6 text-lg leading-relaxed">
+          <div className="space-y-4 md:space-y-6 text-base sm:text-lg md:text-lg leading-relaxed">
             <p className="text-gray-700 dark:text-gray-300">
               MIDEESSI transcende la simple notion d'entreprise. Nous sommes un <span className="font-bold text-gold">mouvement d'indépendance technologique</span> né 
               au cœur du Bénin, héritier de l'esprit du Dahomey, édifié sur une conviction fondamentale : 
@@ -120,8 +122,8 @@ const About = () => {
               Nous sommes les dignes héritiers d'une terre qui a toujours su résister, innover et créer. Du royaume du Dahomey à la République du Bénin, 
               l'esprit d'indépendance coule dans nos veines.
             </p>
-            <div className="bg-gradient-to-r from-gold/5 to-green-500/5 border-l-4 border-gold p-6 rounded-r-lg mt-8">
-              <p className="text-xl font-bold text-midnight dark:text-white italic">
+            <div className="bg-gradient-to-r from-gold/5 to-green-500/5 border-l-4 border-gold p-4 md:p-6 rounded-r-lg mt-6 md:mt-8">
+              <p className="text-base md:text-lg lg:text-xl font-bold text-midnight dark:text-white italic">
                 "Consommons 100% béninois. Créons 100% béninois. Innovons 100% béninois."
               </p>
             </div>
@@ -130,43 +132,43 @@ const About = () => {
       </section>
 
       {/* Notre Mission */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-800">
+      <section className="py-12 md:py-16 lg:py-20 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">Notre Mission</h2>
-            <div className="w-20 h-1 bg-gold mx-auto rounded-full"></div>
+          <div className="text-center mb-8 md:mb-12 lg:mb-16">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-midnight dark:text-white mb-3 md:mb-4">Notre Mission</h2>
+            <div className="w-12 sm:w-16 md:w-20 h-1 bg-gold mx-auto rounded-full"></div>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-lg text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-gold to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin className="w-8 h-8 text-midnight" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-8 md:mb-12">
+            <div className="bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-xl transition-all duration-300 text-center">
+              <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-gold to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MapPin className="w-6 h-6 md:w-8 md:h-8 text-midnight" />
               </div>
-              <h3 className="text-xl font-bold text-midnight dark:text-white mb-2">Pour le Bénin</h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <h3 className="text-base md:text-xl font-bold text-midnight dark:text-white mb-2">Pour le Bénin</h3>
+              <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
                 Contribuer à la souveraineté technologique nationale et créer des emplois qualifiés.
               </p>
             </div>
-            <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-lg text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Flag className="w-8 h-8 text-white" />
+            <div className="bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-xl transition-all duration-300 text-center">
+              <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-green-600 to-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Flag className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-midnight dark:text-white mb-2">Pour l'Afrique</h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <h3 className="text-base md:text-xl font-bold text-midnight dark:text-white mb-2">Pour l'Afrique</h3>
+              <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
                 Inspirer d'autres mouvements d'indépendance technologique sur le continent.
               </p>
             </div>
-            <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-lg text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Rocket className="w-8 h-8 text-white" />
+            <div className="bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-xl transition-all duration-300 text-center">
+              <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Rocket className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-midnight dark:text-white mb-2">Pour le Monde</h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <h3 className="text-base md:text-xl font-bold text-midnight dark:text-white mb-2">Pour le Monde</h3>
+              <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
                 Prouver que l'excellence technologique peut naître de n'importe quel territoire.
               </p>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-lg">
-            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed text-center">
+          <div className="bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl p-6 md:p-8 lg:p-12 shadow-lg">
+            <p className="text-base sm:text-lg md:text-lg leading-relaxed text-center text-gray-700 dark:text-gray-300">
               Chaque trimestre, nous sélectionnons un secteur de la vie quotidienne (santé, finance, éducation, agriculture, mobilité, commerce). 
               Notre démarche est résolument <span className="font-bold text-gold">ancrée dans la réalité du terrain</span>. 
               Nous sommes <span className="font-semibold">proches du peuple</span>, nous travaillons <span className="font-semibold">pour le peuple</span>, 
@@ -177,26 +179,26 @@ const About = () => {
       </section>
 
       {/* Notre Processus Trimestriel */}
-      <section className="py-20 bg-white dark:bg-gray-900">
+      <section className="py-12 md:py-16 lg:py-20 bg-white dark:bg-gray-900">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">Notre Processus Trimestriel</h2>
-            <div className="w-20 h-1 bg-gold mx-auto rounded-full"></div>
-            <p className="text-gray-600 dark:text-gray-300 mt-4 text-lg">
+          <div className="text-center mb-8 md:mb-12 lg:mb-16">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-midnight dark:text-white mb-3 md:mb-4">Notre Processus Trimestriel</h2>
+            <div className="w-12 sm:w-16 md:w-20 h-1 bg-gold mx-auto rounded-full"></div>
+            <p className="text-gray-600 dark:text-gray-300 mt-4 text-sm md:text-base lg:text-lg">
               Innovation par l'immersion : nous créons des solutions qui répondent aux vrais besoins
             </p>
           </div>
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {processSteps.map((item, index) => (
-              <div key={index} className="flex gap-6 items-start group">
+              <div key={index} className="flex gap-4 md:gap-6 items-start group">
                 <div className="flex-shrink-0">
-                  <div className="w-20 h-20 bg-gradient-to-br from-gold via-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-2xl font-bold text-midnight">{item.step}</span>
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-gold via-yellow-500 to-yellow-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <span className="text-lg md:text-2xl font-bold text-midnight">{item.step}</span>
                   </div>
                 </div>
-                <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-md group-hover:shadow-xl transition-shadow duration-300">
-                  <h3 className="text-xl font-bold text-midnight dark:text-white mb-2">{item.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{item.description}</p>
+                <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-lg md:rounded-xl p-4 md:p-6 shadow-md group-hover:shadow-lg transition-shadow duration-300">
+                  <h3 className="text-base md:text-lg lg:text-xl font-bold text-midnight dark:text-white mb-2">{item.title}</h3>
+                  <p className="text-sm md:text-base text-gray-600 dark:text-gray-300 leading-relaxed">{item.description}</p>
                 </div>
               </div>
             ))}
@@ -205,23 +207,23 @@ const About = () => {
       </section>
 
       {/* Nos Valeurs */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-800">
+      <section className="py-12 md:py-16 lg:py-20 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">Nos Valeurs Cardinales</h2>
-            <div className="w-20 h-1 bg-gold mx-auto rounded-full"></div>
+          <div className="text-center mb-8 md:mb-12 lg:mb-16">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-midnight dark:text-white mb-3 md:mb-4">Nos Valeurs Cardinales</h2>
+            <div className="w-12 sm:w-16 md:w-20 h-1 bg-gold mx-auto rounded-full"></div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
             {values.map((value, index) => (
               <div 
                 key={index} 
-                className="group bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 p-8 hover:-translate-y-3 border-2 border-transparent hover:border-gold"
+                className="group bg-white dark:bg-gray-900 rounded-lg md:rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 p-6 md:p-8 hover:-translate-y-3 border-2 border-transparent hover:border-gold"
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-gold/20 to-gold/5 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-gold/20 to-gold/5 rounded-lg md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform duration-300">
                   {value.icon}
                 </div>
-                <h3 className="text-xl font-bold text-midnight dark:text-white mb-3">{value.title}</h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{value.description}</p>
+                <h3 className="text-base md:text-lg lg:text-xl font-bold text-midnight dark:text-white mb-2 md:mb-3">{value.title}</h3>
+                <p className="text-sm md:text-base text-gray-600 dark:text-gray-300 leading-relaxed">{value.description}</p>
               </div>
             ))}
           </div>
@@ -309,46 +311,46 @@ const About = () => {
       </section>
 
       {/* Notre Vision */}
-      <section className="relative py-24 bg-gradient-to-br from-midnight via-blue-900 to-midnight dark:from-black dark:via-gray-900 dark:to-black text-white overflow-hidden">
+      <section className="relative py-12 md:py-20 lg:py-24 bg-gradient-to-br from-midnight via-blue-900 to-midnight dark:from-black dark:via-gray-900 dark:to-black text-white overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gold rounded-full blur-3xl animate-pulse"></div>
         </div>
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Notre Vision</h2>
-            <div className="w-20 h-1 bg-gold mx-auto rounded-full"></div>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">Notre Vision</h2>
+            <div className="w-12 sm:w-16 md:w-20 h-1 bg-gold mx-auto rounded-full"></div>
           </div>
-          <div className="bg-white/5 backdrop-blur-lg border border-gold/30 rounded-3xl p-10 shadow-2xl">
-            <p className="text-xl text-gray-200 mb-8 leading-relaxed">
+          <div className="bg-white/5 backdrop-blur-lg border border-gold/30 rounded-2xl md:rounded-3xl p-6 md:p-10 lg:p-12 shadow-2xl">
+            <p className="text-base sm:text-lg md:text-lg lg:text-xl text-gray-200 mb-6 md:mb-8 leading-relaxed">
               Dans dix ans, MIDEESSI sera devenu une <span className="text-gold font-bold">manufacture d'idées et de solutions 100% béninoises</span>, 
               un <span className="text-gold font-bold">incubateur de talents autodidactes</span>, et une <span className="text-gold font-bold">référence continentale 
               en innovation locale</span>.
             </p>
-            <p className="text-xl text-gray-200 mb-8 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-lg lg:text-xl text-gray-200 mb-6 md:mb-8 leading-relaxed">
               Nous envisageons un avenir où chaque jeune béninois pourra vivre dignement de son talent technologique, où chaque quartier de Cotonou, 
               Porto-Novo, Parakou et Abomey comptera ses propres architectes de solutions innovantes.
             </p>
-            <div className="grid md:grid-cols-3 gap-6 mt-8">
-              <div className="text-center p-6 bg-gold/10 rounded-xl border border-gold/30">
-                <div className="text-4xl font-bold text-gold mb-2">100%</div>
-                <div className="text-sm text-gray-300">Béninois, fiers et indépendants</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mt-8 md:mt-10">
+              <div className="text-center p-4 md:p-6 bg-gold/10 rounded-lg md:rounded-xl border border-gold/30">
+                <div className="text-3xl md:text-4xl font-bold text-gold mb-2">100%</div>
+                <div className="text-xs md:text-sm text-gray-300">Béninois, fiers et indépendants</div>
               </div>
-              <div className="text-center p-6 bg-gold/10 rounded-xl border border-gold/30">
-                <div className="text-4xl font-bold text-gold mb-2">12</div>
-                <div className="text-sm text-gray-300">Solutions par an, une par trimestre</div>
+              <div className="text-center p-4 md:p-6 bg-gold/10 rounded-lg md:rounded-xl border border-gold/30">
+                <div className="text-3xl md:text-4xl font-bold text-gold mb-2">12</div>
+                <div className="text-xs md:text-sm text-gray-300">Solutions par an, une par trimestre</div>
               </div>
-              <div className="text-center p-6 bg-gold/10 rounded-xl border border-gold/30">
-                <div className="text-4xl font-bold text-gold mb-2">∞</div>
-                <div className="text-sm text-gray-300">Impact pour notre peuple</div>
+              <div className="text-center p-4 md:p-6 bg-gold/10 rounded-lg md:rounded-xl border border-gold/30">
+                <div className="text-3xl md:text-4xl font-bold text-gold mb-2">∞</div>
+                <div className="text-xs md:text-sm text-gray-300">Impact pour notre peuple</div>
               </div>
             </div>
           </div>
-          <div className="text-center mt-12">
-            <div className="inline-block bg-gold/20 backdrop-blur-sm border-2 border-gold rounded-full px-10 py-5 shadow-2xl">
-              <p className="text-2xl font-bold text-gold mb-2">
+          <div className="text-center mt-10 md:mt-12 lg:mt-16">
+            <div className="inline-block bg-gold/20 backdrop-blur-sm border-2 border-gold rounded-full px-6 md:px-10 py-4 md:py-5 shadow-2xl">
+              <p className="text-lg md:text-xl lg:text-2xl font-bold text-gold mb-2">
                 Nous sommes MIDEESSI
               </p>
-              <p className="text-lg text-gray-200">
+              <p className="text-xs md:text-sm lg:text-base text-gray-200">
                 Proches du peuple • Travaillons pour le peuple • Pour le Bénin • Pour l'Afrique • Pour le monde
               </p>
             </div>
