@@ -79,6 +79,13 @@ User-agent: EmailWolf
 Disallow: /
 
 # ========================================
+# RÈGLES SPÉCIFIQUES FACEBOOK
+# ========================================
+User-agent: facebookexternalhit
+Allow: /
+
+
+# ========================================
 # SITEMAPS
 # ========================================
 
