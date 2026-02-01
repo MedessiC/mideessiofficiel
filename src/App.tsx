@@ -6,7 +6,9 @@ import CookieConsent from './components/CookieConsent';
 import NewHome from './pages/NewHome';
 import About from './pages/About';
 import Learn from './pages/Learn';
+import Solutions from './pages/Solutions';
 import Projects from './pages/Projects';
+import SolutionDetail from './pages/SolutionDetail';
 import NewBlog from './pages/NewBlog';
 import NewBlogPost from './pages/NewBlogPost';
 import Contact from './pages/Contact';
@@ -27,6 +29,8 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<NewHome />} />
           <Route path="/about" element={<About />} />
+          <Route path="/solutions" element={<Solutions />} />
+          <Route path="/solutions/:slug" element={<SolutionDetail />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/blog" element={<NewBlog />} />
           <Route path="/blog/:slug" element={<NewBlogPost />} />

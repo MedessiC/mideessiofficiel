@@ -1,44 +1,55 @@
 import BlogCard from '../components/BlogCard';
 import SEO from '../components/SEO';
 import { blogPosts } from '../data/blogPosts';
-import { Facebook, Linkedin, Rss } from 'lucide-react';
+import { Rss, BookOpen, Lightbulb, Zap, Rocket, ArrowRight, Mail } from 'lucide-react';
+import { getIcon } from '../utils/iconMapper';
 
 const Blog = () => {
+  const topics = [
+    { name: 'Intelligence Artificielle', icon: 'Lightbulb' },
+    { name: 'Automatisation', icon: 'Zap' },
+    { name: 'Innovation', icon: 'Rocket' },
+    { name: 'Développement', icon: 'Code' },
+  ];
+
   return (
-    <div className="min-h-screen pt-16">
+    <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
       <SEO
         title="Blog MIDEESSI | Actualités technologiques et innovation"
         description="Suivez les dernières actualités de MIDEESSI, nos réflexions sur l'IA, l'automatisation et l'innovation technologique en Afrique."
         keywords={['blog', 'actualités', 'IA', 'automatisation', 'technologie', 'innovation', 'MIDEESSI']}
       />
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white py-24 overflow-hidden">
+      
+      {/* Hero Section - Responsive */}
+      <section className="relative bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white py-12 md:py-20 lg:py-24 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-gold rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
+          <div className="absolute top-10 right-5 md:top-20 md:right-10 w-40 h-40 md:w-72 md:h-72 bg-gold rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-10 -left-5 md:bottom-20 md:left-10 w-48 h-48 md:w-96 md:h-96 bg-blue-500 rounded-full blur-3xl"></div>
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-center tracking-tight">
-            Blog & <span className="text-gold">Actualités</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-center text-gray-200 max-w-3xl mx-auto font-light">
-            Découvrez nos dernières réflexions sur la technologie, l'innovation et l'avenir de l'automatisation.
-          </p>
+          <div className="text-center">
+            <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold mb-4 md:mb-6 tracking-tight leading-tight">
+              Blog & <span className="text-gold">Actualités</span>
+            </h1>
+            <p className="text-base md:text-lg lg:text-xl text-gray-200 max-w-3xl mx-auto font-light leading-relaxed">
+              Découvrez nos dernières réflexions sur la technologie, l'innovation et l'avenir de l'automatisation en Afrique.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Blog Posts Section */}
-      <section className="py-20 bg-white dark:bg-gray-900">
+      {/* Blog Posts Section - Responsive Grid */}
+      <section className="py-8 md:py-12 lg:py-16 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {blogPosts.length > 0 ? (
             <>
-              <div className="text-center mb-16">
-                <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">
+              <div className="text-center mb-8 md:mb-12 lg:mb-16">
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-midnight dark:text-white mb-4">
                   Articles Récents
                 </h2>
-                <div className="w-20 h-1 bg-gold mx-auto rounded-full"></div>
+                <div className="w-16 md:w-20 h-1 bg-gold mx-auto rounded-full"></div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
                 {blogPosts.map((post) => (
                   <div 
                     key={post.id}
@@ -50,14 +61,14 @@ const Blog = () => {
               </div>
             </>
           ) : (
-            <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gold/10 rounded-full mb-6">
-                <Rss className="w-10 h-10 text-gold" />
+            <div className="text-center py-12 md:py-20">
+              <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gold/10 rounded-full mb-4 md:mb-6">
+                <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-gold" />
               </div>
-              <h3 className="text-2xl font-bold text-midnight dark:text-white mb-4">
+              <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-midnight dark:text-white mb-3 md:mb-4">
                 Bientôt Disponible
               </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-300 max-w-md mx-auto">
+              <p className="text-sm md:text-lg text-gray-600 dark:text-gray-300 max-w-md mx-auto">
                 Nous préparons du contenu exclusif pour vous. Restez connectés pour découvrir nos premiers articles !
               </p>
             </div>
@@ -65,62 +76,69 @@ const Blog = () => {
         </div>
       </section>
 
-      {/* Categories/Topics Section */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-800">
+      {/* Categories/Topics Section - Responsive */}
+      <section className="py-8 md:py-12 lg:py-16 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-midnight dark:text-white mb-4">
               Nos Thématiques
             </h2>
-            <div className="w-20 h-1 bg-gold mx-auto rounded-full"></div>
+            <div className="w-16 md:w-20 h-1 bg-gold mx-auto rounded-full"></div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {['Intelligence Artificielle', 'Automatisation', 'Innovation', 'Développement'].map((topic, index) => (
-              <div 
-                key={topic}
-                className="group bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 text-center hover:-translate-y-1"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <h3 className="text-lg font-semibold text-midnight dark:text-white group-hover:text-gold transition-colors duration-300">
-                  {topic}
-                </h3>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {topics.map((topic) => {
+              const Icon = getIcon(topic.icon);
+              return (
+                <div 
+                  key={topic.name}
+                  className="group bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200 dark:border-gray-700 hover:border-gold"
+                >
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 md:w-14 md:h-14 bg-gold/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-gold/20 transition-colors">
+                      <Icon className="w-6 h-6 md:w-7 md:h-7 text-gold" />
+                    </div>
+                    <h3 className="text-base md:text-lg font-semibold text-midnight dark:text-white text-center group-hover:text-gold transition-colors">
+                      {topic.name}
+                    </h3>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Stay Connected Section */}
-      <section className="py-20 bg-white dark:bg-gray-900">
+      {/* Stay Connected Section - Responsive */}
+      <section className="py-8 md:py-12 lg:py-16 bg-white dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl shadow-xl p-12">
-            <div className="text-center mb-10">
-              <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl md:rounded-2xl lg:rounded-3xl shadow-xl p-6 md:p-8 lg:p-12 border border-gray-200 dark:border-gray-700">
+            <div className="text-center mb-6 md:mb-10">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-midnight dark:text-white mb-4">
                 Restez Informé
               </h2>
-              <div className="w-20 h-1 bg-gold mx-auto rounded-full mb-6"></div>
-              <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+              <div className="w-16 md:w-20 h-1 bg-gold mx-auto rounded-full mb-4 md:mb-6"></div>
+              <p className="text-sm md:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
                 Nous publions régulièrement des articles sur nos projets, nos découvertes technologiques
                 et nos réflexions sur l'avenir de l'innovation. Suivez-nous pour ne rien manquer !
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
               <a
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-midnight dark:bg-white text-white dark:text-midnight font-semibold rounded-full hover:bg-gold hover:text-midnight dark:hover:bg-gold dark:hover:text-midnight transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                className="group inline-flex items-center justify-center gap-2 px-4 md:px-6 lg:px-8 py-2.5 md:py-3 lg:py-4 bg-midnight dark:bg-white text-white dark:text-midnight font-bold rounded-lg md:rounded-xl hover:bg-gold hover:text-midnight dark:hover:bg-gold dark:hover:text-midnight transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 text-sm md:text-base"
               >
-                <Facebook className="w-5 h-5" />
+                <Mail className="w-4 h-4 md:w-5 md:h-5" />
                 <span>Facebook</span>
               </a>
               <a
                 href="https://linkedin.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-midnight dark:bg-white text-white dark:text-midnight font-semibold rounded-full hover:bg-gold hover:text-midnight dark:hover:bg-gold dark:hover:text-midnight transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                className="group inline-flex items-center justify-center gap-2 px-4 md:px-6 lg:px-8 py-2.5 md:py-3 lg:py-4 bg-midnight dark:bg-white text-white dark:text-midnight font-bold rounded-lg md:rounded-xl hover:bg-gold hover:text-midnight dark:hover:bg-gold dark:hover:text-midnight transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 text-sm md:text-base"
               >
-                <Linkedin className="w-5 h-5" />
+                <Mail className="w-4 h-4 md:w-5 md:h-5" />
                 <span>LinkedIn</span>
               </a>
             </div>
@@ -128,26 +146,24 @@ const Blog = () => {
         </div>
       </section>
 
-      {/* Newsletter/CTA Section */}
-      <section className="relative py-24 bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white overflow-hidden">
+      {/* Newsletter/CTA Section - Responsive */}
+      <section className="relative py-12 md:py-16 lg:py-24 bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gold rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 md:w-96 md:h-96 bg-gold rounded-full blur-3xl"></div>
         </div>
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold mb-6">Partagez Votre Expertise</h2>
-          <div className="w-20 h-1 bg-gold mx-auto rounded-full mb-10"></div>
-          <p className="text-xl text-gray-200 mb-10 leading-relaxed font-light max-w-2xl mx-auto">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6">Partagez Votre Expertise</h2>
+          <div className="w-16 md:w-20 h-1 bg-gold mx-auto rounded-full mb-6 md:mb-10"></div>
+          <p className="text-base md:text-lg lg:text-xl text-gray-200 mb-6 md:mb-10 leading-relaxed font-light max-w-2xl mx-auto">
             Vous avez une idée d'article ou souhaitez contribuer à notre blog ? 
             Nous sommes toujours à la recherche de nouvelles voix et perspectives !
           </p>
           <a
             href="/contact"
-            className="inline-flex items-center space-x-2 bg-gradient-to-r from-gold to-yellow-500 hover:from-yellow-500 hover:to-gold text-midnight font-bold px-10 py-4 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            className="inline-flex items-center gap-2 bg-gold hover:bg-yellow-500 text-midnight font-bold px-6 md:px-8 lg:px-10 py-3 md:py-4 rounded-lg md:rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm md:text-base"
           >
             <span>Proposer un article</span>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
+            <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
           </a>
         </div>
       </section>

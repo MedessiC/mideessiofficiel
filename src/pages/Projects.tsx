@@ -1,10 +1,9 @@
-import { FolderTree, Rocket, MessageSquare, Bot, FileCode, Sparkles } from 'lucide-react';
-import ProjectCard from '../components/ProjectCard';
+import { ArrowRight, ExternalLink, CheckCircle, Users, Zap, Award } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
+import { solutions } from '../data/solutions';
 
 const Projects = () => {
-  
-
   const statusColors: { [key: string]: string } = {
     'Disponible': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
     'En cours': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
@@ -62,10 +61,102 @@ const Projects = () => {
             </p>
           </div>
 
-          {/* Projects Grid */}
-         
-          
-          
+          {/* Solutions Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            {solutions.map((solution) => (
+              <Link
+                key={solution.id}
+                to={`/solutions/${solution.slug}`}
+                className="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+              >
+                {/* Image */}
+                <div className="relative h-56 overflow-hidden bg-gray-200 dark:bg-gray-700">
+                  <img
+                    src={solution.image}
+                    alt={solution.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                </div>
+
+                {/* Content */}
+                <div className="p-8 relative">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-2xl font-bold text-midnight dark:text-white mb-1 group-hover:text-gold transition-colors">
+                        {solution.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                        {solution.tagline}
+                      </p>
+                    </div>
+                    <span className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap ml-4 ${
+                      solution.status === 'Disponible'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                    }`}>
+                      {solution.status}
+                    </span>
+                  </div>
+
+                  <p className="text-gray-600 dark:text-gray-300 mb-6 line-clamp-3">
+                    {solution.description}
+                  </p>
+
+                  {/* Key Benefits */}
+                  <div className="mb-6 space-y-2">
+                    {solution.benefits.slice(0, 3).map((benefit, idx) => (
+                      <div key={idx} className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="w-4 h-4 text-gold flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-600 dark:text-gray-400">{benefit}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Stats */}
+                  {solution.stats && (
+                    <div className="grid grid-cols-2 gap-4 mb-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      {solution.stats.slice(0, 2).map((stat, idx) => (
+                        <div key={idx}>
+                          <div className="text-lg font-bold text-gold">{stat.value}</div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">{stat.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* CTA */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <span className="inline-flex items-center text-gold font-bold text-sm group-hover:gap-2 transition-all">
+                      En savoir plus
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </span>
+                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-gold transition-colors" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Audience Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-16">
+            {solutions.map((solution) => (
+              <div key={solution.id} className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8">
+                <h4 className="text-xl font-bold text-midnight dark:text-white mb-4 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-gold" />
+                  {solution.name} - Cible
+                </h4>
+                <ul className="space-y-2">
+                  {solution.targetAudience.map((audience, idx) => (
+                    <li key={idx} className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-gold flex-shrink-0" />
+                      {audience}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
