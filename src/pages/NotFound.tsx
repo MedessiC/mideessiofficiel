@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { Home, ArrowLeft, Search, FileQuestion } from 'lucide-react';
 
 const NotFound = () => {
@@ -46,13 +45,13 @@ const NotFound = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                to="/"
+              <a
+                href="/"
                 className="inline-flex items-center justify-center space-x-2 bg-gold hover:bg-yellow-500 text-midnight font-semibold px-6 py-3 rounded-lg transition-all transform hover:scale-105"
               >
                 <Home className="w-5 h-5" />
                 <span>Retour à l'accueil</span>
-              </Link>
+              </a>
               <button
                 onClick={() => window.history.back()}
                 className="inline-flex items-center justify-center space-x-2 bg-midnight dark:bg-white text-white dark:text-midnight hover:bg-opacity-90 font-semibold px-6 py-3 rounded-lg transition-all"
@@ -98,14 +97,14 @@ const NotFound = () => {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {quickLinks.map((link) => (
-              <Link
+              <a
                 key={link.to}
-                to={link.to}
+                href={link.to}
                 className="flex items-center justify-center space-x-2 bg-gray-50 dark:bg-gray-800 hover:bg-gold hover:text-midnight dark:hover:bg-gold dark:hover:text-midnight text-gray-700 dark:text-gray-300 font-medium px-4 py-3 rounded-lg transition-all transform hover:scale-105"
               >
                 {link.icon}
                 <span>{link.label}</span>
-              </Link>
+              </a>
             ))}
           </div>
         </div>

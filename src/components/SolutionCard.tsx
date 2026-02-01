@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { ArrowRight, ExternalLink, CheckCircle } from 'lucide-react';
 import { Solution } from '../data/solutions';
 
@@ -10,8 +9,8 @@ interface SolutionCardProps {
 const SolutionCard = ({ solution, variant = 'default' }: SolutionCardProps) => {
   if (variant === 'compact') {
     return (
-      <Link
-        to={`/solutions/${solution.slug}`}
+      <a
+        href={`/solutions/${solution.slug}`}
         className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
       >
         <div className="relative h-32 md:h-40 bg-gray-200 dark:bg-gray-700 overflow-hidden">
@@ -33,13 +32,13 @@ const SolutionCard = ({ solution, variant = 'default' }: SolutionCardProps) => {
             <ArrowRight className="w-3 h-3 md:w-4 md:h-4 text-gold group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
-      </Link>
+      </a>
     );
   }
 
   return (
-    <Link
-      to={`/solutions/${solution.slug}`}
+    <a
+      href={`/solutions/${solution.slug}`}
       className="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
     >
       {/* Image - Responsive Height */}
@@ -109,7 +108,7 @@ const SolutionCard = ({ solution, variant = 'default' }: SolutionCardProps) => {
           <ExternalLink className="w-4 h-4 md:w-5 md:h-5 text-gray-400 group-hover:text-gold transition-colors" />
         </div>
       </div>
-    </Link>
+    </a>
   );
 };
 

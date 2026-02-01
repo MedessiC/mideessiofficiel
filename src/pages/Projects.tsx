@@ -1,5 +1,4 @@
 import { ArrowRight, ExternalLink, CheckCircle, Users, Zap, Award } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { solutions } from '../data/solutions';
 
@@ -64,9 +63,9 @@ const Projects = () => {
           {/* Solutions Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
             {solutions.map((solution) => (
-              <Link
+              <a
                 key={solution.id}
-                to={`/solutions/${solution.slug}`}
+                href={`/solutions/${solution.slug}`}
                 className="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
               >
                 {/* Image */}
@@ -134,7 +133,7 @@ const Projects = () => {
                     <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-gold transition-colors" />
                   </div>
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, ExternalLink, CheckCircle, Mail, MessageCircle, Users, Award,
   Zap, ArrowRight, Briefcase, Code
@@ -64,13 +64,13 @@ const SolutionDetail = () => {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Link
-            to="/solutions"
+          <a
+            href="/solutions"
             className="inline-flex items-center gap-2 text-white hover:text-gold transition-colors mb-6 md:mb-8 text-sm md:text-base"
           >
             <ArrowLeft className="w-4 h-4" />
             Retour aux solutions
-          </Link>
+          </a>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 items-end">
             <div className="min-w-0">
@@ -339,13 +339,13 @@ const SolutionDetail = () => {
           <div className="w-16 md:w-20 h-1 bg-gold mx-auto rounded-full mb-8 md:mb-12"></div>
 
           <div className="text-center">
-            <Link
-              to="/solutions"
+            <a
+              href="/solutions"
               className="inline-flex items-center gap-2 bg-gold hover:bg-yellow-500 text-midnight font-bold px-6 md:px-8 py-2.5 md:py-3 rounded-lg transition-all duration-300 text-sm md:text-base"
             >
               Découvrir Toutes les Solutions
               <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
-            </Link>
+            </a>
           </div>
         </div>
       </section>

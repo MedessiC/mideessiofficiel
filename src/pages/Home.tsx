@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { ArrowRight, Flag, BookOpen, Lightbulb, Users, Calendar, MapPin, Target, Heart, TrendingUp, MessageCircle, Sparkles, Globe, Code } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ProjectCard from '../components/ProjectCard';
@@ -124,21 +123,21 @@ const Home = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
-              <Link
-                to="/about"
+              <a
+                href="/about"
                 className="group inline-flex items-center space-x-2 sm:space-x-3 bg-gradient-to-r from-gold to-yellow-500 hover:from-yellow-400 hover:to-gold text-midnight font-bold px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-gold/30 w-full sm:w-auto text-center justify-center"
               >
                 <span className="text-base sm:text-lg">Découvrir notre mission</span>
                 <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform duration-300" />
-              </Link>
+              </a>
               
-              <Link
-                to="/contact"
+              <a
+                href="/contact"
                 className="group inline-flex items-center space-x-2 sm:space-x-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-bold px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-xl transition-all duration-300 border-2 border-white/30 hover:border-white/60 w-full sm:w-auto text-center justify-center"
               >
                 <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="text-base sm:text-lg">Nous rejoindre</span>
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -300,14 +299,14 @@ const Home = () => {
           </div>
 
           <div className="text-center">
-            <Link
-              to="/projects"
+            <a
+              href="/projects"
               className="group inline-flex items-center space-x-3 bg-white text-midnight hover:bg-gold hover:text-white font-bold px-6 sm:px-8 py-3 sm:py-4 rounded-2xl transition-all duration-300 text-base sm:text-lg hover:shadow-xl"
             >
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Voir le calendrier complet</span>
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform duration-300" />
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -342,14 +341,14 @@ const Home = () => {
           </div>
 
           <div className="text-center">
-            <Link
-              to="/blog"
+            <a
+              href="/blog"
               className="group inline-flex items-center space-x-3 text-gold hover:text-midnight dark:hover:text-white font-bold transition-colors duration-300 text-lg sm:text-xl"
             >
               <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
               <span>Lire tous les articles</span>
               <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform duration-300" />
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -382,15 +381,15 @@ const Home = () => {
               <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
               <span>Nous contacter</span>
               <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform duration-300" />
-            </Link>
+            </a>
 
-            <Link
-              to="/about"
+            <a
+              href="/about"
               className="group inline-flex items-center space-x-3 bg-white hover:bg-gray-100 text-midnight font-bold px-6 sm:px-10 py-4 sm:py-6 rounded-2xl transition-all duration-300 hover:shadow-xl text-base sm:text-lg w-full sm:w-auto justify-center"
             >
               <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
               <span>Notre histoire</span>
-            </Link>
+            </a>
           </div>
 
           <div className="mt-12 pt-8 border-t-2 border-midnight/20">
