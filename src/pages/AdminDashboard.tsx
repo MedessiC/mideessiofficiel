@@ -83,181 +83,195 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-16 flex items-center justify-center">
-        <p className="text-lg text-corporate-600">Chargement...</p>
+      <div className="min-h-screen pt-16 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-lg text-gray-600 dark:text-gray-300">Chargement...</p>
+        </div>
       </div>
     );
   }
-const handlePublishPDF = () => {
-  // Exemple : ouvrir une page d'upload ou de publication
-  navigate("/admin/pdfeditor");
-};
 
   return (
-    <div className="min-h-screen pt-16 bg-corporate-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen pt-16 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-8">
+        {/* Header - Responsive */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 md:gap-6 mb-6 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-midnight dark:text-white mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1 md:mb-2">
               Tableau de bord
             </h1>
-            <p className="text-corporate-600 dark:text-corporate-300">
+            <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
               Gérez vos articles de blog
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
             <Link
               to="/admin/post/new"
-              className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
+              className="inline-flex items-center justify-center px-4 md:px-6 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors text-sm md:text-base"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              Nouvel article
+              <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Nouvel article</span>
+              <span className="sm:hidden">Nouvel</span>
             </Link>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center px-4 py-3 bg-corporate-200 dark:bg-corporate-800 hover:bg-corporate-300 dark:hover:bg-corporate-700 text-corporate-700 dark:text-corporate-200 font-semibold rounded-lg transition-colors"
+              className="inline-flex items-center justify-center px-3 md:px-4 py-2 md:py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-lg transition-colors text-sm md:text-base"
             >
-              
-              <LogOut className="w-5 h-5 mr-2" />
-              Déconnexion
+              <LogOut className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Déconnexion</span>
+              <span className="sm:hidden">Quitter</span>
             </button>
           </div>
-          <button
-            onClick={handlePublishPDF}
-            className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors"
-          >
-            <FileText className="w-5 h-5 mr-2" />
-            Publier PDF
-          </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-corporate-200 dark:border-gray-700">
+        {/* Stats Grid - Responsive */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+          <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg md:rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-2">
-              <FileText className="w-8 h-8 text-blue-600" />
-              <span className="text-3xl font-bold text-midnight dark:text-white">{stats.total}</span>
+              <FileText className="w-6 h-6 md:w-8 md:h-8 text-blue-600 flex-shrink-0" />
+              <span className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{stats.total}</span>
             </div>
-            <p className="text-corporate-600 dark:text-corporate-300 font-medium">Total articles</p>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-medium">Total articles</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-corporate-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg md:rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-2">
-              <Eye className="w-8 h-8 text-green-600" />
-              <span className="text-3xl font-bold text-midnight dark:text-white">{stats.published}</span>
+              <Eye className="w-6 h-6 md:w-8 md:h-8 text-green-600 flex-shrink-0" />
+              <span className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{stats.published}</span>
             </div>
-            <p className="text-corporate-600 dark:text-corporate-300 font-medium">Publiés</p>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-medium">Publiés</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-corporate-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg md:rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-2">
-              <FileText className="w-8 h-8 text-orange-600" />
-              <span className="text-3xl font-bold text-midnight dark:text-white">{stats.draft}</span>
+              <FileText className="w-6 h-6 md:w-8 md:h-8 text-orange-600 flex-shrink-0" />
+              <span className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{stats.draft}</span>
             </div>
-            <p className="text-corporate-600 dark:text-corporate-300 font-medium">Brouillons</p>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-medium">Brouillons</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-corporate-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg md:rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-2">
-              <TrendingUp className="w-8 h-8 text-purple-600" />
-              <span className="text-3xl font-bold text-midnight dark:text-white">{stats.views}</span>
+              <TrendingUp className="w-6 h-6 md:w-8 md:h-8 text-purple-600 flex-shrink-0" />
+              <span className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{stats.views}</span>
             </div>
-            <p className="text-corporate-600 dark:text-corporate-300 font-medium">Vues totales</p>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-medium">Vues totales</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-corporate-200 dark:border-gray-700 overflow-hidden">
+        {/* Posts Table - Responsive */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg md:rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-corporate-50 dark:bg-gray-700 border-b border-corporate-200 dark:border-gray-600">
+              <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-corporate-700 dark:text-corporate-200">
+                  <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-200">
                     Article
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-corporate-700 dark:text-corporate-200">
+                  <th className="hidden md:table-cell px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-200">
                     Catégorie
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-corporate-700 dark:text-corporate-200">
+                  <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-200">
                     Statut
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-corporate-700 dark:text-corporate-200">
+                  <th className="hidden sm:table-cell px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-200">
                     Vues
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-corporate-700 dark:text-corporate-200">
+                  <th className="hidden md:table-cell px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-200">
                     Date
                   </th>
-                  <th className="px-6 py-4 text-right text-sm font-bold text-corporate-700 dark:text-corporate-200">
+                  <th className="px-3 md:px-6 py-3 md:py-4 text-right text-xs md:text-sm font-bold text-gray-700 dark:text-gray-200">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-corporate-200 dark:divide-gray-700">
-                {posts.map((post) => (
-                  <tr key={post.id} className="hover:bg-corporate-50 dark:hover:bg-gray-700/50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={post.image_url}
-                          alt={post.title}
-                          className="w-16 h-12 object-cover rounded"
-                        />
-                        <div>
-                          <p className="font-semibold text-midnight dark:text-white">
-                            {post.title}
-                          </p>
-                          <p className="text-sm text-corporate-500 dark:text-corporate-400">
-                            {post.author}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-full">
-                        {post.category}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => togglePublish(post)}
-                        className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                          post.is_published
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                        }`}
-                      >
-                        {post.is_published ? 'Publié' : 'Brouillon'}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 text-corporate-600 dark:text-corporate-300">
-                      {post.views}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-corporate-600 dark:text-corporate-300">
-                      {new Date(post.created_at).toLocaleDateString('fr-FR')}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={`/blog/${post.slug}`}
-                          target="_blank"
-                          className="p-2 hover:bg-corporate-100 dark:hover:bg-gray-600 rounded transition-colors"
-                        >
-                          <Eye className="w-4 h-4 text-corporate-600 dark:text-corporate-300" />
-                        </Link>
-                        <Link
-                          to={`/admin/post/${post.id}`}
-                          className="p-2 hover:bg-corporate-100 dark:hover:bg-gray-600 rounded transition-colors"
-                        >
-                          <Edit className="w-4 h-4 text-blue-600" />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(post.id)}
-                          className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {posts.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                      <FileText className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                      <p>Aucun article pour le moment</p>
+                      <Link to="/admin/post/new" className="text-blue-600 hover:underline text-sm mt-2 inline-block">
+                        Créer le premier article
+                      </Link>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  posts.map((post) => (
+                    <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="px-3 md:px-6 py-3 md:py-4">
+                        <div className="flex items-start md:items-center gap-2 md:gap-3 min-w-0">
+                          {post.image_url && (
+                            <img
+                              src={post.image_url}
+                              alt={post.title}
+                              className="w-10 h-8 md:w-16 md:h-12 object-cover rounded flex-shrink-0"
+                              onError={(e) => { e.currentTarget.src = '/placeholder.png'; }}
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900 dark:text-white text-xs md:text-base line-clamp-1 md:line-clamp-none">
+                              {post.title}
+                            </p>
+                            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-1 md:line-clamp-none">
+                              {post.author}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="hidden md:table-cell px-6 py-4">
+                        <span className="inline-flex px-2 py-1 md:px-3 md:py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-full">
+                          {post.category}
+                        </span>
+                      </td>
+                      <td className="px-3 md:px-6 py-3 md:py-4">
+                        <button
+                          onClick={() => togglePublish(post)}
+                          className={`px-2 md:px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                            post.is_published
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50'
+                              : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/50'
+                          }`}
+                        >
+                          {post.is_published ? '✓ Publié' : '○ Brouillon'}
+                        </button>
+                      </td>
+                      <td className="hidden sm:table-cell px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                        {post.views || 0}
+                      </td>
+                      <td className="hidden md:table-cell px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                        {new Date(post.created_at).toLocaleDateString('fr-FR')}
+                      </td>
+                      <td className="px-3 md:px-6 py-3 md:py-4">
+                        <div className="flex items-center justify-end gap-1 md:gap-2">
+                          <Link
+                            to={`/blog/${post.slug}`}
+                            target="_blank"
+                            className="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                            title="Voir"
+                          >
+                            <Eye className="w-4 h-4 md:w-5 md:h-5 text-blue-600 dark:text-blue-400" />
+                          </Link>
+                          <Link
+                            to={`/admin/post/${post.id}`}
+                            className="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                            title="Modifier"
+                          >
+                            <Edit className="w-4 h-4 md:w-5 md:h-5 text-blue-600 dark:text-blue-400" />
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(post.id)}
+                            className="p-1.5 md:p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-600 dark:text-red-400" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
