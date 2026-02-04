@@ -3,6 +3,69 @@ import { Calendar, User, ArrowLeft } from 'lucide-react';
 import SEO from '../components/SEO';
 import { blogPosts } from '../data/blogPosts';
 
+const renderMarkdownContent = (content: string) => {
+  let html = content;
+  
+  // Headers
+  html = html.replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mt-6 mb-3 text-midnight dark:text-white border-l-4 border-blue-600 pl-4">$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mt-8 mb-4 text-midnight dark:text-white border-l-4 border-blue-600 pl-4">$1</h2>');
+  html = html.replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mt-10 mb-6 text-midnight dark:text-white border-l-4 border-blue-600 pl-4">$1</h1>');
+  
+  // Bold
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-midnight dark:text-white">$1</strong>');
+  
+  // Italic
+  html = html.replace(/\*([^*]+)\*/g, '<em class="italic text-gray-800 dark:text-gray-100">$1</em>');
+  
+  // Images with figure caption
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<figure class="my-6"><img src="$2" alt="$1" class="w-full rounded-lg shadow-md max-w-full" /><figcaption class="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center italic">$1</figcaption></figure>');
+  
+  // Links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">$1</a>');
+  
+  // Code blocks
+  html = html.replace(/```([^`]+)```/g, '<pre class="bg-gray-900 dark:bg-black text-gray-100 p-4 rounded-lg overflow-x-auto my-4 border border-gray-700"><code>$1</code></pre>');
+  
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 rounded font-mono text-sm">$1</code>');
+  
+  // Blockquotes
+  html = html.replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-gold pl-4 italic text-gray-700 dark:text-gray-300 my-4">$1</blockquote>');
+  
+  // Unordered lists
+  html = html.replace(/\n- /g, '\n<li class="ml-6 text-gray-700 dark:text-gray-300">');
+  html = html.replace(/(<li[^>]*>[^<]*)<\/li>/g, '$1</li>');
+  
+  // Wrap lists in ul
+  html = html.replace(/(<li[^>]*>.*?<\/li>)/gs, (match: string) => {
+    if (!match.includes('<ul')) {
+      return '<ul class="list-disc space-y-2 my-4">' + match + '</ul>';
+    }
+    return match;
+  });
+  
+  // Paragraphs - wrap remaining text that's not already in a tag
+  const lines = html.split('\n');
+  html = lines.map((line: string) => {
+    if (line.trim() === '' || 
+        line.includes('<h') || 
+        line.includes('<ul') || 
+        line.includes('<li') || 
+        line.includes('<pre') || 
+        line.includes('<blockquote') || 
+        line.includes('<figure') ||
+        line.includes('</')) {
+      return line;
+    }
+    if (line.trim()) {
+      return `<p class="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">${line}</p>`;
+    }
+    return line;
+  }).join('\n');
+  
+  return { __html: html };
+};
+
 const BlogPost = () => {
   const { id } = useParams<{ id: string }>();
   const post = blogPosts.find(p => p.id === id);
@@ -26,8 +89,6 @@ const BlogPost = () => {
       </div>
     );
   }
-
-  const contentParagraphs = post.content.split('\n\n');
 
   return (
     <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
@@ -64,44 +125,7 @@ const BlogPost = () => {
         </header>
 
         <div className="prose prose-lg dark:prose-invert max-w-none">
-          {contentParagraphs.map((paragraph, index) => {
-            if (paragraph.startsWith('# ')) {
-              return (
-                <h1 key={index} className="text-3xl font-bold text-midnight dark:text-white mt-8 mb-4">
-                  {paragraph.replace('# ', '')}
-                </h1>
-              );
-            }
-            if (paragraph.startsWith('## ')) {
-              return (
-                <h2 key={index} className="text-2xl font-bold text-midnight dark:text-white mt-6 mb-3">
-                  {paragraph.replace('## ', '')}
-                </h2>
-              );
-            }
-            if (paragraph.startsWith('### ')) {
-              return (
-                <h3 key={index} className="text-xl font-bold text-midnight dark:text-white mt-4 mb-2">
-                  {paragraph.replace('### ', '')}
-                </h3>
-              );
-            }
-            if (paragraph.startsWith('- ')) {
-              const items = paragraph.split('\n');
-              return (
-                <ul key={index} className="list-disc list-inside space-y-2 mb-4 text-gray-700 dark:text-gray-300">
-                  {items.map((item, i) => (
-                    <li key={i}>{item.replace('- ', '')}</li>
-                  ))}
-                </ul>
-              );
-            }
-            return (
-              <p key={index} className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
-                {paragraph}
-              </p>
-            );
-          })}
+          <div dangerouslySetInnerHTML={renderMarkdownContent(post.content)} />
         </div>
 
         <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">

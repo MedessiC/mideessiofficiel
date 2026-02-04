@@ -148,17 +148,27 @@ const shareOnSocial = (platform: string) => {
       .split('\n\n')
       .map((paragraph, index) => {
         // Titres
+        if (paragraph.startsWith('# ')) {
+          const text = paragraph.replace(/^# /, '');
+          return (
+            <h1 key={index} className="text-4xl md:text-5xl font-bold text-midnight dark:text-white mt-14 mb-8 leading-tight">
+              {text}
+            </h1>
+          );
+        }
         if (paragraph.startsWith('## ')) {
+          const text = paragraph.replace(/^## /, '');
           return (
             <h2 key={index} className="text-3xl md:text-4xl font-bold text-midnight dark:text-white mt-12 mb-6 leading-tight">
-              {paragraph.replace('## ', '')}
+              {text}
             </h2>
           );
         }
         if (paragraph.startsWith('### ')) {
+          const text = paragraph.replace(/^### /, '');
           return (
             <h3 key={index} className="text-2xl md:text-3xl font-bold text-midnight dark:text-white mt-10 mb-5 leading-tight">
-              {paragraph.replace('### ', '')}
+              {text}
             </h3>
           );
         }
@@ -171,7 +181,7 @@ const shareOnSocial = (platform: string) => {
               {items.map((item, i) => (
                 <li key={i} className="flex items-start gap-3 text-gray-700 dark:text-gray-200 text-lg leading-relaxed">
                   <span className="w-2 h-2 bg-yellow-400 rounded-full mt-2.5 flex-shrink-0"></span>
-                  <span>{item.replace('- ', '')}</span>
+                  <span>{item.replace(/^- /, '')}</span>
                 </li>
               ))}
             </ul>
@@ -180,10 +190,11 @@ const shareOnSocial = (platform: string) => {
 
         // Citations
         if (paragraph.startsWith('> ')) {
+          const text = paragraph.replace(/^> /, '');
           return (
             <blockquote key={index} className="my-8 pl-6 border-l-4 border-yellow-400 bg-gradient-to-r from-yellow-50 to-transparent dark:from-yellow-900/20 dark:to-transparent py-4 pr-6 rounded-r-2xl">
               <p className="text-xl italic text-gray-700 dark:text-gray-200 leading-relaxed">
-                {paragraph.replace('> ', '')}
+                {text}
               </p>
             </blockquote>
           );
@@ -221,11 +232,17 @@ const shareOnSocial = (platform: string) => {
           );
         }
 
-        // Liens et formatage inline
+        // Formatage inline avec dangerouslySetInnerHTML
+        // Ordre important: traiter **...**  avant  *...*
         let formattedText = paragraph
-          .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-midnight dark:text-yellow-400">$1</strong>')
-          .replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>')
-          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-yellow-400 hover:text-yellow-500 font-medium underline decoration-2 underline-offset-2" target="_blank" rel="noopener noreferrer">$1</a>');
+          // Gras: **...**
+          .replace(/\*\*([^*]+?)\*\*/g, '<strong class="font-bold text-midnight dark:text-yellow-400">$1</strong>')
+          // Italique: *...*
+          .replace(/\*([^*]+?)\*/g, '<em class="italic text-gray-800 dark:text-gray-100">$1</em>')
+          // Liens: [texte](url)
+          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-yellow-400 hover:text-yellow-500 font-medium underline decoration-2 underline-offset-2" target="_blank" rel="noopener noreferrer">$1</a>')
+          // Code inline: `...`
+          .replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 rounded font-mono text-sm">$1</code>');
 
         return (
           <p
