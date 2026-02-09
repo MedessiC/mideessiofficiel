@@ -58,7 +58,7 @@ const renderMarkdownContent = (content: string) => {
       return line;
     }
     if (line.trim()) {
-      return `<p class="text-xs sm:text-sm md:text-base text-gray-700 dark:text-gray-300 mb-3 sm:mb-4 leading-relaxed">${line}</p>`;
+      return `<p class="text-sm sm:text-base md:text-base lg:text-lg text-gray-700 dark:text-gray-300 mb-3 sm:mb-4 leading-relaxed">${line}</p>`;
     }
     return line;
   }).join('\n');

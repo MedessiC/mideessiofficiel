@@ -179,7 +179,7 @@ const shareOnSocial = (platform: string) => {
           return (
             <ul key={index} className="space-y-2 sm:space-y-3 my-4 sm:my-6 pl-3 sm:pl-4">
               {items.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm md:text-base text-gray-700 dark:text-gray-200 leading-relaxed">
+                <li key={i} className="flex items-start gap-2 sm:gap-3 text-sm sm:text-base md:text-base text-gray-700 dark:text-gray-200 leading-relaxed">
                   <span className="w-2 h-2 bg-yellow-400 rounded-full mt-1.5 sm:mt-2.5 flex-shrink-0"></span>
                   <span>{item.replace(/^- /, '')}</span>
                 </li>
@@ -193,7 +193,7 @@ const shareOnSocial = (platform: string) => {
           const text = paragraph.replace(/^> /, '');
           return (
             <blockquote key={index} className="my-4 sm:my-6 md:my-8 pl-3 sm:pl-6 border-l-4 border-yellow-400 bg-gradient-to-r from-yellow-50 to-transparent dark:from-yellow-900/20 dark:to-transparent py-3 sm:py-4 pr-3 sm:pr-6 rounded-r-2xl">
-              <p className="text-xs sm:text-sm md:text-lg lg:text-xl italic text-gray-700 dark:text-gray-200 leading-relaxed">
+              <p className="text-sm sm:text-base md:text-base lg:text-lg italic text-gray-700 dark:text-gray-200 leading-relaxed">
                 {text}
               </p>
             </blockquote>
@@ -247,7 +247,7 @@ const shareOnSocial = (platform: string) => {
         return (
           <p
             key={index}
-            className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-700 dark:text-gray-200 leading-relaxed mb-3 sm:mb-4 md:mb-6"
+            className="text-sm sm:text-base md:text-base lg:text-lg text-gray-700 dark:text-gray-200 leading-relaxed mb-3 sm:mb-4 md:mb-6"
             dangerouslySetInnerHTML={{ __html: formattedText }}
           />
         );
@@ -370,7 +370,7 @@ const shareOnSocial = (platform: string) => {
             {post.title}
           </h1>
 
-          <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-600 dark:text-gray-300 leading-relaxed mb-6 sm:mb-8">
+          <p className="text-sm sm:text-base md:text-base lg:text-lg xl:text-xl text-gray-600 dark:text-gray-300 leading-relaxed mb-6 sm:mb-8">
             {post.excerpt}
           </p>
 
@@ -500,7 +500,7 @@ const shareOnSocial = (platform: string) => {
             Vous avez aimé cet article ?
           </h3>
           <div className="w-16 sm:w-20 h-1 bg-yellow-400 rounded-full mb-4 sm:mb-6"></div>
-          <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-200 mb-6 sm:mb-8 leading-relaxed max-w-2xl">
+          <p className="text-sm sm:text-base md:text-base lg:text-lg text-gray-200 mb-6 sm:mb-8 leading-relaxed max-w-2xl">
             Rejoignez le mouvement MIDEESSI et restez informé de nos dernières innovations et actualités technologiques.
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
@@ -558,7 +558,7 @@ const shareOnSocial = (platform: string) => {
                         {relatedPost.category}
                       </span>
                     </div>
-                    <h3 className="text-sm sm:text-lg font-bold text-midnight dark:text-white mb-2 group-hover:text-yellow-400 transition-colors line-clamp-2 leading-tight">
+                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-midnight dark:text-white mb-2 group-hover:text-yellow-400 transition-colors line-clamp-2 leading-tight">
                       {relatedPost.title}
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
