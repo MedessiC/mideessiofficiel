@@ -151,7 +151,7 @@ const shareOnSocial = (platform: string) => {
         if (paragraph.startsWith('# ')) {
           const text = paragraph.replace(/^# /, '');
           return (
-            <h1 key={index} className="text-4xl md:text-5xl font-bold text-midnight dark:text-white mt-14 mb-8 leading-tight">
+            <h1 key={index} className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-midnight dark:text-white mt-8 sm:mt-10 md:mt-14 mb-4 sm:mb-6 md:mb-8 leading-tight">
               {text}
             </h1>
           );
@@ -159,7 +159,7 @@ const shareOnSocial = (platform: string) => {
         if (paragraph.startsWith('## ')) {
           const text = paragraph.replace(/^## /, '');
           return (
-            <h2 key={index} className="text-3xl md:text-4xl font-bold text-midnight dark:text-white mt-12 mb-6 leading-tight">
+            <h2 key={index} className="text-lg sm:text-xl md:text-3xl lg:text-4xl font-bold text-midnight dark:text-white mt-8 sm:mt-10 md:mt-12 mb-4 sm:mb-5 md:mb-6 leading-tight">
               {text}
             </h2>
           );
@@ -167,7 +167,7 @@ const shareOnSocial = (platform: string) => {
         if (paragraph.startsWith('### ')) {
           const text = paragraph.replace(/^### /, '');
           return (
-            <h3 key={index} className="text-2xl md:text-3xl font-bold text-midnight dark:text-white mt-10 mb-5 leading-tight">
+            <h3 key={index} className="text-base sm:text-lg md:text-2xl lg:text-3xl font-bold text-midnight dark:text-white mt-6 sm:mt-8 md:mt-10 mb-3 sm:mb-4 md:mb-5 leading-tight">
               {text}
             </h3>
           );
@@ -177,10 +177,10 @@ const shareOnSocial = (platform: string) => {
         if (paragraph.startsWith('- ')) {
           const items = paragraph.split('\n');
           return (
-            <ul key={index} className="space-y-3 my-6 pl-4">
+            <ul key={index} className="space-y-2 sm:space-y-3 my-4 sm:my-6 pl-3 sm:pl-4">
               {items.map((item, i) => (
-                <li key={i} className="flex items-start gap-3 text-gray-700 dark:text-gray-200 text-lg leading-relaxed">
-                  <span className="w-2 h-2 bg-yellow-400 rounded-full mt-2.5 flex-shrink-0"></span>
+                <li key={i} className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm md:text-base text-gray-700 dark:text-gray-200 leading-relaxed">
+                  <span className="w-2 h-2 bg-yellow-400 rounded-full mt-1.5 sm:mt-2.5 flex-shrink-0"></span>
                   <span>{item.replace(/^- /, '')}</span>
                 </li>
               ))}
@@ -192,8 +192,8 @@ const shareOnSocial = (platform: string) => {
         if (paragraph.startsWith('> ')) {
           const text = paragraph.replace(/^> /, '');
           return (
-            <blockquote key={index} className="my-8 pl-6 border-l-4 border-yellow-400 bg-gradient-to-r from-yellow-50 to-transparent dark:from-yellow-900/20 dark:to-transparent py-4 pr-6 rounded-r-2xl">
-              <p className="text-xl italic text-gray-700 dark:text-gray-200 leading-relaxed">
+            <blockquote key={index} className="my-4 sm:my-6 md:my-8 pl-3 sm:pl-6 border-l-4 border-yellow-400 bg-gradient-to-r from-yellow-50 to-transparent dark:from-yellow-900/20 dark:to-transparent py-3 sm:py-4 pr-3 sm:pr-6 rounded-r-2xl">
+              <p className="text-xs sm:text-sm md:text-lg lg:text-xl italic text-gray-700 dark:text-gray-200 leading-relaxed">
                 {text}
               </p>
             </blockquote>
@@ -204,8 +204,8 @@ const shareOnSocial = (platform: string) => {
         const imgMatch = paragraph.match(/!\[([^\]]*)\]\(([^)]+)\)/);
         if (imgMatch) {
           return (
-            <figure key={index} className="my-10">
-              <div className="rounded-3xl overflow-hidden shadow-2xl">
+            <figure key={index} className="my-6 sm:my-8 md:my-10">
+              <div className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg sm:shadow-2xl">
                 <img
                   src={imgMatch[2]}
                   alt={imgMatch[1]}
@@ -214,7 +214,7 @@ const shareOnSocial = (platform: string) => {
                 />
               </div>
               {imgMatch[1] && (
-                <figcaption className="text-sm text-gray-500 dark:text-gray-400 text-center mt-4 italic">
+                <figcaption className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center mt-2 sm:mt-4 italic">
                   {imgMatch[1]}
                 </figcaption>
               )}
@@ -226,8 +226,8 @@ const shareOnSocial = (platform: string) => {
         if (paragraph.startsWith('```')) {
           const codeContent = paragraph.replace(/```\w*\n?/, '').replace(/```$/, '');
           return (
-            <pre key={index} className="my-8 p-6 bg-gray-900 rounded-2xl overflow-x-auto shadow-lg">
-              <code className="text-sm text-gray-100 font-mono">{codeContent}</code>
+            <pre key={index} className="my-4 sm:my-6 md:my-8 p-3 sm:p-4 md:p-6 bg-gray-900 rounded-xl sm:rounded-2xl overflow-x-auto shadow-md sm:shadow-lg">
+              <code className="text-xs sm:text-sm text-gray-100 font-mono">{codeContent}</code>
             </pre>
           );
         }
@@ -247,7 +247,7 @@ const shareOnSocial = (platform: string) => {
         return (
           <p
             key={index}
-            className="text-lg md:text-xl text-gray-700 dark:text-gray-200 leading-relaxed mb-6"
+            className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-700 dark:text-gray-200 leading-relaxed mb-3 sm:mb-4 md:mb-6"
             dangerouslySetInnerHTML={{ __html: formattedText }}
           />
         );
@@ -269,10 +269,10 @@ const shareOnSocial = (platform: string) => {
           <div className="w-24 h-24 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-8">
             <ArrowLeft className="w-12 h-12 text-midnight" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-midnight dark:text-white mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-midnight dark:text-white mb-4">
             Article introuvable
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 mb-10 max-w-md mx-auto">
+          <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 dark:text-gray-300 mb-10 max-w-md mx-auto">
             L'article que vous recherchez n'existe pas ou a été supprimé.
           </p>
           <Link
@@ -343,46 +343,46 @@ const shareOnSocial = (platform: string) => {
         </Link>
 
         {/* En-tête de l'article */}
-        <header className="mb-12">
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <span className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-midnight rounded-full font-bold text-sm shadow-md">
+        <header className="mb-8 sm:mb-10 md:mb-12">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+            <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-midnight rounded-full font-bold text-xs sm:text-sm shadow-md">
               {post.category}
             </span>
-            <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-              <Calendar className="w-4 h-4" />
+            <span className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              <Calendar className="w-3 sm:w-4 h-3 sm:h-4" />
               {new Date(post.published_at).toLocaleDateString('fr-FR', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
               })}
             </span>
-            <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-              <Clock className="w-4 h-4" />
+            <span className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              <Clock className="w-3 sm:w-4 h-3 sm:h-4" />
               {calculateReadingTime(post.content)} min
             </span>
-            <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-              <Eye className="w-4 h-4" />
+            <span className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              <Eye className="w-3 sm:w-4 h-3 sm:h-4" />
               {post.views || 0} vues
             </span>
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-bold text-midnight dark:text-white mb-8 leading-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-midnight dark:text-white mb-4 sm:mb-6 md:mb-8 leading-tight">
             {post.title}
           </h1>
 
-          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
+          <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-600 dark:text-gray-300 leading-relaxed mb-6 sm:mb-8">
             {post.excerpt}
           </p>
 
           {/* Info auteur */}
-          <div className="flex items-center justify-between py-6 border-y-2 border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
-                <User className="w-7 h-7 text-midnight" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 py-4 sm:py-6 border-y-2 border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 sm:w-14 h-10 sm:h-14 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <User className="w-5 sm:w-7 h-5 sm:h-7 text-midnight" />
               </div>
               <div>
-                <p className="font-bold text-midnight dark:text-white text-lg">{post.author}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Auteur</p>
+                <p className="font-bold text-midnight dark:text-white text-sm sm:text-base md:text-lg">{post.author}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Auteur</p>
               </div>
             </div>
 
@@ -465,7 +465,7 @@ const shareOnSocial = (platform: string) => {
         </header>
 
         {/* Image principale */}
-        <div className="relative rounded-3xl overflow-hidden mb-12 shadow-2xl">
+        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden mb-8 sm:mb-12 shadow-lg sm:shadow-2xl">
           <div className="aspect-video bg-gray-100 dark:bg-gray-800">
             <img
               src={post.image_url}
@@ -477,12 +477,12 @@ const shareOnSocial = (platform: string) => {
         </div>
 
         {/* Tags */}
-        <div className="flex flex-wrap items-center gap-3 py-6 mb-8">
-          <Tag className="w-5 h-5 text-yellow-400" />
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 py-4 sm:py-6 mb-6 sm:mb-8">
+          <Tag className="w-4 sm:w-5 h-4 sm:h-5 text-yellow-400" />
           {post.tags.map((tag, index) => (
             <span
               key={index}
-              className="px-4 py-2 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-full hover:bg-gradient-to-br hover:from-yellow-400 hover:to-yellow-500 hover:text-midnight transition-all cursor-pointer border-2 border-gray-200 dark:border-gray-700 hover:border-yellow-400"
+              className="px-3 sm:px-4 py-1 sm:py-2 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 text-gray-700 dark:text-gray-300 text-xs sm:text-sm font-medium rounded-full hover:bg-gradient-to-br hover:from-yellow-400 hover:to-yellow-500 hover:text-midnight transition-all cursor-pointer border-2 border-gray-200 dark:border-gray-700 hover:border-yellow-400"
             >
               #{tag}
             </span>
@@ -490,29 +490,29 @@ const shareOnSocial = (platform: string) => {
         </div>
 
         {/* Contenu formaté */}
-        <div className="prose prose-xl dark:prose-invert max-w-none mb-16">
+        <div className="prose dark:prose-invert md:prose-lg max-w-none mb-12 sm:mb-16">
           {formatContent(post.content)}
         </div>
 
         {/* Call to action */}
-        <div className="my-16 p-8 md:p-12 bg-gradient-to-br from-midnight via-blue-900 to-midnight dark:from-gray-800 dark:to-gray-900 rounded-3xl border-2 border-yellow-400 shadow-2xl">
-          <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
+        <div className="my-12 sm:my-16 p-4 sm:p-8 md:p-12 bg-gradient-to-br from-midnight via-blue-900 to-midnight dark:from-gray-800 dark:to-gray-900 rounded-2xl sm:rounded-3xl border-2 border-yellow-400 shadow-lg sm:shadow-2xl">
+          <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4">
             Vous avez aimé cet article ?
           </h3>
-          <div className="w-20 h-1 bg-yellow-400 rounded-full mb-6"></div>
-          <p className="text-lg text-gray-200 mb-8 leading-relaxed max-w-2xl">
+          <div className="w-16 sm:w-20 h-1 bg-yellow-400 rounded-full mb-4 sm:mb-6"></div>
+          <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-200 mb-6 sm:mb-8 leading-relaxed max-w-2xl">
             Rejoignez le mouvement MIDEESSI et restez informé de nos dernières innovations et actualités technologiques.
           </p>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
             <Link
               to="/contact"
-              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-midnight font-bold rounded-full transition-all transform hover:scale-105 shadow-lg"
+              className="inline-flex items-center px-6 sm:px-8 py-2.5 sm:py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-midnight font-bold text-sm sm:text-base rounded-full transition-all transform hover:scale-105 shadow-lg"
             >
               Nous contacter
             </Link>
             <Link
               to="/blog"
-              className="inline-flex items-center px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-bold rounded-full border-2 border-white/30 transition-all"
+              className="inline-flex items-center px-6 sm:px-8 py-2.5 sm:py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-bold text-sm sm:text-base rounded-full border-2 border-white/30 transition-all"
             >
               Plus d'articles
             </Link>
@@ -521,26 +521,26 @@ const shareOnSocial = (platform: string) => {
 
         {/* Articles similaires */}
         {relatedPosts.length > 0 && (
-          <section className="mt-20 pt-12 border-t-2 border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3 mb-10">
-              <div className="w-12 h-12 bg-yellow-400/20 rounded-2xl flex items-center justify-center">
-                <MessageCircle className="w-6 h-6 text-yellow-400" />
+          <section className="mt-12 sm:mt-16 md:mt-20 pt-8 sm:pt-10 md:pt-12 border-t-2 border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2 sm:gap-3 mb-8 sm:mb-10">
+              <div className="w-10 sm:w-12 h-10 sm:h-12 bg-yellow-400/20 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-5 sm:w-6 h-5 sm:h-6 text-yellow-400" />
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-midnight dark:text-white">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-midnight dark:text-white">
                 Articles similaires
               </h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
               {relatedPosts.map((relatedPost, index) => (
                 <Link
                   key={relatedPost.id}
                   to={`/blog/${relatedPost.slug}`}
-                  className="group bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-500 border-2 border-gray-200 dark:border-gray-700 hover:border-yellow-400 dark:hover:border-yellow-400 transform hover:-translate-y-1"
+                  className="group bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl sm:rounded-3xl overflow-hidden hover:shadow-lg sm:hover:shadow-2xl transition-all duration-500 border-2 border-gray-200 dark:border-gray-700 hover:border-yellow-400 dark:hover:border-yellow-400 transform hover:-translate-y-1"
                   style={{
                     animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`
                   }}
                 >
-                  <div className="relative h-48 overflow-hidden bg-gray-100 dark:bg-gray-700">
+                  <div className="relative h-36 sm:h-48 overflow-hidden bg-gray-100 dark:bg-gray-700">
                     <img
                       src={relatedPost.image_url}
                       alt={relatedPost.title}
@@ -549,19 +549,19 @@ const shareOnSocial = (platform: string) => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-midnight/60 via-transparent to-transparent"></div>
                   </div>
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>{new Date(relatedPost.published_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                  <div className="p-4 sm:p-6">
+                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-2 sm:mb-3">
+                      <Calendar className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+                      <span className="text-xs">{new Date(relatedPost.published_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
                       <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                      <span className="px-2 py-0.5 bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 rounded-full font-semibold">
+                      <span className="px-2 py-0.5 bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 rounded-full font-semibold text-xs">
                         {relatedPost.category}
                       </span>
                     </div>
-                    <h3 className="text-lg font-bold text-midnight dark:text-white mb-2 group-hover:text-yellow-400 transition-colors line-clamp-2 leading-tight">
+                    <h3 className="text-sm sm:text-lg font-bold text-midnight dark:text-white mb-2 group-hover:text-yellow-400 transition-colors line-clamp-2 leading-tight">
                       {relatedPost.title}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
                       {relatedPost.excerpt}
                     </p>
                   </div>
