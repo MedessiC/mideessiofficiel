@@ -6,6 +6,7 @@ import CookieConsent from './components/CookieConsent';
 import NewHome from './pages/NewHome';
 import About from './pages/About';
 import Learn from './pages/Learn';
+import Library from './pages/Library';
 import Solutions from './pages/Solutions';
 import Projects from './pages/Projects';
 import SolutionDetail from './pages/SolutionDetail';
@@ -35,6 +36,7 @@ function AppContent() {
           <Route path="/blog" element={<NewBlog />} />
           <Route path="/blog/:slug" element={<NewBlogPost />} />
           <Route path ="/learn" element={<Learn />} />
+          <Route path="/library" element={<Library />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
