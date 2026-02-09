@@ -97,7 +97,7 @@ const Learn = () => {
   return (
     <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
       {/* Hero Section - Midnight Theme */}
-      <section className="relative bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white py-12 md:py-20 lg:py-24 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white py-10 md:py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 right-5 md:top-20 md:right-10 w-40 h-40 md:w-72 md:h-72 bg-gold rounded-full blur-3xl"></div>
           <div className="absolute -bottom-10 -left-5 md:bottom-20 md:left-10 w-48 h-48 md:w-96 md:h-96 bg-blue-500 rounded-full blur-3xl"></div>
@@ -105,78 +105,83 @@ const Learn = () => {
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold mb-4 md:mb-6 tracking-tight leading-tight">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 tracking-tight leading-tight">
               MIDEESSI <span className="text-gold">Learn</span>
             </h1>
             
-            <p className="text-base md:text-lg lg:text-xl text-gray-200 max-w-3xl mx-auto mb-6 md:mb-8 font-light leading-relaxed">
+            <p className="text-sm md:text-base lg:text-lg text-gray-200 max-w-3xl mx-auto mb-6 md:mb-8 font-light leading-relaxed">
               Apprenez la technologie depuis votre téléphone avec des PDFs de qualité professionnelle
             </p>
             
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mb-8 md:mb-12 max-w-2xl mx-auto">
-              <div className="text-lg md:text-2xl font-bold text-gold">
-                1000 FCFA
+            {/* Prix et infos principales en une seule ligne */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 mb-6 md:mb-8 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xl md:text-2xl font-bold text-gold">1000 FCFA</span>
+                <span className="text-gold text-opacity-50">/</span>
+                <span className="text-xs md:text-sm text-gray-300">Par PDF</span>
               </div>
-              <div className="hidden sm:block text-gold">/</div>
-              <div className="text-sm md:text-base text-gray-200 font-medium">
-                Par PDF • Accès illimité
+              <div className="hidden sm:block w-px h-6 bg-gold/30"></div>
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-gold" />
+                <span className="text-xs md:text-sm text-gray-300">Accès illimité</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12 max-w-4xl mx-auto">
-              <div className="bg-white/10 backdrop-blur-md rounded-xl md:rounded-2xl p-4 md:p-6 border border-gold/30 hover:border-gold/60 transition-all">
-                <div className="flex items-center gap-3 mb-2">
-                  <Clock className="w-5 h-5 md:w-6 md:h-6 text-gold flex-shrink-0" />
-                  <p className="font-bold text-sm md:text-base">Hebdomadaire</p>
+            {/* 3 Features en ligne compacte */}
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-8 max-w-4xl mx-auto justify-center">
+              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-lg md:rounded-xl px-4 md:px-5 py-3 border border-gold/30 hover:border-gold/60 transition-all">
+                <Clock className="w-5 h-5 md:w-6 md:h-6 text-gold flex-shrink-0" />
+                <div className="text-left">
+                  <p className="font-bold text-xs md:text-sm">Hebdomadaire</p>
+                  <p className="text-xs text-gray-300">Nouveau contenu</p>
                 </div>
-                <p className="text-xs md:text-sm text-gray-300">Nouveau contenu chaque semaine</p>
               </div>
               
-              <div className="bg-white/10 backdrop-blur-md rounded-xl md:rounded-2xl p-4 md:p-6 border border-gold/30 hover:border-gold/60 transition-all">
-                <div className="flex items-center gap-3 mb-2">
-                  <Smartphone className="w-5 h-5 md:w-6 md:h-6 text-gold flex-shrink-0" />
-                  <p className="font-bold text-sm md:text-base">100% Mobile</p>
+              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-lg md:rounded-xl px-4 md:px-5 py-3 border border-gold/30 hover:border-gold/60 transition-all">
+                <Smartphone className="w-5 h-5 md:w-6 md:h-6 text-gold flex-shrink-0" />
+                <div className="text-left">
+                  <p className="font-bold text-xs md:text-sm">100% Mobile</p>
+                  <p className="text-xs text-gray-300">Sans PC • Hors ligne</p>
                 </div>
-                <p className="text-xs md:text-sm text-gray-300">Sans PC requis • Hors ligne</p>
               </div>
               
-              <div className="bg-white/10 backdrop-blur-md rounded-xl md:rounded-2xl p-4 md:p-6 border border-gold/30 hover:border-gold/60 transition-all">
-                <div className="flex items-center gap-3 mb-2">
-                  <Award className="w-5 h-5 md:w-6 md:h-6 text-gold flex-shrink-0" />
-                  <p className="font-bold text-sm md:text-base">Expert Local</p>
+              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-lg md:rounded-xl px-4 md:px-5 py-3 border border-gold/30 hover:border-gold/60 transition-all">
+                <Award className="w-5 h-5 md:w-6 md:h-6 text-gold flex-shrink-0" />
+                <div className="text-left">
+                  <p className="font-bold text-xs md:text-sm">Expert Local</p>
+                  <p className="text-xs text-gray-300">Par experts béninois</p>
                 </div>
-                <p className="text-xs md:text-sm text-gray-300">Créé par des experts béninois</p>
               </div>
             </div>
 
             <a 
               href="#pdfs" 
-              className="inline-flex items-center gap-2 bg-gold hover:bg-yellow-500 text-midnight font-bold px-6 md:px-8 py-3 md:py-4 rounded-lg md:rounded-xl transition-all shadow-lg hover:scale-105 text-sm md:text-base"
+              className="inline-flex items-center gap-2 bg-gold hover:bg-yellow-500 text-midnight font-bold px-6 md:px-8 py-2.5 md:py-3 rounded-lg md:rounded-xl transition-all shadow-lg hover:scale-105 text-sm md:text-base"
             >
-              <BookOpen className="w-5 h-5" />
+              <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
               Découvrir les PDFs
             </a>
           </div>
         </div>
 
-        {/* Trust Indicators */}
-        <div className="relative mt-12 md:mt-16 max-w-5xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center">
+        {/* Trust Indicators - Ligne compacte */}
+        <div className="relative mt-8 md:mt-10 max-w-5xl mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-gold mb-1">1000F</p>
-              <p className="text-xs md:text-sm text-gray-300">Prix unique</p>
+              <p className="text-lg md:text-2xl font-bold text-gold mb-0.5">1000F</p>
+              <p className="text-xs text-gray-300">Prix unique</p>
             </div>
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-gold mb-1">52+</p>
-              <p className="text-xs md:text-sm text-gray-300">PDFs par an</p>
+              <p className="text-lg md:text-2xl font-bold text-gold mb-0.5">52+</p>
+              <p className="text-xs text-gray-300">PDFs/an</p>
             </div>
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-gold mb-1">500+</p>
-              <p className="text-xs md:text-sm text-gray-300">Étudiants actifs</p>
+              <p className="text-lg md:text-2xl font-bold text-gold mb-0.5">500+</p>
+              <p className="text-xs text-gray-300">Étudiants</p>
             </div>
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-gold mb-1">4.8/5</p>
-              <p className="text-xs md:text-sm text-gray-300">Note moyenne</p>
+              <p className="text-lg md:text-2xl font-bold text-gold mb-0.5">4.8/5</p>
+              <p className="text-xs text-gray-300">Note moy.</p>
             </div>
           </div>
         </div>
