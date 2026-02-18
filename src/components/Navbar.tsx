@@ -1,18 +1,16 @@
-import { Menu, X, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import CommandPalette from './CommandPalette';
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
   const links = [
-    { href: '/', label: 'Accueil' },
-    { href: '/about', label: 'À propos' },
-        { href: '/learn', label: 'Apprendre' },
-    { href: '/solutions', label: 'Solutions' },
+    { href: '/learn', label: 'Apprendre' },
     { href: '/blog', label: 'Blog' },
-    { href: '/contact', label: 'Contact' },
+    { href: '/solutions', label: 'Solutions' },
+    { href: '/about', label: 'À propos' },
   ];
 
   // Fonction pour déterminer si c'est la nuit (18h-6h)
@@ -84,19 +82,10 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Bloquer le scroll quand le menu mobile est ouvert
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
+  // Bloquer le scroll when stuff opens (not needed anymore since no mobile menu)
+  // Removed old scroll blocking code
 
-  const isActive = (path) => {
+  const isActive = (path: string) => {
     if (typeof window !== 'undefined') {
       return window.location.pathname === path;
     }
@@ -147,7 +136,7 @@ const Navbar = () => {
               </div>
             </a>
 
-            {/* Navigation Desktop avec indicateur animé */}
+            {/* Navigation Desktop - Simplified + Command Palette */}
             <div className="hidden md:flex items-center space-x-1">
               {links.map((link) => (
                 <a
@@ -158,46 +147,50 @@ const Navbar = () => {
                   <span
                     className={`text-sm font-semibold transition-colors duration-200 ${
                       isActive(link.href)
-                        ? 'text-blue-600'
-                        : 'text-gray-700 dark:text-gray-200 group-hover:text-blue-600'
+                        ? 'text-[#ffd700]'
+                        : 'text-gray-700 dark:text-gray-200 group-hover:text-[#ffd700]'
                     }`}
                   >
                     {link.label}
                   </span>
                   {isActive(link.href) && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 animate-[slideIn_0.3s_ease-out]" />
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#ffd700]" />
                   )}
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#ffd700] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                 </a>
               ))}
 
-              {/* Toggle theme avec animation */}
-              <button
-                onClick={toggleTheme}
-                className="ml-4 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-110 active:scale-95"
-                aria-label="Toggle theme"
-              >
-                <div className="relative w-5 h-5">
-                  <Sun
-                    className={`w-5 h-5 text-blue-600 absolute inset-0 transition-all duration-500 ${
-                      isDark
-                        ? 'rotate-0 opacity-100 scale-100'
-                        : 'rotate-90 opacity-0 scale-0'
-                    }`}
-                  />
-                  <Moon
-                    className={`w-5 h-5 text-blue-600 absolute inset-0 transition-all duration-500 ${
-                      isDark
-                        ? '-rotate-90 opacity-0 scale-0'
-                        : 'rotate-0 opacity-100 scale-100'
-                    }`}
-                  />
-                </div>
-              </button>
+              {/* Command Palette + Theme Toggle */}
+              <div className="flex items-center gap-2 ml-6 pl-6 border-l border-gray-200 dark:border-gray-700">
+                <CommandPalette />
+
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-110 active:scale-95"
+                  aria-label="Toggle theme"
+                >
+                  <div className="relative w-5 h-5">
+                    <Sun
+                      className={`w-5 h-5 text-[#ffd700] absolute inset-0 transition-all duration-500 ${
+                        isDark
+                          ? 'rotate-0 opacity-100 scale-100'
+                          : 'rotate-90 opacity-0 scale-0'
+                      }`}
+                    />
+                    <Moon
+                      className={`w-5 h-5 text-[#ffd700] absolute inset-0 transition-all duration-500 ${
+                        isDark
+                          ? '-rotate-90 opacity-0 scale-0'
+                          : 'rotate-0 opacity-100 scale-100'
+                      }`}
+                    />
+                  </div>
+                </button>
+              </div>
             </div>
 
-            {/* Boutons Mobile */}
-            <div className="md:hidden flex items-center space-x-2">
+            {/* Mobile: Theme Toggle Only (Navigation moved to BottomNavigation) */}
+            <div className="md:hidden">
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 active:scale-95"
@@ -205,36 +198,17 @@ const Navbar = () => {
               >
                 <div className="relative w-5 h-5">
                   <Sun
-                    className={`w-5 h-5 text-blue-600 absolute inset-0 transition-all duration-500 ${
+                    className={`w-5 h-5 text-[#ffd700] absolute inset-0 transition-all duration-500 ${
                       isDark
                         ? 'rotate-0 opacity-100 scale-100'
                         : 'rotate-90 opacity-0 scale-0'
                     }`}
                   />
                   <Moon
-                    className={`w-5 h-5 text-blue-600 absolute inset-0 transition-all duration-500 ${
+                    className={`w-5 h-5 text-[#ffd700] absolute inset-0 transition-all duration-500 ${
                       isDark
                         ? '-rotate-90 opacity-0 scale-0'
                         : 'rotate-0 opacity-100 scale-100'
-                    }`}
-                  />
-                </div>
-              </button>
-
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="text-gray-900 dark:text-white hover:text-blue-600 transition-all duration-300 active:scale-95"
-                aria-label="Toggle menu"
-              >
-                <div className="relative w-6 h-6">
-                  <Menu
-                    className={`w-6 h-6 absolute inset-0 transition-all duration-300 ${
-                      isOpen ? 'rotate-90 opacity-0 scale-0' : 'rotate-0 opacity-100 scale-100'
-                    }`}
-                  />
-                  <X
-                    className={`w-6 h-6 absolute inset-0 transition-all duration-300 ${
-                      isOpen ? 'rotate-0 opacity-100 scale-100' : '-rotate-90 opacity-0 scale-0'
                     }`}
                   />
                 </div>
@@ -243,63 +217,6 @@ const Navbar = () => {
           </div>
         </div>
       </nav>
-
-      {/* Menu Mobile avec animation slide */}
-      <div
-        className={`fixed inset-0 z-40 md:hidden transition-all duration-300 ${
-          isOpen ? 'visible' : 'invisible'
-        }`}
-      >
-        <div
-          className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
-            isOpen ? 'opacity-100' : 'opacity-0'
-          }`}
-          onClick={() => setIsOpen(false)}
-        />
-
-        <div
-          className={`absolute top-16 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-2xl transition-transform duration-300 ${
-            isOpen ? 'translate-y-0' : '-translate-y-full'
-          }`}
-        >
-          <div className="px-4 pt-4 pb-6 space-y-2 max-h-[calc(100vh-4rem)] overflow-y-auto">
-            {links.map((link, index) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className={`block px-4 py-3 rounded-lg text-base font-semibold transition-all duration-200 transform ${
-                  isActive(link.href)
-                    ? 'bg-blue-50 dark:bg-gray-800 text-blue-600 scale-105 shadow-md'
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-blue-600 hover:translate-x-2'
-                }`}
-                style={{
-                  transitionDelay: isOpen ? `${index * 50}ms` : '0ms',
-                  opacity: isOpen ? 1 : 0,
-                  transform: isOpen ? 'translateY(0)' : 'translateY(-10px)',
-                }}
-              >
-                <span className="flex items-center justify-between">
-                  {link.label}
-                  {isActive(link.href) && (
-                    <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
-                  )}
-                </span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes slideIn {
-          from {
-            transform: scaleX(0);
-          }
-          to {
-            transform: scaleX(1);
-          }
-        }
-      `}</style>
     </>
   );
 };

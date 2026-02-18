@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Navbar from './components/Navbar';
+import BottomNavigation from './components/BottomNavigation';
 import Footer from './components/Footer';
 import CookieConsent from './components/CookieConsent';
 import NewHome from './pages/NewHome';
@@ -48,6 +49,7 @@ function AppContent() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+      {!isAdminRoute && <BottomNavigation />}
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <CookieConsent />}
     </div>
