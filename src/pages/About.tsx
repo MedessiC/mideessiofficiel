@@ -1,4 +1,6 @@
-import { Target, BookOpen, Lightbulb, Users, Flag, MapPin, Calendar, Rocket } from 'lucide-react';
+import { BookOpen, Lightbulb, Users, Flag, MapPin, Calendar, Rocket } from 'lucide-react';
+import TeamMemberCard from '../components/TeamMemberCard';
+import { teamMembers } from '../data/teamMembers';
 
 const About = () => {
   const values = [
@@ -277,8 +279,48 @@ const About = () => {
         </div>
       </section>
 
+      {/* Nos Membres */}
+      <section className="py-16 md:py-24 lg:py-32 bg-gradient-to-b from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="text-center mb-16 md:mb-20">
+            <div className="inline-block mb-4">
+              <span className="text-sm font-bold text-gold uppercase tracking-widest">L'Équipe MIDEESSI</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-midnight dark:text-white mb-4 leading-tight">
+              Les talents qui font <span className="text-gold">MIDEESSI</span>
+            </h2>
+            <div className="w-16 sm:w-20 md:w-24 h-1 bg-gradient-to-r from-gold to-gold/50 mx-auto rounded-full mt-6"></div>
+            <p className="text-gray-600 dark:text-gray-300 mt-6 text-base md:text-lg max-w-2xl mx-auto">
+              Une équipe de jeunes talents béninois passionnés, dédiés à l'innovation et à l'indépendance technologique
+            </p>
+          </div>
+
+          {/* Team Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 md:gap-16 lg:gap-20 max-w-5xl mx-auto">
+            {teamMembers.map((member) => (
+              <TeamMemberCard key={member.id} member={member} />
+            ))}
+          </div>
+
+          {/* CTA Section */}
+          <div className="mt-16 md:mt-20 text-center">
+            <p className="text-gray-600 dark:text-gray-300 mb-6 text-base md:text-lg">
+              Vous souhaitez rejoindre l'aventure MIDEESSI ?
+            </p>
+            <a
+              href="/contact"
+              className="inline-flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-gold to-yellow-600 text-midnight font-bold rounded-full hover:shadow-lg hover:shadow-gold/30 transition-all duration-300 hover:-translate-y-0.5"
+            >
+              Postulez maintenant
+              <span className="text-lg">→</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Timeline */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-800">
+      <section className="py-20 bg-white dark:bg-gray-900">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">Notre Évolution</h2>

@@ -19,6 +19,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminPostEditor from './pages/AdminPostEditor';
 import AdminPdfs from './pages/AdminPdfs';
 import ShareRedirect from './pages/ShareRedirect';
+import TeamMemberProfile from './pages/TeamMemberProfile';
 function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -30,6 +31,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<NewHome />} />
           <Route path="/about" element={<About />} />
+          <Route path="/team/:id" element={<TeamMemberProfile />} />
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/solutions/:slug" element={<SolutionDetail />} />
           <Route path="/projects" element={<Projects />} />

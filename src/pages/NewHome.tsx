@@ -1,10 +1,12 @@
 import {
   ArrowRight, TrendingUp, Shield, Zap, Users, Award,
   CheckCircle, Building2, Heart, Lightbulb, HandHeart, Globe, ChevronLeft, ChevronRight, ChevronUp,
-  BookOpen, Download, Star, Calendar, Clock, Target, Filter, Search, ExternalLink
+  BookOpen, Download, Star, ExternalLink
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+// import NewsletterSignup from '../components/NewsletterSignup';
+// import MIDEESSIStats from '../components/MIDEESSIStats';
 
 const FeaturedPostSkeleton = () => (
   <div className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 animate-pulse">
@@ -205,10 +207,6 @@ const NewHome = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 relative overflow-hidden transition-colors duration-300">
-      <div className="fixed inset-0 pointer-events-none opacity-[0.15] dark:opacity-20 z-0">
-        <div className="african-pattern"></div>
-      </div>
-
       <button
         onClick={scrollToTop}
         className={`fixed bottom-8 right-8 z-50 p-4 bg-[#ffd700] text-[#191970] rounded-full shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-[#ffd700]/50 ${
@@ -845,6 +843,12 @@ const NewHome = () => {
         </div>
       </section>
 
+      {/* MIDEESSI Stats Section */}
+      {/* <MIDEESSIStats /> */}
+
+      {/* Newsletter Section */}
+      {/* <NewsletterSignup variant="hero" /> */}
+
       {/* CTA Section */}
       <section className="py-16 sm:py-20 bg-[#191970] dark:bg-gray-900 text-white transition-colors duration-300 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -884,9 +888,6 @@ const NewHome = () => {
 
       {/* Quote Section */}
       <section className="py-12 sm:py-16 bg-gradient-to-r from-[#191970] via-[#ffd700] to-[#191970] text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="african-pattern-quote"></div>
-        </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <p className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-[#191970]">
             « Du Dahomey au Bénin, l'esprit d'indépendance perdure. »
@@ -936,22 +937,6 @@ const NewHome = () => {
 
         .diamond-shape {
           transform: rotate(45deg);
-        }
-
-        .african-pattern {
-          background-image: 
-            repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(25, 25, 112, 0.15) 35px, rgba(25, 25, 112, 0.15) 70px),
-            repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(255, 215, 0, 0.15) 35px, rgba(255, 215, 0, 0.15) 70px);
-          width: 100%;
-          height: 100%;
-        }
-
-        .african-pattern-quote {
-          background-image: 
-            repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(25, 25, 112, 0.2) 20px, rgba(25, 25, 112, 0.2) 40px),
-            repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(25, 25, 112, 0.2) 20px, rgba(25, 25, 112, 0.2) 40px);
-          width: 100%;
-          height: 100%;
         }
 
         @media (max-width: 768px) {
