@@ -38,26 +38,26 @@ const Library = () => {
 
   const categories = [
     { id: 'all', name: 'Tous les PDFs', iconName: 'BookOpen' },
-    { id: 'mobile', name: 'Tutoriels Mobile', iconName: 'Smartphone' },
-    { id: 'cybersec', name: 'Cybersécurité', iconName: 'Lock' },
-    { id: 'webdev', name: 'Développement Web', iconName: 'Code' },
-    { id: 'design', name: 'Design & UI/UX', iconName: 'Sparkles' },
-    { id: 'business', name: 'Tech Business', iconName: 'TrendingUp' },
+    { id: 'mobile', name: 'Mobile', iconName: 'Smartphone' },
+    { id: 'cybersec', name: 'Cybersec', iconName: 'Lock' },
+    { id: 'webdev', name: 'Web Dev', iconName: 'Code' },
+    { id: 'design', name: 'Design', iconName: 'Sparkles' },
+    { id: 'business', name: 'Business', iconName: 'TrendingUp' },
     { id: 'data', name: 'Data & IA', iconName: 'Zap' },
   ];
 
   const levels = [
-    { id: 'all', name: 'Tous niveaux' },
+    { id: 'all', name: 'Tous les niveaux' },
     { id: 'Débutant', name: 'Débutant' },
     { id: 'Intermédiaire', name: 'Intermédiaire' },
     { id: 'Avancé', name: 'Avancé' },
   ];
 
   const sortOptions = [
-    { id: 'recent', name: 'Plus récents' },
-    { id: 'popular', name: 'Plus populaires' },
-    { id: 'rated', name: 'Mieux notés' },
-    { id: 'price-asc', name: 'Prix croissant' },
+    { id: 'recent', name: 'Nouveaux' },
+    { id: 'popular', name: 'Populaires' },
+    { id: 'rated', name: 'Top notés' },
+    { id: 'price-asc', name: 'Moins cher' },
   ];
 
   useEffect(() => {
@@ -123,8 +123,8 @@ const Library = () => {
   return (
     <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
       <SEO 
-        title="Bibliothèque MIDEESSI Learn | PDFs éducatifs"
-        description="Découvrez notre complète bibliothèque de PDFs éducatifs classés par catégories et niveaux"
+        title="Biblio MIDEESSI Learn | PDFs éducatifs"
+        description="Tous nos PDFs éducatifs. Catégories, niveaux. Learn chill, learn mobile."
       />
       
       {/* Hero Section Compact - Mobile First */}
@@ -141,11 +141,11 @@ const Library = () => {
           </Link>
 
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-1.5 md:mb-2 tracking-tight">
-            Bibliothèque <span className="text-gold">Learn</span>
+            La Biblio <span className="text-gold">Learn</span>
           </h1>
           
           <p className="text-xs sm:text-sm md:text-base text-gray-200 max-w-2xl">
-            Explorez notre collection de PDFs éducatifs classés par catégories et niveaux.
+            Tous nos PDFs. Catégories, niveaux. Apprends comme tu veux, où tu veux.
           </p>
         </div>
       </section>
@@ -159,7 +159,7 @@ const Library = () => {
                 <Search className="absolute left-2.5 md:left-3 lg:left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Rechercher..."
+                  placeholder="Cherche un truc..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-8 md:pl-10 lg:pl-12 pr-2 md:pr-3 lg:pr-4 py-2 md:py-2.5 lg:py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg md:rounded-xl focus:ring-2 focus:ring-gold focus:border-gold bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium text-xs md:text-sm lg:text-base"

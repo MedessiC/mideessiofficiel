@@ -40,8 +40,7 @@ const Projects = () => {
             Nos <span className="text-gold">Solutions</span>
           </h1>
           <p className="text-xl md:text-2xl text-center text-gray-200 max-w-3xl mx-auto font-light">
-            Découvrez notre gamme complète de solutions d'automatisation et d'intelligence artificielle
-            conçues pour transformer votre façon de travailler.
+            On crée des outils qui marchent. De vraies solutions pour des vrais problèmes.
           </p>
         </div>
       </section>
@@ -55,8 +54,7 @@ const Projects = () => {
             </h2>
             <div className="w-20 h-1 bg-gold mx-auto rounded-full mb-6"></div>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Chaque projet MIDEESSI est développé avec une attention particulière aux besoins réels de notre communauté.
-              Nous combinons technologie de pointe et approche centrée sur l'utilisateur pour créer des solutions qui font vraiment la différence.
+              Chaque projet est pensé pour une vraie personne avec un vrai défi. Tech + empathie = solutions qui changent vraiment les choses.
             </p>
           </div>
 
@@ -193,13 +191,11 @@ const Projects = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">
-              Technologies et Méthodologies
+              Les Tech qu'on Utilise
             </h2>
             <div className="w-20 h-1 bg-gold mx-auto rounded-full mb-6"></div>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Nos projets utilisent les technologies les plus avancées en matière d'intelligence artificielle,
-              d'apprentissage automatique et d'automatisation. Nous maintenons des standards de qualité élevés
-              et suivons les meilleures pratiques de l'industrie.
+              IA, machine learning, automatisation. Outils modernes. Résultats qui parlent. Pas de compromis sur la qualité.
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -225,18 +221,17 @@ const Projects = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-3xl shadow-xl p-12">
             <h2 className="text-4xl font-bold text-midnight dark:text-white mb-6">
-              Une Idée de Projet ?
+              Tu as une idée du fou ?
             </h2>
             <div className="w-20 h-1 bg-gold mx-auto rounded-full mb-8"></div>
             <p className="text-lg text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Nous sommes toujours à l'écoute de nouvelles idées et opportunités de collaboration.
-              Si vous avez un besoin spécifique ou une suggestion de projet, n'hésitez pas à nous contacter.
+              On adore les nouvelles idées. Si tu as un défi à relever ou un projet qui pourrait changer les choses, on veut l'entendre.
             </p>
             <a
               href="/contact"
               className="inline-flex items-center space-x-2 bg-gradient-to-r from-gold to-yellow-500 hover:from-yellow-500 hover:to-gold text-midnight font-bold px-10 py-4 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
-              <span>Contactez-nous</span>
+              <span>Hop, on parle</span>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
@@ -251,11 +246,10 @@ const Projects = () => {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gold rounded-full blur-3xl"></div>
         </div>
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold mb-6">L'Innovation au Service de Tous</h2>
+          <h2 className="text-4xl font-bold mb-6">Tech qui Marche. Vraiment.</h2>
           <div className="w-20 h-1 bg-gold mx-auto rounded-full mb-10"></div>
           <p className="text-xl text-gray-200 leading-relaxed font-light">
-            Chez MIDEESSI, nous croyons que la technologie doit être accessible, innovante et au service de la communauté.
-            Chaque solution que nous développons reflète notre engagement envers l'excellence et l'indépendance.
+            On crée de la tech accessible, utile et puissante. Pas juste pour les tech-bros. Pour tout le monde. Indépendants, responsables, on va changer les choses.
           </p>
         </div>
       </section>

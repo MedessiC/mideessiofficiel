@@ -120,11 +120,11 @@ const NewBlog = () => {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
-            Blog & <span className="text-yellow-400">Actualités</span>
+            Blog & <span className="text-yellow-400">News</span>
           </h1>
           <div className="w-24 h-1 bg-yellow-400 mx-auto rounded-full mb-6"></div>
           <p className="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto font-light leading-relaxed">
-            Restez informé des dernières tendances en IA, automatisation et innovation technologique
+            IA, automatisation, innovation. Les trucs qui changent la donne. On partage nos discoveries et des tutos.
           </p>
         </div>
       </section>
@@ -164,7 +164,7 @@ const NewBlog = () => {
                 <TrendingUp className="w-6 h-6 text-yellow-400" />
               </div>
               <span className="text-lg font-bold text-yellow-400 uppercase tracking-wide">
-                Article à la une
+                À lire en priorité
               </span>
             </div>
             <Link
@@ -217,7 +217,7 @@ const NewBlog = () => {
                     <span className="text-sm font-medium">{featuredPost.author}</span>
                   </div>
                   <span className="inline-flex items-center text-yellow-400 font-bold group-hover:gap-3 transition-all">
-                    Lire l'article
+                    Vas-y, lis
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </span>
                 </div>

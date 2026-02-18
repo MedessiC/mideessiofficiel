@@ -80,10 +80,10 @@ const Learn = () => {
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-2 tracking-tight">
-            Apprenez avec <span className="text-gold">MIDEESSI Learn</span>
+            Apprends avec <span className="text-gold">MIDEESSI Learn</span>
           </h1>
           <p className="text-sm md:text-base text-gray-200 max-w-2xl mb-6 md:mb-8">
-            1000 FCFA par PDF • Accès illimité • Content 100% mobile
+            1000 FCFA par PDF • Zéro tergiversation • 100% sur mobile
           </p>
           <Link
             to="/library"
@@ -284,7 +284,7 @@ const Learn = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-12 lg:mb-16">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
-              Pourquoi choisir MIDEESSI Learn ?
+              Pourquoi MIDEESSI Learn ?
             </h2>
             <div className="w-16 md:w-20 h-1 bg-gold mx-auto rounded-full"></div>
           </div>
@@ -294,9 +294,9 @@ const Learn = () => {
               <div className="w-14 h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-gold rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
                 <Clock className="w-7 h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 text-midnight" />
               </div>
-              <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4">Nouveau contenu hebdomadaire</h3>
+              <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4">Nouveau chaque semaine</h3>
               <p className="text-gray-200 leading-relaxed text-sm md:text-base">
-                Recevez un nouveau PDF chaque semaine pour rester à la pointe de la technologie et progresser continuellement.
+                Un nouveau PDF chaque semaine. Reste actualisé sans stresser.
               </p>
             </div>
 
@@ -304,9 +304,9 @@ const Learn = () => {
               <div className="w-14 h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-gold rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
                 <Download className="w-7 h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 text-midnight" />
               </div>
-              <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4">100% accessible hors ligne</h3>
+              <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4">100% sur téléphone</h3>
               <p className="text-gray-200 leading-relaxed text-sm md:text-base">
-                Téléchargez vos PDFs et apprenez où vous voulez, quand vous voulez, même sans connexion internet.
+                Télécharge et apprends sans WiFi. N'importe où, n'importe quand.
               </p>
             </div>
 
@@ -314,9 +314,9 @@ const Learn = () => {
               <div className="w-14 h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-gold rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
                 <Award className="w-7 h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 text-midnight" />
               </div>
-              <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4">Expertise 100% locale</h3>
+              <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4">Expertise locale</h3>
               <p className="text-gray-200 leading-relaxed text-sm md:text-base">
-                Contenu créé par des experts béninois qui comprennent vos besoins et défis spécifiques.
+                Made in Benin. Par des gens qui comprennent ton contexte.
               </p>
             </div>
           </div>
@@ -372,17 +372,17 @@ const Learn = () => {
       <section className="py-8 md:py-12 lg:py-16 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6">
-            Prêt à commencer votre apprentissage ?
+            Prêt à apprendre ?
           </h2>
           <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-6 md:mb-8">
-            Rejoignez des centaines d'étudiants qui apprennent la tech depuis leur mobile
+            Des centaines de gens apprennent déjà la tech depuis leur téléphone. Rejoins-les.
           </p>
           <a 
             href="#pdfs" 
             className="inline-flex items-center gap-2 bg-gold hover:bg-yellow-500 text-midnight font-bold px-6 md:px-8 py-3 md:py-4 rounded-lg md:rounded-xl transition-all shadow-lg hover:scale-105 text-sm md:text-base"
           >
             <BookOpen className="w-5 h-5" />
-            Découvrir nos PDFs à 1000F
+            Voir les PDFs (1000F)
           </a>
         </div>
       </section>

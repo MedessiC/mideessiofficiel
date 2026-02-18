@@ -7,50 +7,50 @@ const About = () => {
     {
       icon: <Flag className="w-8 h-8 text-gold" />,
       title: 'Patriotisme',
-      description: 'Nous aimons profondément le Bénin et travaillons pour sa souveraineté technologique. Consommons 100% béninois.',
+      description: 'On aime le Bénin. Point. Et on travaille pour sa souveraineté technologique. 100% béninois.',
     },
     {
       icon: <BookOpen className="w-8 h-8 text-gold" />,
       title: 'Apprentissage',
-      description: 'Nous valorisons l\'autodidaxie et l\'apprentissage par immersion terrain. Nous apprenons du peuple et avec le peuple.',
+      description: 'Pas d\'école? Pas grave. On va sur le terrain, on écoute, on crée. Voilà comment on apprend vraiment.',
     },
     {
       icon: <Lightbulb className="w-8 h-8 text-gold" />,
       title: 'Innovation',
-      description: 'Nous créons des solutions adaptées aux réalités béninoises, nées de l\'écoute du terrain et des besoins réels.',
+      description: 'On crée ce que le Bénin a besoin. Pas des trucs génériques. Des solutions qui viennent du terrain.',
     },
     {
       icon: <Users className="w-8 h-8 text-gold" />,
       title: 'Solidarité',
-      description: 'Nous progressons collectivement, renforçons les acteurs locaux et partageons nos réussites avec l\'écosystème.',
+      description: 'Seul on va vite, ensemble on va loin. On renforce chacun, on partage les victoires.',
     },
   ];
 
   const processSteps = [
     { 
       step: '01', 
-      title: 'Immersion terrain', 
-      description: 'Nous allons à la rencontre des acteurs du secteur ciblé : agriculteurs, commerçants, transporteurs, enseignants...' 
+      title: 'On y va', 
+      description: 'On sort de nos bureaux. On va rencontrer les vrais gens. Agriculteurs, commerçants, étudiants... C\'est là qu\'on trouve les problèmes réels.' 
     },
     { 
       step: '02', 
-      title: 'Interrogation & Collecte', 
-      description: 'Nous écoutons, interrogeons et documentons les besoins réels. Le peuple sait ce dont il a besoin.' 
+      title: 'On écoute', 
+      description: 'Questions. Observations. Et on note vraiment. Les gens savent ce qu\'il leur faut. On juste doit les entendre.' 
     },
     { 
       step: '03', 
-      title: 'Conception & Développement', 
-      description: 'Nous développons des solutions véritablement adaptées, numériques ou physiques, selon les ressources locales.' 
+      title: 'On crée', 
+      description: 'Avec ce qu\'on a appris, on construit. Une solution qui marche. Pour les vrais gens, pas pour des PowerPoints.' 
     },
     { 
       step: '04', 
-      title: 'Tests sur le terrain', 
-      description: 'Nous retournons tester avec les mêmes acteurs, ajustons et perfectionnons jusqu\'à adoption réelle.' 
+      title: 'On teste', 
+      description: 'On retourne pour vérifier. Est-ce que ça vraiment marche? Est-ce que les gens adoptent? On ajuste, on perfectionne.' 
     },
     { 
       step: '05', 
-      title: 'Distribution & Déploiement', 
-      description: 'Nous déployons avec accompagnement personnalisé pour garantir l\'appropriation effective des solutions.' 
+      title: 'On déploie', 
+      description: 'C\'est pas fini avec le lancement. On accompagne. On forme. On s\'assure que c\'est vraiment adopté et utilisé.' 
     },
   ];
 
@@ -89,7 +89,7 @@ const About = () => {
               </h1>
             </div>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 max-w-4xl mx-auto font-light leading-relaxed px-2">
-              Un mouvement d'indépendance technologique né au Bénin, héritier de l'esprit du Dahomey.
+              Un mouvement où les jeunes béninois créent la tech qu'on a besoin. 100% indépendant.
             </p>
             <div className="mt-6 md:mt-8 flex justify-center">
               <div className="inline-block bg-gold/10 backdrop-blur-sm border-2 border-gold rounded-full px-6 md:px-8 py-2.5 md:py-3">
@@ -111,18 +111,17 @@ const About = () => {
           </div>
           <div className="space-y-4 md:space-y-6 text-base sm:text-lg md:text-lg leading-relaxed">
             <p className="text-gray-700 dark:text-gray-300">
-              MIDEESSI transcende la simple notion d'entreprise. Nous sommes un <span className="font-bold text-gold">mouvement d'indépendance technologique</span> né 
-              au cœur du Bénin, héritier de l'esprit du Dahomey, édifié sur une conviction fondamentale : 
-              <span className="font-semibold"> nous possédons en nous toutes les ressources nécessaires pour forger notre propre avenir.</span>
+              MIDEESSI, c'est pas une startup classique. C'est un <span className="font-bold text-gold">mouvement</span> où les jeunes béninois disent non à la dépendance technologique.
+              <span className="font-semibold"> On a les talents. On a les idées. On crée la tech qu'on a besoin.</span>
             </p>
             <p className="text-gray-700 dark:text-gray-300">
-              Le temps de la consommation passive de technologie étrangère est révolu. Nous aspirons à <span className="font-semibold">concevoir</span>, 
-              <span className="font-semibold"> fabriquer</span> et <span className="font-semibold">innover</span> — en mobilisant nos idées, notre savoir-faire 
-              et notre intelligence collective béninoise et africaine.
+              L'importation de tech étrangère? C'est terminé. <span className="font-semibold">On crée</span>, 
+              <span className="font-semibold"> on fabrique</span> et <span className="font-semibold">on innove</span> — avec nos cerveaux béninois, 
+              notre vision africaine, et notre volonté de vraiment changer les choses.
             </p>
             <p className="text-gray-700 dark:text-gray-300">
-              Nous sommes les dignes héritiers d'une terre qui a toujours su résister, innover et créer. Du royaume du Dahomey à la République du Bénin, 
-              l'esprit d'indépendance coule dans nos veines.
+              Le Bénin a toujours su créer. Maintenant, on crée la tech. On bâtit l'indépendance numérique du Bénin.
+              <span className="font-semibold"> L'Afrique comprendra qu'on peut tout faire, chez nous, avec nos cerveaux.</span>
             </p>
             <div className="bg-gradient-to-r from-gold/5 to-green-500/5 border-l-4 border-gold p-4 md:p-6 rounded-r-lg mt-6 md:mt-8">
               <p className="text-base md:text-lg lg:text-xl font-bold text-midnight dark:text-white italic">
@@ -171,10 +170,8 @@ const About = () => {
           </div>
           <div className="bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl p-6 md:p-8 lg:p-12 shadow-lg">
             <p className="text-base sm:text-lg md:text-lg leading-relaxed text-center text-gray-700 dark:text-gray-300">
-              Chaque trimestre, nous sélectionnons un secteur de la vie quotidienne (santé, finance, éducation, agriculture, mobilité, commerce). 
-              Notre démarche est résolument <span className="font-bold text-gold">ancrée dans la réalité du terrain</span>. 
-              Nous sommes <span className="font-semibold">proches du peuple</span>, nous travaillons <span className="font-semibold">pour le peuple</span>, 
-              pour le Bénin, pour l'Afrique et pour le monde.
+              Chaque trimestre, un secteur différent (santé, agriculture, éducation, commerce...). On sort du bureau, on parle aux gens, on comprend leurs problèmes. 
+              <span className="font-bold text-gold"> Puis on crée.</span> Pour le Bénin. Pour l'Afrique. Pour le monde.
             </p>
           </div>
         </div>
@@ -187,7 +184,7 @@ const About = () => {
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-midnight dark:text-white mb-3 md:mb-4">Notre Processus Trimestriel</h2>
             <div className="w-12 sm:w-16 md:w-20 h-1 bg-gold mx-auto rounded-full"></div>
             <p className="text-gray-600 dark:text-gray-300 mt-4 text-sm md:text-base lg:text-lg">
-              Innovation par l'immersion : nous créons des solutions qui répondent aux vrais besoins
+              Immersion → Écoute → Création. C'est comme ça qu'on fait les solutions qui marchent vraiment.
             </p>
           </div>
           <div className="space-y-4 md:space-y-6">
@@ -258,19 +255,19 @@ const About = () => {
                 <h3 className="text-3xl font-bold text-midnight dark:text-white mb-2">Coovi Medessi</h3>
                 <p className="text-gold font-semibold text-lg mb-2">Fondateur & Gérant</p>
                 <p className="text-gray-500 dark:text-gray-400 mb-6 flex items-center justify-center md:justify-start gap-2">
-                  <MapPin className="w-4 h-4" /> Cotonou, Bénin (ex-Dahomey)
+                  <MapPin className="w-4 h-4" /> Cotonou, Bénin
                 </p>
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg mb-4">
                   Passionné de technologie et visionnaire, Coovi Medessi a fondé MIDEESSI avec la conviction profonde que le Bénin et l'Afrique 
                   possèdent tous les talents nécessaires pour créer leur propre avenir technologique.
                 </p>
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
-                  Guidé par les valeurs de patriotisme, apprentissage, innovation et solidarité, il incarne l'esprit d'indépendance du Dahomey 
-                  et travaille chaque jour pour la souveraineté technologique béninoise et africaine.
+                  Guidé par les valeurs de patriotisme, apprentissage, innovation et solidarité, il incarne la vision d'un Bénin indépendant technologiquement.
+                  Chaque jour, il travaille pour que la tech béninoise soit une réalité, pour le Bénin et pour l'Afrique.
                 </p>
                 <div className="mt-6 inline-block bg-gradient-to-r from-gold/10 to-green-500/10 border border-gold rounded-lg px-6 py-3">
                   <p className="text-sm font-semibold text-gold">
-                    "Du Dahomey au Bénin, l'esprit d'indépendance perdure."
+                    "On crée pour le Bénin. Pour l'Afrique. C'est notre mission."
                   </p>
                 </div>
               </div>
@@ -364,13 +361,12 @@ const About = () => {
           </div>
           <div className="bg-white/5 backdrop-blur-lg border border-gold/30 rounded-2xl md:rounded-3xl p-6 md:p-10 lg:p-12 shadow-2xl">
             <p className="text-base sm:text-lg md:text-lg lg:text-xl text-gray-200 mb-6 md:mb-8 leading-relaxed">
-              Dans dix ans, MIDEESSI sera devenu une <span className="text-gold font-bold">manufacture d'idées et de solutions 100% béninoises</span>, 
-              un <span className="text-gold font-bold">incubateur de talents autodidactes</span>, et une <span className="text-gold font-bold">référence continentale 
-              en innovation locale</span>.
+              Dans 3-5 ans, MIDEESSI? C'est <span className="text-gold font-bold">LA référence africaine en innovation locale</span>. 
+              Des solutions créées au Bénin qu'on copie au Sénégal, au Mali, partout. Les startups sorties de MIDEESSI lèvent des fonds. 
+              Les jeunes trouvent leurs first jobs chez nous.
             </p>
             <p className="text-base sm:text-lg md:text-lg lg:text-xl text-gray-200 mb-6 md:mb-8 leading-relaxed">
-              Nous envisageons un avenir où chaque jeune béninois pourra vivre dignement de son talent technologique, où chaque quartier de Cotonou, 
-              Porto-Novo, Parakou et Abomey comptera ses propres architectes de solutions innovantes.
+              Chaque jeune béninois sait que son talent tech a une valeur. Que sa créativité peut changer les choses. Qu'il peut vivre de l'innovation 100% béninoise.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mt-8 md:mt-10">
               <div className="text-center p-4 md:p-6 bg-gold/10 rounded-lg md:rounded-xl border border-gold/30">

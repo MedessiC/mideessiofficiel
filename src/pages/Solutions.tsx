@@ -30,7 +30,7 @@ const Solutions = () => {
             Nos <span className="text-gold">Solutions</span>
           </h1>
           <p className="text-base md:text-lg lg:text-2xl text-center text-gray-200 max-w-3xl mx-auto font-light leading-relaxed">
-            Des solutions technologiques complètes pour transformer les secteurs clés de l'économie africaine
+            On crée des outils qui font la différence. Des tech concrètes pour les défis réels du Bénin et de l'Afrique de l'Ouest.
           </p>
         </div>
       </section>
@@ -177,23 +177,23 @@ const Solutions = () => {
             {[
               {
                 icon: Zap,
-                title: 'Technologie de Pointe',
-                description: 'Construites avec les dernières technologies cloud et mobile'
+                title: 'Vrai Impact',
+                description: 'Pas juste de la théorie. Ça marche. Les chiffres parlent d\'eux-mêmes.'
               },
               {
                 icon: Users,
-                title: 'Résilience Communautaire',
-                description: 'Conçues pour les besoins réels des entrepreneurs africains'
+                title: 'Fait pour Nous',
+                description: 'Pensées pour les entrepreneurs béninois. On comprend les vrais défis.'
               },
               {
                 icon: TrendingUp,
-                title: 'Impact Mesurable',
-                description: 'Augmentation démontrée des revenus et de l\'efficacité'
+                title: 'Résultats Concrets',
+                description: 'Les revenus augmentent. L\'efficacité aussi. C\'est mesurable, c\'est réel.'
               },
               {
                 icon: Award,
-                title: 'Standards Internationaux',
-                description: 'Conformité aux normes mondiales de sécurité et de qualité'
+                title: 'Secure et Reliable',
+                description: 'Standard international, zéro compromis sur la qualité. On n\'a pas le choix.'
               }
             ].map((item, idx) => (
               <div
@@ -218,11 +218,10 @@ const Solutions = () => {
       {/* Call to Action */}
       <section className="py-12 md:py-20 bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6">Prêt à Transformer Votre Secteur ?</h2>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6">Prêt pour la suite ?</h2>
           <div className="w-16 md:w-20 h-1 bg-gold mx-auto rounded-full mb-6 md:mb-8"></div>
           <p className="text-base md:text-lg lg:text-xl text-gray-200 mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed">
-            Rejoignez des milliers d'utilisateurs à travers l'Afrique qui utilisent nos solutions
-            pour révolutionner leur façon de travailler.
+            Des milliers de gens utilisent nos solutions pour faire bouger les choses. Rejoins le mouvement.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 flex-wrap">

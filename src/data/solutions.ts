@@ -50,42 +50,42 @@ export const categories: SolutionCategoryInfo[] = [
   {
     id: 'communication',
     name: 'Communication & Internet',
-    description: 'Solutions pour économiser sur les forfaits et la connectivité',
+    description: 'Économise sur ton forfait. De la vraie connexion sans te ruiner.',
     iconName: 'Smartphone',
     color: 'from-blue-500 to-blue-600'
   },
   {
     id: 'gastronomie',
     name: 'Gastronomie & Loisirs',
-    description: 'Découverte culinaire et expériences gastronomiques',
+    description: 'Goûte le meilleur de la bouffe béninoise. Des moments chill, des saveurs vraies.',
     iconName: 'UtensilsCrossed',
     color: 'from-orange-500 to-red-600'
   },
   {
     id: 'agriculture',
     name: 'Agriculture & Agritech',
-    description: 'Solutions pour l\'agriculture numérique et durable',
+    description: 'La ferme 2.0. Tech qui aide les paysans à gagner plus et mieux.',
     iconName: 'Leaf',
     color: 'from-green-500 to-emerald-600'
   },
   {
     id: 'finance',
     name: 'Finance & Microfinance',
-    description: 'Solutions de financement et de gestion financière',
+    description: 'Ton argent. Ta décision. Des solutions simple pour gérer et se développer.',
     iconName: 'Wallet',
     color: 'from-purple-500 to-pink-600'
   },
   {
     id: 'education',
     name: 'Éducation & Apprentissage',
-    description: 'Plateforme d\'apprentissage et de formation',
+    description: 'Apprends sur ton téléphone. Des skills qui servent vraiment. Accessible partout.',
     iconName: 'BookOpen',
     color: 'from-indigo-500 to-purple-600'
   },
   {
     id: 'autre',
     name: 'Autres Solutions',
-    description: 'Autres solutions innovantes',
+    description: 'Des trucs innovants qui changent la donne. Reste à l\'affût.',
     iconName: 'Sparkles',
     color: 'from-gray-500 to-slate-600'
   }

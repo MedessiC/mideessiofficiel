@@ -55,24 +55,24 @@ const NewHome = () => {
   const heroSlides = [
     {
       image: '/hero1.webp',
-      badge: 'Mouvement d\'indépendance technologique',
+      badge: '100% Béninois',
       title: 'Nous sommes indépendants',
-      description: 'MIDEESSI est un mouvement d\'indépendance technologique né au cœur du Bénin, héritier de l\'esprit du Dahomey.',
-      subtitle: 'Nous concevons, fabriquons et innovons avec nos idées, notre savoir-faire et notre intelligence collective béninoise.'
+      description: 'MIDEESSI c\'est le mouvement qui dit non à la dépendance technologique. On crée nos solutions, avec nos talents, notre vision.',
+      subtitle: 'Pas d\'importation. Pas de dépendance. Juste de l\'innovation qui vient du terrain.'
     },
     {
       image: '/hero2.webp',
-      badge: 'Innovation 100% béninoise',
-      title: 'Du terrain aux solutions',
-      description: 'Chaque trimestre, nous nous immergeons dans un nouveau secteur pour créer des solutions adaptées aux réalités béninoises.',
-      subtitle: 'De l\'agriculture au commerce, de l\'éducation à la santé, nous innovons là où le Bénin en a besoin.'
+      badge: 'Innovation de terrain',
+      title: 'Du problème à la solution',
+      description: 'Chaque trimestre on se jette dans un secteur. On écoute. On observe. On crée. Les solutions MIDEESSI? Elles viennent de la vraie vie.',
+      subtitle: 'Agriculture, santé, commerce, éducation... On crée où c\'est nécessaire.'
     },
     {
       image: '/hero3.webp',
       badge: 'Souveraineté technologique',
       title: 'Consommons béninois',
-      description: 'Nous refusons la dépendance technologique et bâtissons notre souveraineté numérique avec fierté.',
-      subtitle: 'Chaque solution MIDEESSI est un acte d\'amour pour notre pays et notre continent africain.'
+      description: 'Les talents béninois existent. Les idées béninoises font sens. Les solutions béninoises changeront l\'Afrique.',
+      subtitle: 'C\'est notre mission. Bâtir l\'indépendance technologique du Bénin, ensemble.'
     }
   ];
 
@@ -890,10 +890,10 @@ const NewHome = () => {
       <section className="py-12 sm:py-16 bg-gradient-to-r from-[#191970] via-[#ffd700] to-[#191970] text-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <p className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-[#191970]">
-            « Du Dahomey au Bénin, l'esprit d'indépendance perdure. »
+            « On crée. On innove. On est indépendants. »
           </p>
           <p className="text-sm sm:text-base md:text-lg text-[#191970] font-semibold">
-            MIDEESSI - Fondé en 2025, Cotonou, République du Bénin
+            MIDEESSI - Mouvement d'indépendance technologique du Bénin, depuis 2025
           </p>
         </div>
       </section>

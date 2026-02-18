@@ -44,7 +44,7 @@ const Contact = () => {
       if (response.ok) {
         setSubmitStatus({
           type: 'success',
-          message: 'Merci pour votre message ! Nous vous répondrons dans les plus brefs délais.'
+          message: 'Merci bro! On a reçu ton message. On te revient vite.'
         });
         setFormData({ name: '', email: '', message: '' });
       } else {
@@ -54,7 +54,7 @@ const Contact = () => {
     } catch (error) {
       setSubmitStatus({
         type: 'error',
-        message: 'Une erreur est survenue lors de l\'envoi. Veuillez réessayer ou nous contacter directement par email.'
+        message: 'Oups! Ça a pas marché. Essaie de nouveau ou envoie-nous un email directement.'
       });
       console.error('Erreur:', error);
     } finally {
@@ -105,10 +105,10 @@ const Contact = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-4 md:mb-6 tracking-tight">
-              <span className="text-gold">Contactez</span>-nous
+              <span className="text-gold">Parle</span> avec nous
             </h1>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 max-w-3xl mx-auto font-light leading-relaxed px-2">
-              Une question, une idée de collaboration ou simplement envie d'échanger ? Nous sommes à votre écoute.
+              Question, idée de collaboration, ou tu veux juste discuter ? On est là.
             </p>
           </div>
         </div>
@@ -121,14 +121,14 @@ const Contact = () => {
             {/* Contact Form */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl md:rounded-3xl shadow-xl p-6 md:p-8 lg:p-10">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-midnight dark:text-white mb-2 md:mb-3">
-                Envoyez-nous un message
+                Envoie un message
               </h2>
               <div className="w-12 sm:w-16 md:w-20 h-1 bg-gold rounded-full mb-6 md:mb-8"></div>
               
               <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Nom complet
+                    Ton nom
                   </label>
                   <input
                     type="text"
@@ -138,13 +138,13 @@ const Contact = () => {
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2.5 md:py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gold focus:border-gold dark:focus:border-gold transition-all text-sm md:text-base"
-                    placeholder="Votre nom"
+                    placeholder="C'est quoi ton nom ?"
                   />
                 </div>
 
                 <div>
                   <label htmlFor="email" className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Email
+                    Ton email
                   </label>
                   <input
                     type="email"
@@ -154,7 +154,7 @@ const Contact = () => {
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2.5 md:py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gold focus:border-gold dark:focus:border-gold transition-all text-sm md:text-base"
-                    placeholder="votre@email.com"
+                    placeholder="ton@email.com"
                   />
                 </div>
 
@@ -170,7 +170,7 @@ const Contact = () => {
                     required
                     rows={5}
                     className="w-full px-4 py-2.5 md:py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gold focus:border-gold dark:focus:border-gold transition-all resize-none text-sm md:text-base"
-                    placeholder="Votre message..."
+                    placeholder="Dis-nous ce que tu as en tête..."
                   />
                 </div>
 
@@ -204,11 +204,11 @@ const Contact = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      <span>Envoi en cours...</span>
+                      <span>En cours...</span>
                     </>
                   ) : (
                     <>
-                      <span>Envoyer le message</span>
+                      <span>Envoie</span>
                       <Send className="w-4 h-4 md:w-5 md:h-5" />
                     </>
                   )}
@@ -280,7 +280,7 @@ const Contact = () => {
               {/* Social Links */}
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-lg">
                 <h3 className="text-lg md:text-xl font-bold text-midnight dark:text-white mb-4 md:mb-6">
-                  Suivez-nous
+                  Reste connecté
                 </h3>
                 <div className="flex gap-3 md:gap-4">
                   {socialLinks.map((social, index) => (
@@ -311,17 +311,15 @@ const Contact = () => {
         </div>
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4 lg:mb-6">
-            Vous avez un projet en tête ?
+            Une idée ? Une collab ? Fonce !
           </h2>
           <div className="w-12 sm:w-16 md:w-20 h-1 bg-gold mx-auto rounded-full mb-6 md:mb-8"></div>
           <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 mb-6 md:mb-8 lg:mb-10 max-w-2xl mx-auto leading-relaxed px-2">
-            Nous sommes toujours ravis de discuter de nouvelles opportunités de collaboration.
-            Que vous ayez un projet précis ou simplement une idée, n'hésitez pas à nous contacter.
-            Notre équipe vous répondra dans les plus brefs délais.
+            On adore les nouveau truc. Projet précis, juste une idée, ou besoin de parler - écris nous. On revient vite.
           </p>
           <div className="inline-block bg-gold/20 backdrop-blur-sm border-2 border-gold rounded-full px-6 md:px-8 py-3 md:py-4">
             <p className="text-base md:text-lg lg:text-xl font-bold text-gold">
-              MIDEESSI - Nous sommes indépendants
+              On est indépendants. C'est notre force.
             </p>
           </div>
         </div>
