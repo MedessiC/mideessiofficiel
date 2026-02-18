@@ -39,7 +39,7 @@ const BottomNavigation = () => {
     { label: 'Projets', href: '/projects', icon: <Rocket className="w-5 h-5" /> },
     { label: 'Biblio', href: '/library', icon: <BookOpen className="w-5 h-5" /> },
     { label: 'Contact', href: '/contact', icon: <MessageCircle className="w-5 h-5" /> },
-    { label: 'Équipe', href: '/team', icon: <Users className="w-5 h-5" /> },
+    { label: 'Équipe', href: '/about', icon: <Users className="w-5 h-5" /> },
   ];
 
   const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + '/');
