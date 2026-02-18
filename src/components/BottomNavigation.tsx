@@ -1,4 +1,4 @@
-import { BookOpen, FileText, Lightbulb, Info, Menu, Rocket, MessageCircle, Users } from 'lucide-react';
+import { BookOpen, FileText, Lightbulb, Info, Menu, Rocket, MessageCircle, Home } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -14,6 +14,11 @@ const BottomNavigation = () => {
 
   const mainLinks: BottomNavItem[] = [
     {
+      label: 'Accueil',
+      href: '/',
+      icon: <Home className="w-6 h-6" />,
+    },
+    {
       label: 'Apprendre',
       href: '/learn',
       icon: <BookOpen className="w-6 h-6" />,
@@ -28,18 +33,13 @@ const BottomNavigation = () => {
       href: '/solutions',
       icon: <Lightbulb className="w-6 h-6" />,
     },
-    {
-      label: 'À propos',
-      href: '/about',
-      icon: <Info className="w-6 h-6" />,
-    },
   ];
 
   const moreLinks: BottomNavItem[] = [
+    { label: 'À propos', href: '/about', icon: <Info className="w-5 h-5" /> },
     { label: 'Projets', href: '/projects', icon: <Rocket className="w-5 h-5" /> },
     { label: 'Biblio', href: '/library', icon: <BookOpen className="w-5 h-5" /> },
     { label: 'Contact', href: '/contact', icon: <MessageCircle className="w-5 h-5" /> },
-    { label: 'Équipe', href: '/about', icon: <Users className="w-5 h-5" /> },
   ];
 
   const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + '/');
