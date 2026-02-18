@@ -366,7 +366,7 @@ const NewHome = () => {
           <div className="text-center mb-12 sm:mb-16">
             <div className="h-1 w-16 bg-[#ffd700] mx-auto mb-4"></div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#191970] dark:text-white mb-4">
-              Le PDF de la semaine
+              Ton PDF de la semaine
             </h2>
             <div className="h-1 w-16 bg-[#ffd700] mx-auto"></div>
           </div>
@@ -474,31 +474,31 @@ const NewHome = () => {
             <div className="relative">
               <div className="absolute -left-8 top-0 w-2 h-full bg-gradient-to-b from-[#ffd700] to-transparent hidden lg:block"></div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#191970] dark:text-white mb-4 sm:mb-6">
-                MIDEESSI Learn - Apprendre en ligne
+                MIDEESSI Learn
               </h2>
               <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 mb-6 sm:mb-8 leading-relaxed">
-                Des PDFs de qualité, conçus pour votre téléphone. Chaque semaine, de nouveaux contenus pratiques et accessibles, créés par des experts béninois.
+                Des PDFs solides, optimisés mobile. Nouveaux contenus chaque semaine. Pratique, accessible, fait par des experts qui comprennent le contexte.
               </p>
               <div className="space-y-3 sm:space-y-4 mb-8">
                 <div className="flex items-start space-x-3 bg-white dark:bg-gray-900 p-4 rounded-lg">
                   <CheckCircle className="w-5 h-5 text-[#ffd700] flex-shrink-0 mt-1" />
                   <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white mb-1 text-sm sm:text-base">Nouveau PDF chaque semaine</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Contenus progressifs de débutant à avancé</p>
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-1 text-sm sm:text-base">PDF nouveau chaque semaine</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Du débutant au avancé. Bien structuré.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3 bg-white dark:bg-gray-900 p-4 rounded-lg">
                   <CheckCircle className="w-5 h-5 text-[#ffd700] flex-shrink-0 mt-1" />
                   <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white mb-1 text-sm sm:text-base">100% mobile optimisé</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Apprenez où vous voulez, quand vous voulez</p>
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-1 text-sm sm:text-base">100% smartphone, zéro PC</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Lis comme tu veux, quand tu veux</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3 bg-white dark:bg-gray-900 p-4 rounded-lg">
                   <CheckCircle className="w-5 h-5 text-[#ffd700] flex-shrink-0 mt-1" />
                   <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white mb-1 text-sm sm:text-base">Prix unique : 1000 FCFA/PDF</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Accès illimité après achat</p>
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-1 text-sm sm:text-base">1000 FCFA = Accès forever</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Achat unique, tu l'as pour toi</p>
                   </div>
                 </div>
               </div>
@@ -513,22 +513,22 @@ const NewHome = () => {
             <div className="bg-[#191970] dark:bg-gray-900 p-6 sm:p-8 rounded-lg text-white shadow-2xl transform hover:scale-[1.02] transition-all duration-300 border-4 border-[#ffd700] relative overflow-hidden">
               <div className="absolute top-0 right-0 w-40 h-40 bg-[#ffd700]/10 rounded-full -translate-y-20 translate-x-20"></div>
               <BookOpen className="w-12 h-12 text-[#ffd700] mb-4 relative z-10" />
-              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 relative z-10">Qu'est-ce que MIDEESSI Learn ?</h3>
+              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 relative z-10">C'est quoi MIDEESSI Learn ?</h3>
               <p className="text-sm sm:text-base text-gray-200 mb-4 sm:mb-6 relative z-10 leading-relaxed">
-                Une plateforme d'apprentissage créée par MIDEESSI pour partager le savoir-faire technologique béninois. Chaque PDF est une occasion d'apprendre les compétences en demande.
+                Notre plateforme pour partager le savoir-faire tech béninois. Chaque PDF = compétences en demande, expliquées de façon chill.
               </p>
               <ul className="space-y-2 sm:space-y-3 relative z-10 text-sm sm:text-base">
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-[#ffd700] rounded-full"></span>
-                  Créé par des experts locaux
+                  Créé par des gens d'ici
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-[#ffd700] rounded-full"></span>
-                  Contenu pratique et applicable
+                  Utile et qu'on peut vraiment utiliser
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-[#ffd700] rounded-full"></span>
-                  Accessible à tous les niveaux
+                  Pour tous les niveaux
                 </li>
               </ul>
             </div>
@@ -543,12 +543,12 @@ const NewHome = () => {
             <div className="inline-block mb-4">
               <div className="h-1 w-20 bg-[#ffd700] mx-auto mb-4"></div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#191970] dark:text-white mb-4">
-                Notre méthodologie d'innovation
+                Comment on innove
               </h2>
               <div className="h-1 w-20 bg-[#ffd700] mx-auto"></div>
             </div>
             <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed px-4">
-              Chaque trimestre, nous nous immergeons sur le terrain pour créer des solutions adaptées aux besoins réels
+              Chaque trimestre on débarque sur le terrain. On observe. On écoute. On crée. Point.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
@@ -580,10 +580,10 @@ const NewHome = () => {
             <div className="relative">
               <div className="absolute -left-8 top-0 w-2 h-full bg-gradient-to-b from-[#ffd700] to-transparent hidden lg:block"></div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#191970] dark:text-white mb-4 sm:mb-6">
-                Nos valeurs cardinales
+                Nos valeurs
               </h2>
               <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 mb-6 sm:mb-8 leading-relaxed">
-                MIDEESSI est guidé par des valeurs profondes qui façonnent chaque solution que nous créons.
+                Des valeurs qui ont du poids. Qui guide vraiment comment on bosse.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {values.map((value, index) => (
@@ -629,11 +629,11 @@ const NewHome = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 drop-shadow-lg">
-              Notre processus Trimestriel
+              Notre cycle de 3 mois
             </h2>
             <div className="h-1 w-24 bg-[#ffd700] mx-auto mb-4"></div>
             <p className="text-base sm:text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed px-4">
-              De l'immersion terrain au déploiement, une méthodologie rigoureuse ancrée dans les réalités béninoises
+              Terrain → Écoute → Création → Tests → Déploiement. That's it.
             </p>
           </div>
 
@@ -641,28 +641,28 @@ const NewHome = () => {
             {[
               {
                 step: '1',
-                title: 'Immersion',
-                desc: 'Rencontre avec les acteurs du secteur ciblé',
+                title: 'On arrive',
+                desc: 'Rencontre des gens du secteur',
               },
               {
                 step: '2',
-                title: 'Collecte',
-                desc: 'Écoute des besoins et des défis quotidiens',
+                title: 'On écoute',
+                desc: 'C\'est quoi vos vrais défis ?',
               },
               {
                 step: '3',
-                title: 'Conception',
-                desc: 'Développement de solutions adaptées',
+                title: 'On crée',
+                desc: 'Développement de la solution',
               },
               {
                 step: '4',
-                title: 'Tests',
-                desc: 'Validation sur le terrain avec les utilisateurs',
+                title: 'On teste',
+                desc: 'Validation avec les vraies gens',
               },
               {
                 step: '5',
-                title: 'Déploiement',
-                desc: 'Accompagnement et formation continue',
+                title: 'On déploie',
+                desc: 'Formation et support continu',
               },
             ].map((item, index) => (
               <div 
@@ -698,28 +698,28 @@ const NewHome = () => {
             {[
               {
                 step: '1',
-                title: 'Immersion',
-                desc: 'Rencontre avec les acteurs du secteur ciblé',
+                title: 'On arrive',
+                desc: 'Rencontre des gens du secteur',
               },
               {
                 step: '2',
-                title: 'Collecte',
-                desc: 'Écoute des besoins et des défis quotidiens',
+                title: 'On écoute',
+                desc: 'C\'est quoi vos vrais défis ?',
               },
               {
                 step: '3',
-                title: 'Conception',
-                desc: 'Développement de solutions adaptées',
+                title: 'On crée',
+                desc: 'Développement de la solution',
               },
               {
                 step: '4',
-                title: 'Tests',
-                desc: 'Validation sur le terrain avec les utilisateurs',
+                title: 'On teste',
+                desc: 'Validation avec les vraies gens',
               },
               {
                 step: '5',
-                title: 'Déploiement',
-                desc: 'Accompagnement et formation continue',
+                title: 'On déploie',
+                desc: 'Formation et support continu',
               },
             ].map((item, index) => (
               <div key={index} className="relative">
@@ -759,7 +759,7 @@ const NewHome = () => {
                 Derniers articles
               </h2>
               <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-                Insights et actualités du mouvement MIDEESSI
+                News, tutos, et découvertes du mouvement
               </p>
             </div>
             <a
@@ -861,18 +861,18 @@ const NewHome = () => {
             <div>
               <Globe className="w-12 h-12 sm:w-16 sm:h-16 text-[#ffd700] mb-4 sm:mb-6" />
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">
-                Rejoignez le mouvement
+                Commence maintenant
               </h2>
               <p className="text-base sm:text-lg md:text-xl text-gray-200 mb-6 sm:mb-8 leading-relaxed">
-                Explorez nos PDFs, lisez nos articles et participez à la construction de la souveraineté technologique béninoise.
+                PDFs, articles, apprentissage. Tout pour bâtir l'indépendance tech du Bénin.
               </p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm p-6 sm:p-8 rounded-lg border-2 border-[#ffd700] shadow-2xl transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#ffd700]/10 rounded-full -translate-y-16 translate-x-16"></div>
               <Zap className="w-10 h-10 sm:w-12 sm:h-12 text-[#ffd700] mb-3 sm:mb-4 relative z-10" />
-              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 relative z-10">Commencez maintenant</h3>
+              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 relative z-10">Go Learn</h3>
               <p className="text-xs sm:text-sm md:text-base text-gray-200 mb-6 relative z-10 leading-relaxed">
-                Accédez à notre plateforme d'apprentissage et découvrez les formations disponibles.
+                Accès à notre platform d'apprentissage. Des PDFs disponibles maintenant.
               </p>
               <a
                 href="/learn"
