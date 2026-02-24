@@ -7,6 +7,7 @@ const Navbar = () => {
   const [isDark, setIsDark] = useState(false);
 
   const links = [
+    { href: '/', label: 'Accueil' },
     { href: '/learn', label: 'Apprendre' },
     { href: '/blog', label: 'Blog' },
     { href: '/solutions', label: 'Solutions' },
