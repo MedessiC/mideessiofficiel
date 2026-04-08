@@ -1,4 +1,4 @@
-import { Moon, Sun, UserCircle, LogOut, BookOpen, Menu, Package } from 'lucide-react';
+import { Moon, Sun, UserCircle, LogOut, BookOpen, Menu, Package, MoreVertical, Rocket, Book, Users, Briefcase } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import CommandPalette from './CommandPalette';
 import SideDrawer from './SideDrawer';
@@ -10,6 +10,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const { user, signOut } = useAuth();
   const { showDrawer, setShowDrawer } = useNavigation();
 
@@ -172,6 +173,62 @@ const Navbar = () => {
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                 </a>
               ))}
+
+              {/* More Menu Button */}
+              <div className="relative ml-2">
+                <button
+                  onClick={() => setShowMoreMenu(!showMoreMenu)}
+                  className="relative px-4 py-2 group flex items-center gap-2 rounded-lg hover:bg-gold/10 transition-colors"
+                  aria-label="Plus de pages"
+                  title="Accès aux autres pages: Projets, Équipe, Bibliothèque, Carrières"
+                >
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gold transition-colors">
+                    Plus
+                  </span>
+                  <MoreVertical className="w-4 h-4 text-gray-700 dark:text-gray-200 group-hover:text-gold transition-colors" />
+                </button>
+
+                {/* More Menu Dropdown */}
+                {showMoreMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-midnight rounded-xl shadow-2xl border-2 border-gold/30 z-50 overflow-hidden">
+                    <div className="px-4 py-3 bg-gradient-to-r from-gold/10 to-yellow-100/10 dark:from-gold/20 dark:to-blue-900/20 border-b-2 border-gold/20">
+                      <p className="text-xs font-bold text-gold uppercase tracking-widest">Plus de pages</p>
+                    </div>
+                    <a
+                      href="/projects"
+                      className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-3 text-sm font-medium border-b border-gold/10"
+                      onClick={() => setShowMoreMenu(false)}
+                    >
+                      <Rocket size={18} className="text-gold" />
+                      <span>Nos Projets</span>
+                    </a>
+                    <a
+                      href="/about#team"
+                      className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-3 text-sm font-medium border-b border-gold/10"
+                      onClick={() => setShowMoreMenu(false)}
+                    >
+                      <Users size={18} className="text-gold" />
+                      <span>Équipe</span>
+                    </a>
+                    <a
+                      href="/library"
+                      className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-3 text-sm font-medium border-b border-gold/10"
+                      onClick={() => setShowMoreMenu(false)}
+                    >
+                      <Book size={18} className="text-gold" />
+                      <span>Bibliothèque</span>
+                    </a>
+                    <a
+                      href="/careers"
+                      className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-3 text-sm font-medium"
+                      onClick={() => setShowMoreMenu(false)}
+                    >
+                      <Briefcase size={18} className="text-gold" />
+                      <span>Carrières</span>
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* RIGHT: Search, Theme, Auth */}
