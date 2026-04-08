@@ -2,44 +2,116 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mideessi.com/</loc>
-    <lastmod>2025-10-10T16:04:08.300Z</lastmod>
+    <lastmod>2026-04-08T01:22:11.883Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.00</priority>
   </url>
   <url>
     <loc>https://mideessi.com/about</loc>
-    <lastmod>2025-10-10T16:04:08.300Z</lastmod>
+    <lastmod>2026-04-08T01:22:11.883Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://mideessi.com/learn</loc>
-    <lastmod>2025-10-10T16:04:08.300Z</lastmod>
+    <lastmod>2026-04-08T01:22:11.883Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
     <loc>https://mideessi.com/projects</loc>
-    <lastmod>2025-10-10T16:04:08.300Z</lastmod>
+    <lastmod>2026-04-08T01:22:11.883Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
     <loc>https://mideessi.com/blog</loc>
-    <lastmod>2025-10-10T16:04:08.300Z</lastmod>
+    <lastmod>2026-04-08T01:22:11.883Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
     <loc>https://mideessi.com/contact</loc>
-    <lastmod>2025-10-10T16:04:08.300Z</lastmod>
+    <lastmod>2026-04-08T01:22:11.883Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://mideessi.com/blog/termux-transformer-un-smartphone-android-en-terminal-linux</loc>
-    <lastmod>2025-10-10T12:05:17.849Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
+    <loc>https://mideessi.com/blog/les-10-cyberattaques-les-plus-dangereuses-que-tu-devrais-connaitre</loc>
+    <lastmod>2026-04-06T16:18:06.500Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/ecole-ou-autodidacte-quelle-voie-choisir-en-afrique</loc>
+    <lastmod>2026-02-28T20:44:16.486Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/faut-il-encore-apprendre-a-coder-en-2026</loc>
+    <lastmod>2026-02-18T22:19:41.904Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/cybersecurite-au-benin-proteger-aujourd-hui-notre-avenir-numerique</loc>
+    <lastmod>2026-02-17T07:15:01.844Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/se-former-aujourd-hui-pour-travailler-demain-l-ia-et-l-automatisation-au-c-ur-du-benin-numerique</loc>
+    <lastmod>2026-02-18T00:51:17.699Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/deviens-developpeur-avec-ton-smartphone-python-tome-1</loc>
+    <lastmod>2026-02-26T01:06:58.921Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/mikple-l-innovation-beninoise-qui-simplifie-l-acces-aux-forfaits-moov-famille</loc>
+    <lastmod>2026-02-18T01:39:48.207Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/le-nigeria-entre-dans-l-histoire-avec-son-premier-robot-humanoide</loc>
+    <lastmod>2026-04-05T17:46:42.417Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/himra-lance-son-application-officielle-une-innovation-pour-le-rap-ivoirien</loc>
+    <lastmod>2026-02-26T01:04:03.241Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/les-failles-de-chatgpt-quand-l-ia-se-fait-hacker</loc>
+    <lastmod>2026-02-16T16:14:17.747Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/meta-annonce-la-fin-des-boutons-j-aime-et-partager-sur-les-sites-web-externes</loc>
+    <lastmod>2026-02-16T16:14:29.698Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/5-astuces-pour-accelerer-ton-telephone-android-sans-installer-d-application</loc>
+    <lastmod>2025-11-11T17:18:03.913Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://mideessi.com/blog/apple-suspend-la-production-de-l-iphone-air-quand-la-finesse-ne-suffit-pas</loc>
+    <lastmod>2026-02-26T01:03:43.134Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
   </url>
 </urlset>

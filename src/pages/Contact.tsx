@@ -1,26 +1,28 @@
 import { useState } from 'react';
-import { Mail, MapPin, Phone, Facebook, Github, Send, Clock, CheckCircle, AlertCircle, MessageCircle, ArrowRight } from 'lucide-react';
+import { Mail, MapPin, Phone, Facebook, Github, Send, Clock, CheckCircle, AlertCircle, MessageCircle, Briefcase, Users, Handshake, HelpCircle } from 'lucide-react';
 import SEO from '../components/SEO';
 
 const Contact = () => {
+  const [contactType, setContactType] = useState('general');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    subject: '',
     message: '',
+    phone: '',
+    company: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
 
-  // CONFIGURATION : Remplacez par votre endpoint
-  const FORM_ENDPOINT = 'https://formspree.io/f/mpwoqyaw'; // Remplacez YOUR_FORM_ID
+  const FORM_ENDPOINT = 'https://formspree.io/f/mpwoqyaw';
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
-    // Effacer le message de statut lors de la modification
     if (submitStatus.message) {
       setSubmitStatus({ type: '', message: '' });
     }
@@ -38,15 +40,15 @@ const Contact = () => {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ ...formData, type: contactType })
       });
 
       if (response.ok) {
         setSubmitStatus({
           type: 'success',
-          message: 'Merci bro! On a reçu ton message. On te revient vite.'
+          message: 'Merci! On a reçu ton message. On te revient vite.'
         });
-        setFormData({ name: '', email: '', message: '' });
+        setFormData({ name: '', email: '', message: '', subject: '', phone: '', company: '' });
       } else {
         const data = await response.json();
         throw new Error(data.error || 'Une erreur est survenue');
@@ -62,21 +64,56 @@ const Contact = () => {
     }
   };
 
+  const contactTypes = [
+    {
+      id: 'offres',
+      label: 'Nos Offres',
+      icon: <Briefcase className="w-5 h-5" />,
+      description: 'Vous intéressent nos services',
+      placeholder: 'Décrivez votre projet...',
+    },
+    {
+      id: 'recrutement',
+      label: 'Nous Rejoindre',
+      icon: <Users className="w-5 h-5" />,
+      description: 'Pour les candidatures',
+      placeholder: 'Parlez-nous de vous...',
+      showPhone: true,
+    },
+    {
+      id: 'partenariat',
+      label: 'Partenariat',
+      icon: <Handshake className="w-5 h-5" />,
+      description: 'Propositions de collaboration',
+      placeholder: 'Détaillez votre proposition...',
+      showCompany: true,
+    },
+    {
+      id: 'general',
+      label: 'Question Générale',
+      icon: <HelpCircle className="w-5 h-5" />,
+      description: 'Autre demande',
+      placeholder: 'Dites-nous tout...',
+    },
+  ];
+
+  const currentType = contactTypes.find(t => t.id === contactType);
+
   const contactInfo = [
     {
-      icon: <Mail className="w-6 h-6 text-yellow-600" />,
+      icon: <Mail className="w-6 h-6 text-gold" />,
       title: 'Email',
       content: 'contact@mideessi.com',
       link: 'mailto:contact@mideessi.com',
     },
     {
-      icon: <Phone className="w-6 h-6 text-yellow-600" />,
+      icon: <Phone className="w-6 h-6 text-gold" />,
       title: 'Téléphone',
       content: '+229 01 64 40 96 91',
       link: 'tel:+2290164409691',
     },
     {
-      icon: <MapPin className="w-6 h-6 text-yellow-600" />,
+      icon: <MapPin className="w-6 h-6 text-gold" />,
       title: 'Localisation',
       content: 'Cotonou, Bénin',
       link: 'https://www.google.com/maps/place/Cotonou,+B%C3%A9nin',
@@ -92,8 +129,8 @@ const Contact = () => {
     <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
       <SEO
         title="Contact MIDEESSI | Nous contacter"
-        description="Vous avez une question, une idée de collaboration ou simplement envie d'échanger ? Contactez-nous à Cotonou, Bénin."
-        keywords={['contact', 'collaboration', 'MIDEESSI', 'Bénin', 'email', 'téléphone']}
+        description="Contactez MIDEESSI pour nos offres, un partenariat, une candidature ou une question. Nous vous répondrons rapidement."
+        keywords={['contact', 'collaboration', 'recrutement', 'MIDEESSI', 'Bénin', 'email', 'téléphone']}
       />
 
       {/* Hero Section */}
@@ -108,8 +145,35 @@ const Contact = () => {
               <span className="text-gold">Parle</span> avec nous
             </h1>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 max-w-3xl mx-auto font-light leading-relaxed px-2">
-              Question, idée de collaboration, ou tu veux juste discuter ? On est là.
+              Question, projet, envie de nous rejoindre ? On est là pour échanger.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Type Selection */}
+      <section className="py-8 md:py-12 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            {contactTypes.map((type) => (
+              <button
+                key={type.id}
+                onClick={() => setContactType(type.id)}
+                className={`flex flex-col items-center gap-2 p-3 md:p-4 rounded-xl md:rounded-2xl transition-all duration-300 text-center ${
+                  contactType === type.id
+                    ? 'bg-gold text-midnight shadow-lg shadow-gold/30'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                <div className={contactType === type.id ? 'text-midnight' : 'text-gold'}>
+                  {type.icon}
+                </div>
+                <span className="font-semibold text-xs md:text-sm">{type.label}</span>
+                <span className={`text-xs ${contactType === type.id ? 'text-midnight/70' : 'text-gray-600 dark:text-gray-400'}`}>
+                  {type.description}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       </section>
@@ -121,7 +185,7 @@ const Contact = () => {
             {/* Contact Form */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl md:rounded-3xl shadow-xl p-6 md:p-8 lg:p-10">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-midnight dark:text-white mb-2 md:mb-3">
-                Envoie un message
+                {currentType?.label}
               </h2>
               <div className="w-12 sm:w-16 md:w-20 h-1 bg-gold rounded-full mb-6 md:mb-8"></div>
               
@@ -138,7 +202,7 @@ const Contact = () => {
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2.5 md:py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gold focus:border-gold dark:focus:border-gold transition-all text-sm md:text-base"
-                    placeholder="C'est quoi ton nom ?"
+                    placeholder="Ton nom complet"
                   />
                 </div>
 
@@ -158,6 +222,56 @@ const Contact = () => {
                   />
                 </div>
 
+                {currentType?.showPhone && (
+                  <div>
+                    <label htmlFor="phone" className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Téléphone
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 md:py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gold focus:border-gold dark:focus:border-gold transition-all text-sm md:text-base"
+                      placeholder="+229 XX XX XX XX"
+                    />
+                  </div>
+                )}
+
+                {currentType?.showCompany && (
+                  <div>
+                    <label htmlFor="company" className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Entreprise
+                    </label>
+                    <input
+                      type="text"
+                      id="company"
+                      name="company"
+                      value={formData.company}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 md:py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gold focus:border-gold dark:focus:border-gold transition-all text-sm md:text-base"
+                      placeholder="Nom de votre entreprise"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="subject" className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Sujet
+                  </label>
+                  <input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2.5 md:py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gold focus:border-gold dark:focus:border-gold transition-all text-sm md:text-base"
+                    placeholder="Sujet principal"
+                  />
+                </div>
+
                 <div>
                   <label htmlFor="message" className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Message
@@ -170,7 +284,7 @@ const Contact = () => {
                     required
                     rows={5}
                     className="w-full px-4 py-2.5 md:py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gold focus:border-gold dark:focus:border-gold transition-all resize-none text-sm md:text-base"
-                    placeholder="Dis-nous ce que tu as en tête..."
+                    placeholder={currentType?.placeholder}
                   />
                 </div>
 
@@ -208,7 +322,7 @@ const Contact = () => {
                     </>
                   ) : (
                     <>
-                      <span>Envoie</span>
+                      <span>Envoyer</span>
                       <Send className="w-4 h-4 md:w-5 md:h-5" />
                     </>
                   )}

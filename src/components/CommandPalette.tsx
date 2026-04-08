@@ -161,11 +161,11 @@ const CommandPalette = () => {
           setIsOpen(true);
           setSelectedIndex(0);
         }}
-        className="hidden md:flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 text-sm transition-all duration-300 hover:shadow-md"
-        title="Appuie sur Cmd+K ou Ctrl+K"
+        className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 dark:from-gray-800 dark:to-gray-700 dark:hover:from-gray-700 dark:hover:to-gray-600 rounded-lg text-gray-600 dark:text-gray-300 text-sm transition-all duration-300 hover:shadow-md border border-gray-300 dark:border-gray-600"
+        title="Appuie sur Cmd+K ou Ctrl+K pour rechercher"
       >
         <Search className="w-4 h-4" />
-        <span className="hidden sm:inline min-w-fit">Cmd+K</span>
+        <span className="hidden sm:inline min-w-fit text-xs font-semibold">Ctrl+K</span>
       </button>
 
       {/* Command Palette Modal */}
