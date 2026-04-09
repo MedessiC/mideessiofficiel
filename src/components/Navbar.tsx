@@ -325,13 +325,13 @@ const Navbar = () => {
                 <div className="flex items-center gap-2">
                   <Link
                     to="/login"
-                    className="hidden sm:flex lg:hidden px-3 py-2 rounded-lg text-midnight dark:text-white border-2 border-gold/40 hover:border-gold hover:bg-gold/5 transition-all text-xs md:text-sm font-bold"
+                    className="hidden px-3 py-2 rounded-lg text-midnight dark:text-white border-2 border-gold/40 hover:border-gold hover:bg-gold/5 transition-all text-xs md:text-sm font-bold"
                   >
                     Connexion
                   </Link>
                   <Link
                     to="/signup"
-                    className="hidden sm:flex lg:hidden px-3 py-2 rounded-lg bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight transition-all text-xs md:text-sm font-bold shadow-lg hover:shadow-gold/50"
+                    className="hidden px-3 py-2 rounded-lg bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight transition-all text-xs md:text-sm font-bold shadow-lg hover:shadow-gold/50"
                   >
                     S'inscrire
                   </Link>
