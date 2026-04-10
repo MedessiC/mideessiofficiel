@@ -212,51 +212,62 @@ const Offres = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 {devServices.map((service) => (
-                  <div key={service.id} className="group bg-white dark:bg-gray-800 rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-200 dark:border-gray-700 hover:border-gold flex flex-col">
-                    <div className="w-14 h-14 md:w-16 md:h-16 bg-gold/20 rounded-xl flex items-center justify-center mb-4 md:mb-6 group-hover:bg-gold/30 transition-colors">
-                      <div className="text-gold">
-                        {getIcon(service.icon)}
+                  <div key={service.id} className="group relative">
+                    <div className={`relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 h-full flex flex-col`}>
+                      <div className="relative h-48 md:h-56 overflow-hidden bg-gradient-to-br from-blue-600 to-blue-800">
+                        <img
+                          src={service.image}
+                          alt={service.nom}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute top-4 right-4 w-12 h-12 md:w-14 md:h-14 bg-white/95 dark:bg-gray-900/95 rounded-lg flex items-center justify-center shadow-lg backdrop-blur-sm">
+                          <div className="text-gold">
+                            {getIcon(service.icon)}
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
-                    <h3 className="text-xl md:text-2xl font-bold text-midnight dark:text-white mb-3">
-                      {service.nom}
-                    </h3>
+                      <div className="px-6 md:px-8 py-6 md:py-8 flex flex-col flex-grow">
+                        <h3 className="text-xl md:text-2xl font-bold text-midnight dark:text-white mb-2">
+                          {service.nom}
+                        </h3>
 
-                    <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 mb-4 md:mb-6 flex-grow leading-relaxed">
-                      {service.description}
-                    </p>
-
-                    <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700 space-y-3">
-                      <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Délai estimé</p>
-                        <p className="text-lg md:text-xl font-bold text-gold">
-                          {service.delai}
+                        <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 mb-5 md:mb-6 flex-grow leading-relaxed">
+                          {service.description}
                         </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">À partir de</p>
-                        <p className="text-lg md:text-xl font-bold text-midnight dark:text-white">
-                          {formatPrice(service.prixDebut)} FCFA
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="space-y-3">
-                      <Link
-                        to={`/dev-services/${service.slug}`}
-                        className="w-full bg-midnight dark:bg-gray-700 text-white hover:bg-blue-900 dark:hover:bg-gray-600 py-2.5 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 border-2 border-gold/30 hover:border-gold group-hover:border-gold"
-                      >
-                        <span>Voir les détails</span>
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </Link>
-                      <button
-                        onClick={() => handleWhatsAppDevis(service.nom)}
-                        className="w-full bg-gradient-to-r from-midnight to-blue-900 dark:from-gray-700 dark:to-gray-800 hover:from-blue-900 hover:to-midnight text-white py-2.5 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                        Devis
-                      </button>
+                        <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700 space-y-3">
+                          <div>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Délai estimé</p>
+                            <p className="text-base md:text-lg font-bold text-gold">
+                              {service.delai}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">À partir de</p>
+                            <p className="text-base md:text-lg font-bold text-midnight dark:text-white">
+                              {formatPrice(service.prixDebut)} FCFA
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <Link
+                            to={`/dev-services/${service.slug}`}
+                            className="w-full bg-midnight dark:bg-gray-700 text-white hover:bg-blue-900 dark:hover:bg-gray-600 py-2.5 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 border-2 border-gold/30 hover:border-gold group-hover:border-gold"
+                          >
+                            <span>Voir les détails</span>
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          </Link>
+                          <button
+                            onClick={() => handleWhatsAppDevis(service.nom)}
+                            className="w-full bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight py-2.5 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shadow-md hover:shadow-lg"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            Devis
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

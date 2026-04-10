@@ -12,6 +12,7 @@ export interface DevService {
   delai: string;
   prixDebut: number;
   icon: string;
+  image: string;
   features: DevServiceFeature[];
   pourQui: string;
   processus: string[];
@@ -28,6 +29,7 @@ export const devServices: DevService[] = [
     delai: '2-3 semaines',
     prixDebut: 150000,
     icon: 'Globe',
+    image: '/dev-vitrine.webp',
     features: [
       { name: '5-8 pages professionals', included: true },
       { name: 'Design responsive (mobile, tablette, desktop)', included: true },
@@ -63,6 +65,7 @@ export const devServices: DevService[] = [
     delai: '3-4 semaines',
     prixDebut: 300000,
     icon: 'ShoppingCart',
+    image: '/dev-ecommerce.webp',
     features: [
       { name: 'Jusqu\'à 1000 produits', included: true },
       { name: 'Panier et checkout optimisé', included: true },
@@ -98,6 +101,7 @@ export const devServices: DevService[] = [
     delai: '6-8 semaines',
     prixDebut: 500000,
     icon: 'Smartphone',
+    image: '/dev-mobile.webp',
     features: [
       { name: 'iOS et Android (cross-platform)', included: true },
       { name: 'Design UX/UI professionnel', included: true },
@@ -133,6 +137,7 @@ export const devServices: DevService[] = [
     delai: '8-12 semaines',
     prixDebut: 800000,
     icon: 'Code',
+    image: '/dev-webapp.webp',
     features: [
       { name: 'Design UX/UI sur-mesure', included: true },
       { name: 'Base de données scalable', included: true },
@@ -168,6 +173,7 @@ export const devServices: DevService[] = [
     delai: '1-2 semaines',
     prixDebut: 50000,
     icon: 'PackageOpen',
+    image: '/dev-playstore.webp',
     features: [
       { name: 'Setup complet Apple Developer & Google Play Console', included: true },
       { name: 'Création iTunes Connect / Play Console accounts', included: true },

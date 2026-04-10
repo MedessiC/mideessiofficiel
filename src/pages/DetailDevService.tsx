@@ -43,7 +43,7 @@ const DetailDevService = () => {
       />
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white py-16 md:py-24 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white py-12 md:py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 right-5 md:top-20 md:right-10 w-40 h-40 md:w-72 md:h-72 bg-gold rounded-full blur-3xl"></div>
           <div className="absolute -bottom-10 -left-5 md:bottom-20 md:left-10 w-48 h-48 md:w-96 md:h-96 bg-blue-500 rounded-full blur-3xl"></div>
@@ -56,7 +56,7 @@ const DetailDevService = () => {
             ← Retour aux offres
           </Link>
 
-          <div className="flex items-start gap-6 mb-6">
+          <div className="flex items-start gap-6">
             <div className="w-16 h-16 md:w-20 md:h-20 bg-gold/20 rounded-2xl flex items-center justify-center flex-shrink-0 text-gold">
               {getIcon(service.icon)}
             </div>
@@ -64,12 +64,30 @@ const DetailDevService = () => {
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 tracking-tight leading-tight">
                 {service.nom}
               </h1>
+              <p className="text-sm sm:text-base md:text-lg text-gray-200 font-light leading-relaxed">
+                {service.fullDescription}
+              </p>
             </div>
           </div>
+        </div>
+      </section>
 
-          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 max-w-3xl font-light leading-relaxed">
-            {service.fullDescription}
-          </p>
+      {/* Image Section */}
+      <section className="relative bg-gradient-to-b from-blue-900 to-white dark:from-gray-900 dark:to-gray-900 py-12 md:py-20 overflow-hidden">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-gold to-yellow-400 rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-300"></div>
+            <div className="relative bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-2xl group-hover:shadow-3xl transition-all duration-300 transform group-hover:-translate-y-1">
+              <div className="w-full aspect-video overflow-hidden bg-gradient-to-br from-blue-100 to-gray-100 dark:from-gray-700 dark:to-gray-800">
+                <img
+                  src={service.image}
+                  alt={service.nom}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
