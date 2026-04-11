@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import initVersionCheck from './utils/versionCheck';
 
 const rootElement = document.getElementById('root')!;
 
@@ -22,3 +23,9 @@ if (rootElement.hasChildNodes()) {
     </StrictMode>
   );
 }
+
+// Initialiser la vérification de version toutes les 3 minutes
+// Recharge silencieusement quand une nouvelle version est détectée
+initVersionCheck({
+  checkInterval: 3 * 60 * 1000, // 3 minutes
+});
