@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, MapPin, Phone, Facebook, Github, Send, Clock, CheckCircle, AlertCircle, MessageCircle, Briefcase, Users, Handshake, HelpCircle } from 'lucide-react';
 import SEO from '../components/SEO';
+import PopupDisplay from '../components/PopupDisplay';
 
 const Contact = () => {
   const [contactType, setContactType] = useState('general');
@@ -438,6 +439,8 @@ const Contact = () => {
           </div>
         </div>
       </section>
+
+      <PopupDisplay currentPage="contact" />
     </div>
   );
 };

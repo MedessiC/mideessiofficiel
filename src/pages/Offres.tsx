@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { offres } from '../data/offres';
 import { devServices } from '../data/devServices';
+import PopupDisplay from '../components/PopupDisplay';
 
 type CategoryType = 'presence' | 'tech';
 
@@ -346,6 +347,8 @@ const Offres = () => {
           </Link>
         </div>
       </section>
+
+      <PopupDisplay currentPage="offres" />
     </div>
   );
 };

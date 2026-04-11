@@ -3,6 +3,7 @@ import SEO from '../components/SEO';
 import { blogPosts } from '../data/blogPosts';
 import { Rss, BookOpen, Lightbulb, Zap, Rocket, ArrowRight, Mail } from 'lucide-react';
 import { getIcon } from '../utils/iconMapper';
+import PopupDisplay from '../components/PopupDisplay';
 
 const Blog = () => {
   const topics = [
@@ -167,6 +168,8 @@ const Blog = () => {
           </a>
         </div>
       </section>
+
+      <PopupDisplay currentPage="blog" />
     </div>
   );
 };

@@ -4,9 +4,23 @@ import {
   BookOpen, Download, Star, ExternalLink
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-// import NewsletterSignup from '../components/NewsletterSignup';
-// import MIDEESSIStats from '../components/MIDEESSIStats';
+import { supabase } from '../lib/supabase';
+import PopupDisplay from '../components/PopupDisplay';
+
+interface HeroSlide {
+  id: string;
+  page: string;
+  badge: string;
+  title: string;
+  description: string;
+  subtitle: string;
+  image: string;
+  primary_cta_text: string;
+  primary_cta_link: string;
+  secondary_cta_text: string;
+  secondary_cta_link: string;
+  order: number;
+}
 
 const FeaturedPostSkeleton = () => (
   <div className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 animate-pulse">
@@ -41,48 +55,20 @@ const NewHome = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
   const [featuredPosts, setFeaturedPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [weeklyPDF, setWeeklyPDF] = useState(null);
   const [loadingPDF, setLoadingPDF] = useState(true);
 
-  // Initialize Supabase
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL || '',
-    import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-  );
-
-  const heroSlides = [
-    {
-      image: '/hero1.webp',
-      badge: '100% Béninois',
-      title: 'Nous sommes indépendants',
-      description: 'MIDEESSI c\'est le mouvement qui dit non à la dépendance technologique. On crée nos solutions, avec nos talents, notre vision.',
-      subtitle: 'Pas d\'importation. Pas de dépendance. Juste de l\'innovation qui vient du terrain.'
-    },
-    {
-      image: '/hero2.webp',
-      badge: 'Innovation de terrain',
-      title: 'Du problème à la solution',
-      description: 'Chaque trimestre on se jette dans un secteur. On écoute. On observe. On crée. Les solutions MIDEESSI? Elles viennent de la vraie vie.',
-      subtitle: 'Agriculture, santé, commerce, éducation... On crée où c\'est nécessaire.'
-    },
-    {
-      image: '/hero3.webp',
-      badge: 'Souveraineté technologique',
-      title: 'Consommons béninois',
-      description: 'Les talents béninois existent. Les idées béninoises font sens. Les solutions béninoises changeront l\'Afrique.',
-      subtitle: 'C\'est notre mission. Bâtir l\'indépendance technologique du Bénin, ensemble.'
-    }
-  ];
-
   useEffect(() => {
+    fetchHeroSlides();
     fetchBlogPosts();
     fetchWeeklyPDF();
 
     const heroInterval = setInterval(() => {
       if (!isPaused) {
-        setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+        setCurrentSlide((prev) => (prev + 1) % (heroSlides.length || 1));
       }
     }, 7000);
 
@@ -96,7 +82,71 @@ const NewHome = () => {
       clearInterval(heroInterval);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [isPaused]);
+  }, [isPaused, heroSlides.length]);
+
+  const fetchHeroSlides = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('hero_slides')
+        .select('*')
+        .eq('page', 'home')
+        .eq('is_active', true)
+        .order('order', { ascending: true });
+
+      if (error) {
+        console.error('Erreur lors du chargement des slides:', error);
+        // Fallback aux données par défaut
+        setHeroSlides([
+          {
+            id: '1',
+            page: 'home',
+            badge: '100% Béninois',
+            title: 'Nous sommes indépendants',
+            description: 'MIDEESSI c\'est le mouvement qui dit non à la dépendance technologique. On crée nos solutions, avec nos talents, notre vision.',
+            subtitle: 'Pas d\'importation. Pas de dépendance. Juste de l\'innovation qui vient du terrain.',
+            image: '/hero1.webp',
+            primary_cta_text: 'MIDEESSI Learn',
+            primary_cta_link: '/learn',
+            secondary_cta_text: 'Nos projets',
+            secondary_cta_link: '/projects',
+            order: 0,
+          },
+          {
+            id: '2',
+            page: 'home',
+            badge: 'Innovation de terrain',
+            title: 'Du problème à la solution',
+            description: 'Chaque trimestre on se jette dans un secteur. On écoute. On observe. On crée. Les solutions MIDEESSI? Elles viennent de la vraie vie.',
+            subtitle: 'Agriculture, santé, commerce, éducation... On crée où c\'est nécessaire.',
+            image: '/hero2.webp',
+            primary_cta_text: 'Découvrir nos solutions',
+            primary_cta_link: '/solutions',
+            secondary_cta_text: 'En savoir plus',
+            secondary_cta_link: '/about',
+            order: 1,
+          },
+          {
+            id: '3',
+            page: 'home',
+            badge: 'Souveraineté technologique',
+            title: 'Consommons béninois',
+            description: 'Les talents béninois existent. Les idées béninoises font sens. Les solutions béninoises changeront l\'Afrique.',
+            subtitle: 'C\'est notre mission. Bâtir l\'indépendance technologique du Bénin, ensemble.',
+            image: '/hero3.webp',
+            primary_cta_text: 'Nos offres',
+            primary_cta_link: '/offres',
+            secondary_cta_text: '',
+            secondary_cta_link: '',
+            order: 2,
+          },
+        ]);
+      } else if (data && data.length > 0) {
+        setHeroSlides(data);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des slides:', error);
+    }
+  };
 
   const fetchBlogPosts = async () => {
     try {
@@ -292,19 +342,23 @@ const NewHome = () => {
               ))}
               
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <a
-                  href="/learn"
-                  className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-[#ffd700] text-[#191970] font-bold rounded-lg hover:bg-[#ffed4e] transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-[#ffd700]/50 text-sm sm:text-base"
-                >
-                  MIDEESSI Learn
-                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
-                </a>
-                <a
-                  href="/projects"
-                  className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-2 border-[#ffd700] text-[#ffd700] font-bold rounded-lg hover:bg-[#ffd700]/10 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#ffd700]/50 text-sm sm:text-base"
-                >
-                  Nos projets
-                </a>
+                {heroSlides[currentSlide]?.primary_cta_link && heroSlides[currentSlide]?.primary_cta_text && (
+                  <a
+                    href={heroSlides[currentSlide].primary_cta_link}
+                    className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-[#ffd700] text-[#191970] font-bold rounded-lg hover:bg-[#ffed4e] transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-[#ffd700]/50 text-sm sm:text-base"
+                  >
+                    {heroSlides[currentSlide].primary_cta_text}
+                    <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+                  </a>
+                )}
+                {heroSlides[currentSlide]?.secondary_cta_link && heroSlides[currentSlide]?.secondary_cta_text && (
+                  <a
+                    href={heroSlides[currentSlide].secondary_cta_link}
+                    className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-2 border-[#ffd700] text-[#ffd700] font-bold rounded-lg hover:bg-[#ffd700]/10 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#ffd700]/50 text-sm sm:text-base"
+                  >
+                    {heroSlides[currentSlide].secondary_cta_text}
+                  </a>
+                )}
               </div>
 
               <div className="flex gap-2 mt-6 sm:mt-8" role="tablist" aria-label="Sélection de diapositive">
@@ -897,6 +951,8 @@ const NewHome = () => {
           </p>
         </div>
       </section>
+
+      <PopupDisplay currentPage="home" />
 
       <style>{`
         @keyframes fadeInUp {

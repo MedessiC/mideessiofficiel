@@ -1,6 +1,7 @@
 import { BookOpen, Lightbulb, Users, Flag, MapPin, Calendar, Rocket } from 'lucide-react';
 import TeamMemberCard from '../components/TeamMemberCard';
 import { teamMembers } from '../data/teamMembers';
+import PopupDisplay from '../components/PopupDisplay';
 
 const About = () => {
   const values = [
@@ -395,6 +396,8 @@ const About = () => {
           </div>
         </div>
       </section>
+
+      <PopupDisplay currentPage="about" />
     </div>
   );
 };

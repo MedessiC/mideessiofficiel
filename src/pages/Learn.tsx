@@ -3,6 +3,7 @@ import { BookOpen, Star, Users, Download, Award, Clock, Zap, Smartphone, Lightbu
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getIcon } from '../utils/iconMapper';
+import PopupDisplay from '../components/PopupDisplay';
 
 interface Book {
   id: string;
@@ -482,6 +483,8 @@ const Learn = () => {
           </div>
         </div>
       </section>
+
+      <PopupDisplay currentPage="learn" />
     </div>
   );
 };

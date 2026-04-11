@@ -1,15 +1,46 @@
-import { ArrowRight, Flag, BookOpen, Lightbulb, Users, Calendar, MapPin, Target, Heart, TrendingUp, MessageCircle, Sparkles, Globe, Code } from 'lucide-react';
+import { ArrowRight, Flag, BookOpen, Lightbulb, Users, Calendar, MapPin, Target, Heart, TrendingUp, MessageCircle, Sparkles, Globe } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ProjectCard from '../components/ProjectCard';
 import BlogCard from '../components/BlogCard';
 import { blogPosts } from '../data/blogPosts';
+import { supabase } from '../lib/supabase';
+
+interface HeroSection {
+  id: string;
+  page: string;
+  title: string;
+  subtitle: string;
+  cta_text: string;
+  cta_link: string;
+  image_url: string;
+  is_active: boolean;
+}
 
 const Home = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [hero, setHero] = useState<HeroSection | null>(null);
 
   useEffect(() => {
     setIsVisible(true);
+    fetchHero();
   }, []);
+
+  const fetchHero = async () => {
+    try {
+      const { data } = await supabase
+        .from('hero_sections')
+        .select('*')
+        .eq('page', 'home')
+        .eq('is_active', true)
+        .single();
+
+      if (data) {
+        setHero(data);
+      }
+    } catch (error) {
+      console.log('Hero section not yet configured');
+    }
+  };
 
   const featuredProjects = [
     {
@@ -68,7 +99,14 @@ const Home = () => {
   return (
     <div className="min-h-screen overflow-hidden bg-white dark:bg-gray-900">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-midnight via-blue-900 to-indigo-900 dark:from-black dark:via-gray-900 dark:to-gray-800 text-white py-24 md:py-40 overflow-hidden">
+      <section 
+        className="relative bg-gradient-to-br from-midnight via-blue-900 to-indigo-900 dark:from-black dark:via-gray-900 dark:to-gray-800 text-white py-24 md:py-40 overflow-hidden"
+        style={hero?.image_url ? {
+          backgroundImage: `linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('${hero.image_url}')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        } : {}}
+      >
         {/* Subtle background grid */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0" style={{
@@ -78,11 +116,13 @@ const Home = () => {
         </div>
 
         {/* Gradient orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-gold/20 rounded-full filter blur-3xl"></div>
-          <div className="absolute top-40 right-20 w-96 h-96 bg-green-500/20 rounded-full filter blur-3xl"></div>
-          <div className="absolute bottom-20 left-40 w-80 h-80 bg-blue-500/20 rounded-full filter blur-3xl"></div>
-        </div>
+        {!hero?.image_url && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-20 left-10 w-72 h-72 bg-gold/20 rounded-full filter blur-3xl"></div>
+            <div className="absolute top-40 right-20 w-96 h-96 bg-green-500/20 rounded-full filter blur-3xl"></div>
+            <div className="absolute bottom-20 left-40 w-80 h-80 bg-blue-500/20 rounded-full filter blur-3xl"></div>
+          </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className={`text-center transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
@@ -94,7 +134,7 @@ const Home = () => {
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black mb-6 md:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white via-gold to-white leading-tight">
-              MIDEESSI
+              {hero?.title || 'MIDEESSI'}
             </h1>
             
             <div className="flex items-center justify-center gap-2 sm:gap-4 mb-4 md:mb-6">
@@ -110,8 +150,7 @@ const Home = () => {
             </p>
             
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-8 md:mb-12 text-gray-100 max-w-4xl mx-auto leading-relaxed font-light px-4">
-              Un mouvement d'indépendance technologique né au Bénin. Chaque trimestre, un secteur. Une immersion terrain. 
-              Des solutions <span className="text-gold font-bold">100% béninoises</span>, créées avec le peuple, pour le peuple.
+              {hero?.subtitle || 'Un mouvement d\'indépendance technologique né au Bénin. Chaque trimestre, un secteur. Une immersion terrain. Des solutions 100% béninoises, créées avec le peuple, pour le peuple.'}
             </p>
             
             {/* Location badge */}
@@ -124,10 +163,10 @@ const Home = () => {
             
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
               <a
-                href="/about"
+                href={hero?.cta_link || '/about'}
                 className="group inline-flex items-center space-x-2 sm:space-x-3 bg-gradient-to-r from-gold to-yellow-500 hover:from-yellow-400 hover:to-gold text-midnight font-bold px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-gold/30 w-full sm:w-auto text-center justify-center"
               >
-                <span className="text-base sm:text-lg">Découvrir notre mission</span>
+                <span className="text-base sm:text-lg">{hero?.cta_text || 'Découvrir notre mission'}</span>
                 <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform duration-300" />
               </a>
               
@@ -374,8 +413,8 @@ const Home = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link
-              to="/contact"
+            <a
+              href="/contact"
               className="group inline-flex items-center space-x-3 bg-midnight hover:bg-blue-900 text-white font-bold px-6 sm:px-10 py-4 sm:py-6 rounded-2xl transition-all duration-300 hover:shadow-2xl text-base sm:text-lg w-full sm:w-auto justify-center"
             >
               <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
