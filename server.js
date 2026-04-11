@@ -237,6 +237,34 @@ app.use((req, res, next) => {
   next();
 });
 
+// ============================================================
+// CACHE HEADERS - Cache busting intelligent
+// ============================================================
+app.use((req, res, next) => {
+  // HTML files - Never cache (always check for updates)
+  if (req.path.endsWith('.html') || req.path === '/') {
+    res.set('Cache-Control', 'public, max-age=0, must-revalidate');
+  }
+  // Static assets with hash (JS, CSS, images) - Cache for 1 year
+  else if (/\.(js|css|woff2|ttf|eot|svg|png|jpg|jpeg|webp|gif)$/.test(req.path)) {
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+  // API routes and JSON - Never cache
+  else if (req.path.startsWith('/api/') || req.path.endsWith('.json')) {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+  // Default - Don't cache
+  else {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+  
+  // Add version header for debugging
+  res.set('X-Cache-Version', '1.0');
+  next();
+});
+
 // Middleware pour logger les requêtes
 app.use((req, res, next) => {
   const userAgent = req.headers['user-agent'] || 'Unknown';

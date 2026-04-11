@@ -1,0 +1,46 @@
+# ============================================================
+# Cache Control Headers - Apache Configuration
+# Utilisé si le site n'est pas sur Netlify/Vercel
+# ============================================================
+
+# HTML - Always check for updates (no cache)
+<FilesMatch "\.html?$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+</FilesMatch>
+
+# Assets with hash (JS, CSS, fonts, images) - Cache for 1 year
+<FilesMatch "\.(js|css|woff2?|ttf|eot|svg|png|jpe?g|webp|gif|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+
+# API and JSON - Never cache
+<FilesMatch "api/|\.json$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# Default - Don't cache
+<FilesMatch "^(?!.*\.(html?|js|css|woff2?|ttf|eot|svg|png|jpe?g|webp|gif|ico|json|api)).*$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+</FilesMatch>
+
+# Add Version Header
+Header set X-Cache-Version "1.0"
+
+# Enable gzip compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Enable browser caching with mod_expires
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/html "now"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>

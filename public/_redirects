@@ -1,5 +1,25 @@
 /*    /index.html   200
-# Redirection pour les crawlers de réseaux sociaux
+
+# ============================================================
+# Cache headers - HTML never cached, assets cached
+# ============================================================
+
+# HTML files - No cache (always check)
+/index.html  /index.html  200!
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Default redirect with cache headers
+/*  /index.html  200!
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Assets - Cache for 1 year (they have hash in filename)
+/assets/* /assets/:splat 200!
+  Cache-Control: public, max-age=31536000, immutable
+
+# ============================================================
+# Redirections pour les crawlers de réseaux sociaux
+# ============================================================
+
 # Ces user-agents seront redirigés vers le serveur SEO
 /blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=facebookexternalhit/*
 /blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Facebot/*

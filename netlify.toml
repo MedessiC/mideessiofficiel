@@ -8,9 +8,39 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# ============================================================
+# CACHE BUSTING - Pour éviter les problèmes de cache sur mobile
+# ============================================================
+
+# HTML - Toujours vérifier la version la plus récente
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# index.html - Toujours à jour
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Assets avec hash (JS, CSS) - Cache long terme sûr
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# API/Supabase - Never cache
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# ============================================================
 # IMPORTANT : Les redirections avec conditions User-Agent
 # Pour les crawlers de réseaux sociaux, proxy vers le serveur SEO Render
 # L'URL reste mideessi.com mais le contenu vient de Render
+# ============================================================
 
 # Facebook
 [[redirects]]

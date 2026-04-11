@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run version:update",
+    "build:nocache": "npm run version:update && vite build",
+    "version:update": "node scripts/update-version.js",
     "start": "node server.js",
     "preview": "vite preview",
     "lint": "eslint .",
