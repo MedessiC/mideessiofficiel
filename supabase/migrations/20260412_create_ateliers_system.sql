@@ -152,7 +152,12 @@ CREATE POLICY "Public can read published ateliers"
 
 CREATE POLICY "Admins can manage ateliers"
   ON ateliers FOR ALL
-  USING (auth.jwt_matches_role('authenticated') AND auth.jwt_matches_claim('role', 'admin'));
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.admins 
+      WHERE id = auth.uid()
+    )
+  );
 
 -- RLS policies for atelier_programs
 CREATE POLICY "Public can read programs for published ateliers"
@@ -172,11 +177,11 @@ CREATE POLICY "Public can register for ateliers"
 
 CREATE POLICY "Users can view their own registrations"
   ON atelier_registrations FOR SELECT
-  USING (user_email = current_user_email() OR auth.jwt_matches_claim('role', 'admin'));
+  USING (user_email = auth.jwt()->>'email' OR EXISTS (SELECT 1 FROM public.admins WHERE id = auth.uid()));
 
 CREATE POLICY "Admins can manage all registrations"
   ON atelier_registrations FOR ALL
-  USING (auth.jwt_matches_claim('role', 'admin'));
+  USING (EXISTS (SELECT 1 FROM public.admins WHERE id = auth.uid()));
 
 -- Create indexes for faster queries
 CREATE INDEX IF NOT EXISTS idx_ateliers_slug ON ateliers(slug);

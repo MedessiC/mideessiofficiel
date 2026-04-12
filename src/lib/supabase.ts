@@ -73,3 +73,40 @@ export interface BlogCategory {
   description: string;
   created_at: string;
 }
+
+export interface Atelier {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  long_description: string;
+  category: 'technologie' | 'business' | 'design' | 'marketing' | 'finance' | 'autre';
+  image: string;
+  date: string;
+  time: string;
+  duration: number;
+  location: string;
+  capacity: number;
+  registered: number;
+  language: 'Français' | 'Anglais' | 'Mixte';
+  level: 'Débutant' | 'Intermédiaire' | 'Avancé';
+  instructor: {
+    name: string;
+    title: string;
+    image: string;
+    bio: string;
+  };
+  objectives: string[];
+  program: {
+    time: string;
+    title: string;
+    description: string;
+  }[];
+  prerequisites: string[];
+  materials: string[];
+  price: number;
+  tags: string[];
+  is_online: boolean;
+  meet_link?: string;
+  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+}

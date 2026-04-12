@@ -1,5 +1,6 @@
 import { ArrowRight, MapPin, Calendar, Users, Clock, AlertCircle, CheckCircle, Laptop, Globe, Sparkles, Award } from 'lucide-react';
-import { Atelier, getDaysRemaining, isAtelierPassed, getCountdownStatus } from '../data/ateliers';
+import { Atelier } from '../lib/supabase';
+import { getDaysRemaining, isAtelierPassed, getCountdownStatus } from '../data/ateliers';
 
 interface AtelierCardProps {
   atelier: Atelier;
@@ -178,11 +179,11 @@ const AtelierCard = ({ atelier, variant = 'default' }: AtelierCardProps) => {
             {atelier.language}
           </span>
           <span className={`text-xs sm:text-sm font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full ${
-            atelier.isOnline 
+            atelier.is_online 
               ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
               : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
           }`}>
-            {atelier.isOnline ? 'En ligne' : 'Présentiel'}
+            {atelier.is_online ? 'En ligne' : 'Présentiel'}
           </span>
         </div>
 
@@ -223,7 +224,7 @@ const AtelierCard = ({ atelier, variant = 'default' }: AtelierCardProps) => {
 
           {/* Location Type */}
           <div className="flex items-start gap-1.5 sm:gap-2">
-            {atelier.isOnline ? (
+            {atelier.is_online ? (
               <>
                 <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gold flex-shrink-0 mt-0.5" />
                 <div className="min-w-0">

@@ -1,15 +1,91 @@
-import { Filter, Search, Zap, Calendar, Users, Clock, MapPin, Laptop, GraduationCap, Rocket, TrendingUp, Code } from 'lucide-react';
-import { useState } from 'react';
+import { Search, Zap, Calendar, MapPin, Rocket, Code, Globe } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import SEO from '../components/SEO';
 import AtelierCard from '../components/AtelierCard';
-import { ateliers, atelierCategories, getUpcomingAteliers, getDaysRemaining } from '../data/ateliers';
+import { atelierCategories, getDaysRemaining } from '../data/ateliers';
 import { getIcon } from '../utils/iconMapper';
+import { supabase, Atelier } from '../lib/supabase';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Ateliers = () => {
+  const [ateliers, setAteliers] = useState<Atelier[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOption, setFilterOption] = useState<'all' | 'this-week' | 'this-month' | 'online' | 'in-person'>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'price-low' | 'price-high' | 'available'>('recent');
+
+  useEffect(() => {
+    fetchAteliers();
+  }, []);
+
+  const fetchAteliers = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('ateliers')
+        .select('*')
+        .eq('status', 'upcoming')
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+      
+      // Transform database records to match Atelier interface
+      if (data) {
+        const transformedAteliers = data.map((atelier: any) => {
+          // Fetch instructor details if instructor_id exists
+          return {
+            id: atelier.id,
+            title: atelier.title,
+            slug: atelier.slug,
+            description: atelier.description,
+            long_description: atelier.long_description,
+            category: atelier.category,
+            image: atelier.image,
+            date: atelier.date,
+            time: atelier.time,
+            duration: atelier.duration,
+            location: atelier.location,
+            capacity: atelier.capacity,
+            registered: atelier.registered || 0,
+            language: atelier.language,
+            level: atelier.level,
+            instructor: {
+              name: 'Expert MIDEESSI',
+              title: 'Instructeur',
+              image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+              bio: 'Expert passionné dans son domaine'
+            },
+            objectives: atelier.objectives || [],
+            program: [],
+            prerequisites: atelier.prerequisites || [],
+            materials: atelier.materials || [],
+            price: atelier.price,
+            tags: atelier.tags || [],
+            is_online: atelier.is_online,
+            meet_link: atelier.meet_link,
+            status: atelier.status
+          };
+        });
+        setAteliers(transformedAteliers);
+      }
+    } catch (err) {
+      console.error('Erreur:', err);
+      setAteliers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getUpcomingAteliers = () => {
+    const now = new Date();
+    return ateliers
+      .filter(atelier => {
+        const atelierDate = new Date(atelier.date + 'T00:00:00');
+        return atelierDate > now && atelier.status === 'upcoming';
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  };
 
   const upcomingAteliers = getUpcomingAteliers();
 
@@ -28,9 +104,9 @@ const Ateliers = () => {
     } else if (filterOption === 'this-month') {
       matchesFilter = getDaysRemaining(atelier.date) <= 30;
     } else if (filterOption === 'online') {
-      matchesFilter = atelier.isOnline;
+      matchesFilter = atelier.is_online;
     } else if (filterOption === 'in-person') {
-      matchesFilter = !atelier.isOnline;
+      matchesFilter = !atelier.is_online;
     }
     
     return matchesCategory && matchesSearch && matchesFilter;
@@ -55,6 +131,14 @@ const Ateliers = () => {
   // Ateliers mis en avant (this week)
   const highlightedAteliers = filteredAteliers.filter((a) => getDaysRemaining(a.date) <= 7).slice(0, 2);
   const otherAteliers = filteredAteliers.filter((a) => getDaysRemaining(a.date) > 7);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-32 flex items-center justify-center bg-white dark:bg-gray-900">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
@@ -122,7 +206,7 @@ const Ateliers = () => {
                     : 'bg-white/10 text-white hover:bg-white/20'
                 }`}
               >
-                <Laptop className="w-3.5 h-3.5" /> En ligne
+                <Globe className="w-3.5 h-3.5" /> En ligne
               </button>
               <button
                 onClick={() => setFilterOption('in-person')}

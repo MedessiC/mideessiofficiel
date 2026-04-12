@@ -5,6 +5,8 @@ export interface BlogPost {
   content: string;
   date: string;
   author: string;
+  category: string;
+  image: string;
 }
 
 export const blogPosts: BlogPost[] = [
@@ -12,6 +14,8 @@ export const blogPosts: BlogPost[] = [
     id: '1',
     title: 'L\'avenir de l\'automatisation avec l\'IA',
     excerpt: 'Découvrez comment l\'intelligence artificielle révolutionne les processus d\'automatisation et transforme notre façon de travailler.',
+    category: 'Technologie',
+    image: 'https://images.unsplash.com/photo-1677442d019cecf8841d3fb123149b0a?w=800&q=80',
     content: `# L'avenir de l'automatisation avec l'IA
 
 L'intelligence artificielle est en train de transformer radicalement le monde de l'automatisation. Chez MIDEESSI, nous croyons fermement que cette révolution technologique ouvre des possibilités infinies pour améliorer l'efficacité et la productivité.
@@ -42,6 +46,8 @@ L'avenir de l'automatisation est passionnant, et nous sommes fiers de contribuer
     id: '2',
     title: 'Comment organiser vos fichiers efficacement',
     excerpt: 'Des stratégies pratiques pour maintenir un système de fichiers propre et organisé grâce à l\'automatisation.',
+    category: 'Productivité',
+    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80',
     content: `# Comment organiser vos fichiers efficacement
 
 Dans le monde numérique d'aujourd'hui, la gestion des fichiers peut rapidement devenir chaotique. C'est pourquoi nous avons développé des solutions d'automatisation pour vous aider.
@@ -76,6 +82,8 @@ Découvrez comment notre solution peut transformer votre façon de gérer vos fi
     id: '3',
     title: 'MIDEESSI : Notre vision pour 2024',
     excerpt: 'Nos objectifs et projets ambitieux pour cette année, au service de la communauté technologique.',
+    category: 'Vision',
+    image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80',
     content: `# MIDEESSI : Notre vision pour 2024
 
 Cette année marque un tournant important pour MIDEESSI. Nous avons des projets ambitieux qui vont révolutionner la façon dont notre communauté utilise la technologie.

@@ -10,21 +10,22 @@ import {
   CheckCircle,
   Mail,
   MessageCircle,
+  Globe,
   Zap,
-  Star,
   Share2,
   Heart,
   AlertCircle,
-  Globe,
-  Laptop,
 } from 'lucide-react';
 import SEO from '../components/SEO';
-import { getAtelierBySlug, Atelier, getDaysRemaining, isAtelierPassed, getCountdownStatus } from '../data/ateliers';
+import { Atelier, supabase } from '../lib/supabase';
+import { getDaysRemaining, isAtelierPassed, getCountdownStatus } from '../data/ateliers';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const AtelierDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [atelier, setAtelier] = useState<Atelier | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'program' | 'requirements' | 'instructor'>('program');
   const [bookingStep, setBookingStep] = useState(0);
   const [bookingData, setBookingData] = useState({
@@ -37,13 +38,72 @@ const AtelierDetail = () => {
   const [isBooked, setIsBooked] = useState(false);
 
   useEffect(() => {
-    const foundAtelier = getAtelierBySlug(slug || '');
-    if (foundAtelier) {
-      setAtelier(foundAtelier);
-    } else {
-      navigate('/ateliers');
-    }
+    fetchAtelierDetail();
   }, [slug, navigate]);
+
+  const fetchAtelierDetail = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('ateliers')
+        .select('*')
+        .eq('slug', slug || '')
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const transformedAtelier: Atelier = {
+          id: data.id,
+          title: data.title,
+          slug: data.slug,
+          description: data.description,
+          long_description: data.long_description,
+          category: data.category,
+          image: data.image,
+          date: data.date,
+          time: data.time,
+          duration: data.duration,
+          location: data.location,
+          capacity: data.capacity,
+          registered: data.registered || 0,
+          language: data.language,
+          level: data.level,
+          instructor: {
+            name: 'Expert MIDEESSI',
+            title: 'Instructeur',
+            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+            bio: 'Expert passionné dans son domaine'
+          },
+          objectives: data.objectives || [],
+          program: [],
+          prerequisites: data.prerequisites || [],
+          materials: data.materials || [],
+          price: data.price,
+          tags: data.tags || [],
+          is_online: data.is_online,
+          meet_link: data.meet_link,
+          status: data.status
+        };
+        setAtelier(transformedAtelier);
+      } else {
+        navigate('/ateliers');
+      }
+    } catch (err) {
+      console.error('Erreur:', err);
+      navigate('/ateliers');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-32 flex items-center justify-center bg-white dark:bg-gray-900">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (!atelier) {
     return (
@@ -463,7 +523,7 @@ const AtelierDetail = () => {
                 <div className="bg-gold/10 dark:bg-gold/5 rounded-2xl p-6 md:p-8 border border-gold/20">
                   <p className="text-lg font-bold text-midnight dark:text-white mb-2">Format</p>
                   <p className="text-lg text-gold font-semibold flex items-center gap-2">
-                    {atelier.isOnline ? (
+                    {atelier.is_online ? (
                       <>
                         <Globe className="w-5 h-5" />
                         En ligne
@@ -521,35 +581,6 @@ const AtelierDetail = () => {
                 <p className="text-base md:text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
                   {atelier.instructor.bio}
                 </p>
-
-                {atelier.testimonials && atelier.testimonials.length > 0 && (
-                  <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="text-lg font-bold text-midnight dark:text-white mb-4">Témoignages</h4>
-                    <div className="space-y-4">
-                      {atelier.testimonials.map((testimonial, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-gold/5 dark:bg-gold/10 rounded-lg p-4 border border-gold/20"
-                        >
-                          <div className="flex items-center gap-1 mb-2">
-                            {[...Array(testimonial.rating)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className="w-4 h-4 fill-gold text-gold"
-                              />
-                            ))}
-                          </div>
-                          <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 italic mb-2">
-                            "{testimonial.text}"
-                          </p>
-                          <p className="text-xs md:text-sm font-semibold text-midnight dark:text-white">
-                            {testimonial.author} • {testimonial.role}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           )}
