@@ -1,4 +1,4 @@
-import { BookOpen, FileText, Home, Tag, MoreVertical } from 'lucide-react';
+import { BookOpen, Home, Tag, MoreVertical, GraduationCap } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useNavigation } from '../contexts/NavigationContext';
 
@@ -20,19 +20,19 @@ const BottomNavigation = () => {
       icon: <Home className="w-6 h-6" />,
     },
     {
-      label: 'Apprendre',
-      href: '/learn',
-      icon: <BookOpen className="w-6 h-6" />,
-    },
-    {
-      label: 'Blog',
-      href: '/blog',
-      icon: <FileText className="w-6 h-6" />,
+      label: 'Ateliers',
+      href: '/ateliers',
+      icon: <GraduationCap className="w-6 h-6" />,
     },
     {
       label: 'Nos Offres',
       href: '/offres',
       icon: <Tag className="w-6 h-6" />,
+    },
+    {
+      label: 'Apprendre',
+      href: '/learn',
+      icon: <BookOpen className="w-6 h-6" />,
     },
   ];
 

@@ -25,7 +25,10 @@ import {
   Award,
   TrendingUp,
   Eye,
-  Share2
+  Share2,
+  Palette,
+  DollarSign,
+  Briefcase
 } from 'lucide-react';
 
 type IconName = string;
@@ -57,7 +60,10 @@ export const getIcon = (iconName: IconName): React.FC<{ className?: string }> =>
     Award,
     TrendingUp,
     Eye,
-    Share2
+    Share2,
+    Palette,
+    DollarSign,
+    Briefcase
   };
 
   return icons[iconName] || Sparkles;

@@ -16,29 +16,30 @@ const SideDrawer = ({ isOpen, onClose }: SideDrawerProps) => {
       title: 'AGENCE',
       icon: <Building className="w-4 h-4" />,
       items: [
-        { label: 'Accueil', href: '/', icon: <Home className="w-5 h-5" /> },
-        { label: 'À propos', href: '/about', icon: <Info className="w-5 h-5" /> },
-        { label: 'Équipe', href: '/about', icon: <Zap className="w-5 h-5" /> },
-        { label: 'Contact', href: '/contact', icon: <MessageCircle className="w-5 h-5" /> },
-        { label: 'Carrières', href: '/careers', icon: <Briefcase className="w-5 h-5" /> },
+        { id: 'home', label: 'Accueil', href: '/', icon: <Home className="w-5 h-5" /> },
+        { id: 'about', label: 'À propos', href: '/about', icon: <Info className="w-5 h-5" /> },
+        { id: 'team', label: 'Équipe', href: '/about#team', icon: <Zap className="w-5 h-5" /> },
+        { id: 'contact', label: 'Contact', href: '/contact', icon: <MessageCircle className="w-5 h-5" /> },
+        { id: 'careers', label: 'Carrières', href: '/careers', icon: <Briefcase className="w-5 h-5" /> },
       ]
     },
     {
       title: 'SERVICES',
       icon: <Wrench className="w-4 h-4" />,
       items: [
-        { label: 'Nos Offres', href: '/offres', icon: <Tag className="w-5 h-5" /> },
-        { label: 'Solutions', href: '/solutions', icon: <Lightbulb className="w-5 h-5" /> },
-        { label: 'Nos Projets', href: '/projects', icon: <Rocket className="w-5 h-5" /> },
+        { id: 'offres', label: 'Nos Offres', href: '/offres', icon: <Tag className="w-5 h-5" /> },
+        { id: 'solutions', label: 'Solutions', href: '/solutions', icon: <Lightbulb className="w-5 h-5" /> },
+        { id: 'projects', label: 'Nos Projets', href: '/projects', icon: <Rocket className="w-5 h-5" /> },
+        { id: 'ateliers', label: 'Ateliers', href: '/ateliers', icon: <BookOpen className="w-5 h-5" /> },
       ]
     },
     {
       title: 'RESSOURCES',
       icon: <Library className="w-4 h-4" />,
       items: [
-        { label: 'Blog', href: '/blog', icon: <BookOpen className="w-5 h-5" /> },
-        { label: 'Apprendre', href: '/learn', icon: <Lightbulb className="w-5 h-5" /> },
-        { label: 'Bibliothèque', href: '/library', icon: <Book className="w-5 h-5" /> },
+        { id: 'blog', label: 'Blog', href: '/blog', icon: <BookOpen className="w-5 h-5" /> },
+        { id: 'learn', label: 'Apprendre', href: '/learn', icon: <Lightbulb className="w-5 h-5" /> },
+        { id: 'library', label: 'Bibliothèque', href: '/library', icon: <Book className="w-5 h-5" /> },
       ]
     }
   ];
@@ -83,7 +84,7 @@ const SideDrawer = ({ isOpen, onClose }: SideDrawerProps) => {
               <div className="space-y-1">
                 {section.items.map((item) => (
                   <a
-                    key={item.href}
+                    key={item.id}
                     href={item.href}
                     onClick={onClose}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${

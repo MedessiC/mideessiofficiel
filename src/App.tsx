@@ -2,10 +2,12 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { NavigationProvider } from './contexts/NavigationContext';
+import { LoadingProvider } from './contexts/LoadingContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import BottomNavigation from './components/BottomNavigation';
 import Footer from './components/Footer';
+import PageLoader from './components/PageLoader';
 import CookieConsent from './components/CookieConsent';
 import NewHome from './pages/NewHome';
 import About from './pages/About';
@@ -14,7 +16,9 @@ import Library from './pages/Library';
 import Solutions from './pages/Solutions';
 import Projects from './pages/Projects';
 import SolutionDetail from './pages/SolutionDetail';
-import NewBlog from './pages/NewBlog';
+import Ateliers from './pages/Ateliers';
+import AtelierDetail from './pages/AtelierDetail';
+import ModernBlog from './pages/ModernBlog';
 import NewBlogPost from './pages/NewBlogPost';
 import Contact from './pages/Contact';
 import Careers from './pages/Careers';
@@ -39,8 +43,9 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+      <PageLoader />
       {!isAdminRoute && !isAuthRoute && <Navbar />}
-      <main>
+      <main className="animate-fade-in">
         <Routes>
           <Route path="/" element={<NewHome />} />
           <Route path="/about" element={<About />} />
@@ -48,10 +53,12 @@ function AppContent() {
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/solutions/:slug" element={<SolutionDetail />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/ateliers" element={<Ateliers />} />
+          <Route path="/ateliers/:slug" element={<AtelierDetail />} />
           <Route path="/offres" element={<Offres />} />
           <Route path="/offres/:slug" element={<DetailOffre />} />
           <Route path="/dev-services/:slug" element={<DetailDevService />} />
-          <Route path="/blog" element={<NewBlog />} />
+          <Route path="/blog" element={<ModernBlog />} />
           <Route path="/blog/:slug" element={<NewBlogPost />} />
           <Route path ="/learn" element={<Learn />} />
           <Route path="/library" element={<Library />} />
@@ -82,7 +89,9 @@ function App() {
       <AuthProvider>
         <NavigationProvider>
           <Router>
-            <AppContent />
+            <LoadingProvider>
+              <AppContent />
+            </LoadingProvider>
           </Router>
         </NavigationProvider>
       </AuthProvider>

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Calendar, User, ArrowRight, TrendingUp, Search, Loader2, Tag, Clock } from 'lucide-react';
 import SEO from '../components/SEO';
 import { supabase, BlogPost, BlogCategory } from '../lib/supabase';
@@ -167,8 +166,8 @@ const NewBlog = () => {
                 À lire en priorité
               </span>
             </div>
-            <Link
-              to={`/blog/${featuredPost.slug}`}
+            <a
+              href={`/blog/${featuredPost.slug}`}
               className="group grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-500 border-2 border-gray-200 dark:border-gray-700"
             >
               <div className="relative h-72 lg:h-full overflow-hidden bg-gray-100 dark:bg-gray-700">
@@ -222,29 +221,9 @@ const NewBlog = () => {
                   </span>
                 </div>
               </div>
-            </Link>
+            </a>
           </div>
         )}
-
-        {/* Statistiques du blog */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 text-center border-2 border-gray-200 dark:border-gray-700">
-            <div className="text-3xl font-bold text-yellow-400 mb-1">{posts.length}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">Articles</div>
-          </div>
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 text-center border-2 border-gray-200 dark:border-gray-700">
-            <div className="text-3xl font-bold text-yellow-400 mb-1">{categories.length}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">Catégories</div>
-          </div>
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 text-center border-2 border-gray-200 dark:border-gray-700">
-            <div className="text-3xl font-bold text-yellow-400 mb-1">5+</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">Auteurs</div>
-          </div>
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 text-center border-2 border-gray-200 dark:border-gray-700">
-            <div className="text-3xl font-bold text-yellow-400 mb-1">New</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">Chaque semaine</div>
-          </div>
-        </div>
 
         {/* Section de filtres améliorée */}
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-6 md:p-8 mb-12 shadow-lg border-2 border-gray-200 dark:border-gray-700">
@@ -305,9 +284,9 @@ const NewBlog = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {filteredPosts.map((post) => (
-              <Link
+              <a
                 key={post.id}
-                to={`/blog/${post.slug}`}
+                href={`/blog/${post.slug}`}
                 className="group bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-500 border-2 border-gray-200 dark:border-gray-700 hover:border-yellow-400 dark:hover:border-yellow-400 transform hover:-translate-y-1"
               >
                 <div className="relative h-56 overflow-hidden bg-gray-100 dark:bg-gray-700">
@@ -366,7 +345,7 @@ const NewBlog = () => {
                     </div>
                   </div>
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         )}

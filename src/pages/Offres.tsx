@@ -1,6 +1,5 @@
 import { ArrowRight, Globe, ShoppingCart, Smartphone, Code, PackageOpen, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { offres } from '../data/offres';
 import { devServices } from '../data/devServices';
@@ -187,8 +186,8 @@ const Offres = () => {
                           ))}
                         </div>
 
-                        <Link
-                          to={`/offres/${offre.slug}`}
+                        <a
+                          href={`/offres/${offre.slug}`}
                           className={`group/btn w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 flex items-center justify-center gap-2 mt-auto ${
                             offre.badge
                               ? 'bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight shadow-lg hover:shadow-xl'
@@ -197,7 +196,7 @@ const Offres = () => {
                         >
                           <span>Voir les détails</span>
                           <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
-                        </Link>
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -253,13 +252,13 @@ const Offres = () => {
                         </div>
 
                         <div className="space-y-3">
-                          <Link
-                            to={`/dev-services/${service.slug}`}
+                          <a
+                            href={`/dev-services/${service.slug}`}
                             className="w-full bg-midnight dark:bg-gray-700 text-white hover:bg-blue-900 dark:hover:bg-gray-600 py-2.5 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 border-2 border-gold/30 hover:border-gold group-hover:border-gold"
                           >
                             <span>Voir les détails</span>
                             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                          </Link>
+                          </a>
                           <button
                             onClick={() => handleWhatsAppDevis(service.nom)}
                             className="w-full bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight py-2.5 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shadow-md hover:shadow-lg"
@@ -338,13 +337,13 @@ const Offres = () => {
           <p className="text-sm sm:text-base md:text-lg text-gray-200 max-w-2xl mx-auto mb-6 sm:mb-8">
             Explorez les détails de chaque offre ou service et trouvez la solution adaptée à vos besoins.
           </p>
-          <Link
-            to="/contact"
+          <a
+            href="/contact"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             Nous contacter
             <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
-          </Link>
+          </a>
         </div>
       </section>
 
