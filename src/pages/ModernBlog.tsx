@@ -3,6 +3,8 @@ import { Clock, Search, TrendingUp, BookOpen, User } from 'lucide-react';
 import SEO from '../components/SEO';
 import BlogCarousel from '../components/BlogCarousel';
 import ArticlePreview from '../components/ArticlePreview';
+import BlogSearchBar from '../components/BlogSearchBar';
+import SearchStatsComponent, { SearchSuggestionsComponent } from '../components/SearchStatsComponent';
 import { supabase, BlogPost, BlogCategory } from '../lib/supabase';
 
 const ModernBlog = () => {
@@ -275,43 +277,16 @@ const ModernBlog = () => {
             Explorez nos articles sur la technologie, l'entrepreneuriat et l'innovation africaine.
           </p>
 
-          {/* SEARCH HERO */}
-          <div className="relative max-w-2xl mb-8 md:mb-10">
-            <Search className="absolute left-4 top-3 sm:top-4 w-5 sm:w-6 h-5 sm:h-6 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Chercher..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 sm:pl-14 pr-4 sm:pr-6 py-3 sm:py-4 bg-white/10 border border-white/20 rounded-xl sm:rounded-2xl text-white text-sm sm:text-base md:text-lg placeholder:text-gray-400 focus:outline-none focus:border-gold focus:bg-white/20 transition-all backdrop-blur-sm"
+          {/* SEARCH HERO WITH ADVANCED FILTERS */}
+          <div className="relative max-w-3xl mx-auto mb-8 md:mb-10">
+            <BlogSearchBar
+              posts={allPosts}
+              categories={categories}
+              onSearchChange={setSearchQuery}
+              onCategoryChange={setSelectedCategory}
+              selectedCategory={selectedCategory}
+              searchQuery={searchQuery}
             />
-          </div>
-
-          {/* CATEGORY PILLS */}
-          <div className="flex flex-wrap gap-2 sm:gap-3">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-3 sm:px-5 py-2 sm:py-3 text-xs sm:text-sm rounded-full font-semibold transition-all transform hover:scale-105 ${
-                selectedCategory === 'all'
-                  ? 'bg-gold text-midnight shadow-lg'
-                  : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-              }`}
-            >
-              Tous
-            </button>
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.name)}
-                className={`px-3 sm:px-5 py-2 sm:py-3 text-xs sm:text-sm rounded-full font-semibold transition-all transform hover:scale-105 ${
-                  selectedCategory === cat.name
-                    ? 'bg-gold text-midnight shadow-lg'
-                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
           </div>
         </div>
       </section>
@@ -406,8 +381,31 @@ const ModernBlog = () => {
       <section className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-16 md:py-20 lg:py-24 border-t border-gray-200 dark:border-gray-700">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-midnight dark:text-white mb-8 md:mb-10">Tous les Articles</h2>
 
-        {displayedPosts.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-24 md:py-32">
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex gap-2">
+                <div className="w-4 h-4 rounded-full bg-gold animate-bounce" style={{ animationDelay: '0s' }} />
+                <div className="w-4 h-4 rounded-full bg-gold animate-bounce" style={{ animationDelay: '0.2s' }} />
+                <div className="w-4 h-4 rounded-full bg-gold animate-bounce" style={{ animationDelay: '0.4s' }} />
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Chargement des articles...</p>
+            </div>
+          </div>
+        ) : displayedPosts.length > 0 ? (
           <>
+            {/* Search Statistics */}
+            {(searchQuery || selectedCategory !== 'all') && (
+              <SearchStatsComponent
+                stats={{
+                  totalResults: filteredPosts.length,
+                  searchQuery: searchQuery,
+                  selectedCategory: selectedCategory,
+                  totalArticles: allPosts.length
+                }}
+              />
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {displayedPosts.map(post => (
                 <ArticlePreview key={post.id} post={post}>
@@ -440,9 +438,27 @@ const ModernBlog = () => {
           </>
         ) : (
           <div className="text-center py-12 md:py-16">
-            <Search className="w-12 sm:w-16 h-12 sm:h-16 text-gray-300 mx-auto mb-3 md:mb-4" />
-            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-midnight dark:text-white mb-2">Aucun article trouvé</h3>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Essayez une autre recherche</p>
+            {searchQuery || selectedCategory !== 'all' ? (
+              <>
+                <Search className="w-12 sm:w-16 h-12 sm:h-16 text-gray-300 mx-auto mb-3 md:mb-4" />
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-midnight dark:text-white mb-2">Aucun article trouvé</h3>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6 md:mb-8">Essayez une autre recherche ou changez le filtre de catégorie</p>
+                <SearchSuggestionsComponent 
+                  onSuggestionClick={(suggestion) => {
+                    setSearchQuery(suggestion);
+                    setSelectedCategory('all');
+                  }}
+                />
+              </>
+            ) : (
+              <>
+                <Search className="w-12 sm:w-16 h-12 sm:h-16 text-gray-300 mx-auto mb-3 md:mb-4" />
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-midnight dark:text-white mb-4 md:mb-6">Découvrez nos articles</h3>
+                <SearchSuggestionsComponent 
+                  onSuggestionClick={(suggestion) => setSearchQuery(suggestion)}
+                />
+              </>
+            )}
           </div>
         )}
       </section>
