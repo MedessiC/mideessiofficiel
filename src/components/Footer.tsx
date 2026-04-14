@@ -12,7 +12,7 @@ const Footer = () => {
             <img
     src="/mideessi.webp"
     alt="Logo Mideessi"
-    className="h-16 w-auto sm:h-20 md:h-24 lg:h-28 object-contain mx-auto mb-4"
+    className="h-12 w-auto sm:h-14 md:h-16 object-contain mx-auto mb-4"
     loading="lazy"
     decoding="async"
   />

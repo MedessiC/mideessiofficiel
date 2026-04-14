@@ -49,14 +49,14 @@ const ClientLogin = () => {
       <div className="absolute top-20 left-10 w-72 h-72 bg-gold rounded-full blur-3xl opacity-10"></div>
       <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-10"></div>
 
-      <div className="relative z-10 w-full max-w-md px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 w-full max-w-md px-4 sm:px-6 lg:px-8 flex flex-col justify-center min-h-screen">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-block mb-6">
+        <div className="text-center mb-12">
+          <div className="inline-block mb-8">
             <img
               src="/mideessi.webp"
               alt="Logo MIDEESSI"
-              className="h-16 object-contain"
+              className="h-14 object-contain"
               loading="eager"
               decoding="async"
             />

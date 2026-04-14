@@ -109,7 +109,7 @@ export default function Signup() {
             <img
               src={isDark ? "/mideessi.webp" : "/mideessi-light.webp"}
               alt="Logo MIDEESSI"
-              className="h-20 mx-auto mb-4 transition-opacity duration-500"
+              className="h-14 mx-auto mb-4 transition-opacity duration-500"
             />
             <p className="text-gray-600 dark:text-gray-300">
               Rejoignez notre communauté de lecteurs et créateurs
