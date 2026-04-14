@@ -127,33 +127,12 @@ const Navbar = () => {
 
               {/* Logo */}
               <a href="/" className="flex items-center space-x-2 group">
-                <div className="relative w-12 h-12">
-                  <img 
-                    src="/mideessi-light.webp" 
-                    alt="Logo Mideessi"
-                    loading="eager"
-                    decoding="async"
-                    aria-hidden={isDark}
-                    className={`absolute inset-0 w-full h-full object-contain transition-all duration-500 ${
-                      isDark 
-                        ? 'opacity-0 scale-90 rotate-180' 
-                        : 'opacity-100 scale-100 rotate-0'
-                    }`}
-                  />
-                  <img 
-                    src="/mideessi.webp" 
-                    alt="Logo Mideessi"
-                    loading={isDark ? "eager" : "lazy"}
-                    decoding="async"
-                    aria-hidden={!isDark}
-                    className={`absolute inset-0 w-full h-full object-contain transition-all duration-500 ${
-                      isDark 
-                        ? 'opacity-100 scale-100 rotate-0' 
-                        : 'opacity-0 scale-90 -rotate-180'
-                    }`}
-                  />
-                  <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300" />
-                </div>
+                <img 
+                  src={isDark ? "/mideessi.webp" : "/mideessi-light.webp"} 
+                  alt="Logo Mideessi"
+                  className="h-12 w-auto object-contain"
+                  loading="eager"
+                />
               </a>
             </div>
 
