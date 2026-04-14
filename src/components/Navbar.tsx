@@ -127,12 +127,22 @@ const Navbar = () => {
 
               {/* Logo */}
               <a href="/" className="flex items-center space-x-2 group">
-                <img 
-                  src={isDark ? "/mideessi.webp" : "/mideessi-light.webp"} 
-                  alt="Logo Mideessi"
-                  className="h-12 w-auto object-contain"
-                  loading="eager"
-                />
+                <div className="relative w-auto h-12">
+                  <img 
+                    src="/mideessi-light.webp" 
+                    alt="Logo Mideessi"
+                    className="h-12 object-contain dark:hidden"
+                    loading="eager"
+                    decoding="async"
+                  />
+                  <img 
+                    src="/mideessi.webp" 
+                    alt="Logo Mideessi"
+                    className="h-12 object-contain hidden dark:block"
+                    loading="eager"
+                    decoding="async"
+                  />
+                </div>
               </a>
             </div>
 
