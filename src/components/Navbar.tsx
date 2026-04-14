@@ -131,14 +131,14 @@ const Navbar = () => {
                   <img 
                     src="/mideessi-light.webp" 
                     alt="Logo Mideessi"
-                    className="h-8 sm:h-9 object-contain dark:hidden"
+                    className="h-8 sm:h-9 object-contain dark:hidden transition-all duration-300 ease-in-out dark:opacity-0 dark:rotate-180 dark:scale-95"
                     loading="eager"
                     decoding="async"
                   />
                   <img 
                     src="/mideessi.webp" 
                     alt="Logo Mideessi"
-                    className="h-8 sm:h-9 object-contain hidden dark:block"
+                    className="h-8 sm:h-9 object-contain hidden dark:block transition-all duration-300 ease-in-out opacity-0 dark:opacity-100 rotate-180 dark:rotate-0 scale-95 dark:scale-100"
                     loading="eager"
                     decoding="async"
                   />
