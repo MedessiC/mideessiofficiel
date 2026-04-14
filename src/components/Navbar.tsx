@@ -130,18 +130,22 @@ const Navbar = () => {
                 <div className="relative w-12 h-12">
                   <img 
                     src="/mideessi-light.webp" 
-                    alt="Logo Mideessi" 
+                    alt="Logo Mideessi"
+                    loading="eager"
+                    decoding="async"
+                    aria-hidden={isDark}
                     className={`absolute inset-0 w-full h-full object-contain transition-all duration-500 ${
                       isDark 
                         ? 'opacity-0 scale-90 rotate-180' 
                         : 'opacity-100 scale-100 rotate-0'
                     }`}
-                    loading="eager"
-                    decoding="async"
                   />
                   <img 
                     src="/mideessi.webp" 
-                    alt="Logo Mideessi" 
+                    alt="Logo Mideessi"
+                    loading={isDark ? "eager" : "lazy"}
+                    decoding="async"
+                    aria-hidden={!isDark}
                     className={`absolute inset-0 w-full h-full object-contain transition-all duration-500 ${
                       isDark 
                         ? 'opacity-100 scale-100 rotate-0' 

@@ -142,6 +142,16 @@
     <!-- Optimisation performance -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@300;400;600&display=swap" />
     
+    <!-- Preload critical images for performance -->
+    <!-- Logo images (light and dark versions) -->
+    <link rel="preload" as="image" href="/mideessi-light.webp" type="image/webp" media="(prefers-color-scheme: light)" />
+    <link rel="preload" as="image" href="/mideessi.webp" type="image/webp" media="(prefers-color-scheme: dark)" />
+    
+    <!-- Hero slides for homepage carousel -->
+    <link rel="preload" as="image" href="/hero1.webp" type="image/webp" />
+    <link rel="preload" as="image" href="/hero2.webp" type="image/webp" />
+    <link rel="preload" as="image" href="/hero3.webp" type="image/webp" />
+    
   </head>
   <body itemscope itemtype="https://schema.org/WebPage">
     <a href="#main-content" class="skip-to-main" style="position:absolute;left:-9999px;z-index:999;">Aller au contenu principal</a>

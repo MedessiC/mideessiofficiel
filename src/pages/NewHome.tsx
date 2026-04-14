@@ -284,8 +284,9 @@ const NewHome = () => {
             >
               <img
                 src={slide.image}
-                alt=""
-                loading={index === 0 ? "eager" : "lazy"}
+                alt={slide.title}
+                loading={index <= 1 ? "eager" : "lazy"}
+                decoding="async"
                 className="absolute inset-0 w-full h-full object-cover object-center"
                 style={{ objectFit: 'cover' }}
               />
