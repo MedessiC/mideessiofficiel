@@ -127,18 +127,18 @@ const Navbar = () => {
 
               {/* Logo */}
               <a href="/" className="flex items-center space-x-2 group">
-                <div className="relative w-auto h-10 sm:h-12">
+                <div className="relative w-auto h-8 sm:h-9">
                   <img 
                     src="/mideessi-light.webp" 
                     alt="Logo Mideessi"
-                    className="h-10 sm:h-12 object-contain dark:hidden"
+                    className="h-8 sm:h-9 object-contain dark:hidden"
                     loading="eager"
                     decoding="async"
                   />
                   <img 
                     src="/mideessi.webp" 
                     alt="Logo Mideessi"
-                    className="h-10 sm:h-12 object-contain hidden dark:block"
+                    className="h-8 sm:h-9 object-contain hidden dark:block"
                     loading="eager"
                     decoding="async"
                   />
