@@ -17,8 +17,8 @@ const SolutionCard = ({ solution, variant = 'default' }: SolutionCardProps) => {
           <img
             src={solution.image}
             alt={solution.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"            loading="lazy"
+            decoding="async"          />
         </div>
         <div className="p-3 md:p-4">
           <h3 className="text-base md:text-lg font-bold text-midnight dark:text-white group-hover:text-gold transition-colors line-clamp-2">

@@ -190,6 +190,8 @@ export const BlogSearchBar: React.FC<BlogSearchBarProps> = ({
                           src={post.image_url}
                           alt={post.title}
                           className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                          loading="lazy"
+                          decoding="async"
                         />
                       )}
                       <div className="flex-1 min-w-0">

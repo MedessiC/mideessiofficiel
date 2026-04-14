@@ -201,6 +201,8 @@ const PopupDisplay = ({ currentPage }: PopupDisplayProps) => {
               src={popup.image_url}
               alt={popup.title}
               className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}

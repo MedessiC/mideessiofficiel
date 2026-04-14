@@ -136,6 +136,8 @@ const Navbar = () => {
                         ? 'opacity-0 scale-90 rotate-180' 
                         : 'opacity-100 scale-100 rotate-0'
                     }`}
+                    loading="eager"
+                    decoding="async"
                   />
                   <img 
                     src="/mideessi.webp" 

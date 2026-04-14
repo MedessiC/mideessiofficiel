@@ -3,7 +3,9 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { NavigationProvider } from './contexts/NavigationContext';
 import { LoadingProvider } from './contexts/LoadingContext';
+import { ClientProvider } from './contexts/ClientContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import ClientProtectedRoute from './components/ClientProtectedRoute';
 import Navbar from './components/Navbar';
 import BottomNavigation from './components/BottomNavigation';
 import Footer from './components/Footer';
@@ -28,6 +30,7 @@ import DetailDevService from './pages/DetailDevService';
 import NotFound from './pages/NotFound';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminClientManagement from './pages/AdminClientManagement';
 import AdminPostEditor from './pages/AdminPostEditor';
 import AdminPdfs from './pages/AdminPdfs';
 import ShareRedirect from './pages/ShareRedirect';
@@ -36,15 +39,19 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import MyLibrary from './pages/MyLibrary';
 import UserProfile from './pages/UserProfile';
+import ClientLogin from './pages/ClientLogin';
+import ClientOnboarding from './pages/ClientOnboarding';
+import ClientDashboard from './pages/ClientDashboard';
 function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isAuthRoute = location.pathname.startsWith('/login') || location.pathname.startsWith('/signup');
+  const isClientRoute = location.pathname.startsWith('/clients');
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
       <PageLoader />
-      {!isAdminRoute && !isAuthRoute && <Navbar />}
+      {!isAdminRoute && !isAuthRoute && !isClientRoute && <Navbar />}
       <main className="animate-fade-in">
         <Routes>
           <Route path="/" element={<NewHome />} />
@@ -68,17 +75,24 @@ function AppContent() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile/:username" element={<UserProfile />} />
           <Route path="/my-library" element={<ProtectedRoute><MyLibrary /></ProtectedRoute>} />
+          
+          {/* Client Routes */}
+          <Route path="/clients" element={<ClientLogin />} />
+          <Route path="/clients/onboarding" element={<ClientProtectedRoute><ClientOnboarding /></ClientProtectedRoute>} />
+          <Route path="/clients/dashboard" element={<ClientProtectedRoute><ClientDashboard /></ClientProtectedRoute>} />
+          
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/clients" element={<AdminClientManagement />} />
           <Route path="/admin/pdfeditor" element={<AdminPdfs />} />
           <Route path="/share/:slug" element={<ShareRedirect />} />
           <Route path="/admin/post/:id" element={<AdminPostEditor />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      {!isAdminRoute && !isAuthRoute && <BottomNavigation />}
-      {!isAdminRoute && !isAuthRoute && <Footer />}
-      {!isAdminRoute && !isAuthRoute && <CookieConsent />}
+      {!isAdminRoute && !isAuthRoute && !isClientRoute && <BottomNavigation />}
+      {!isAdminRoute && !isAuthRoute && !isClientRoute && <Footer />}
+      {!isAdminRoute && !isAuthRoute && !isClientRoute && <CookieConsent />}
     </div>
   );
 }
@@ -87,13 +101,15 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <NavigationProvider>
-          <Router>
-            <LoadingProvider>
-              <AppContent />
-            </LoadingProvider>
-          </Router>
-        </NavigationProvider>
+        <ClientProvider>
+          <NavigationProvider>
+            <Router>
+              <LoadingProvider>
+                <AppContent />
+              </LoadingProvider>
+            </Router>
+          </NavigationProvider>
+        </ClientProvider>
       </AuthProvider>
     </ThemeProvider>
   );

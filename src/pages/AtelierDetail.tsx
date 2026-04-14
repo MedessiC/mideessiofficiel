@@ -165,7 +165,7 @@ const AtelierDetail = () => {
       {/* Hero Section */}
       <section className="relative py-12 md:py-20 lg:py-24 overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={atelier.image} alt={atelier.title} className="w-full h-full object-cover" />
+          <img src={atelier.image} alt={atelier.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
           <div className="absolute inset-0 bg-black/70 dark:bg-black/80"></div>
         </div>
 
@@ -549,6 +549,8 @@ const AtelierDetail = () => {
                     src={atelier.instructor.image}
                     alt={atelier.instructor.name}
                     className="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-4 md:mb-6 object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <h3 className="text-2xl md:text-3xl font-bold text-midnight dark:text-white mb-2">
                     {atelier.instructor.name}

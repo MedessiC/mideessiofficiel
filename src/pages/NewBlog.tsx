@@ -174,7 +174,7 @@ const NewBlog = () => {
                 <img
                   src={featuredPost.image_url}
                   alt={featuredPost.title}
-                  loading="eager"
+                  loading="lazy"
                   decoding="async"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   onError={(e) => {

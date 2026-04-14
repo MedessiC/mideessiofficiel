@@ -398,7 +398,7 @@ const AdminDashboard = () => {
                   {/* Cover */}
                   <div className={`relative h-40 bg-gradient-to-br ${book.cover_color} flex items-center justify-center overflow-hidden`}>
                     {book.cover_image ? (
-                      <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" />
+                      <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                     ) : (
                       <BookOpen className="w-12 h-12 text-white opacity-50" />
                     )}

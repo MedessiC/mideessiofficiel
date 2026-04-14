@@ -21,6 +21,8 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member }) => {
               src={member.image}
               alt={member.name}
               className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = 'https://via.placeholder.com/400x400?text=' + encodeURIComponent(member.name);

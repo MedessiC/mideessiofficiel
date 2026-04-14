@@ -13,6 +13,8 @@ const Footer = () => {
     src="/mideessi.webp"
     alt="Logo Mideessi"
     className="h-16 w-auto sm:h-20 md:h-24 lg:h-28 object-contain mx-auto mb-4"
+    loading="lazy"
+    decoding="async"
   />
             <p className="text-gray-300 text-sm">
               Nous sommes indépendants. 

@@ -97,6 +97,8 @@ const Careers = () => {
                 src="/404-image.webp" 
                 alt="Aucune offre disponible" 
                 className="w-full max-w-xs sm:max-w-sm md:max-w-md h-auto object-contain rounded-2xl"
+                loading="lazy"
+                decoding="async"
               />
             </div>
 

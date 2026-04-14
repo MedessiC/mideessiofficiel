@@ -58,6 +58,8 @@ const DetailOffre = () => {
           src={offre?.image}
           alt={offre?.nom}
           className="w-full h-full object-cover"
+          loading="lazy"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
       </section>

@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, CreditCard as Edit, Trash2, Eye, LogOut, TrendingUp, FileText, Zap, PenTool, Tag, Film } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Eye, LogOut, TrendingUp, FileText, Zap, PenTool, Tag, Film, Users } from 'lucide-react';
 import { supabase, BlogPost } from '../lib/supabase';
 import HeroManager from '../components/admin/HeroManager';
 import PopupManager from '../components/admin/PopupManager';
 import PromoCodeManager from '../components/admin/PromoCodeManager';
 import HeroSlidesManager from '../components/admin/HeroSlidesManager';
+import AdminClientManagement from './AdminClientManagement';
 
-type TabType = 'blog' | 'hero' | 'slides' | 'popups' | 'promo';
+type TabType = 'blog' | 'hero' | 'slides' | 'popups' | 'promo' | 'clients';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -179,6 +180,17 @@ const AdminDashboard = () => {
             <Tag className="w-5 h-5" />
             Codes Promo
           </button>
+          <button
+            onClick={() => setActiveTab('clients')}
+            className={`flex items-center gap-2 px-4 py-3 font-semibold text-sm md:text-base whitespace-nowrap border-b-2 transition-all ${
+              activeTab === 'clients'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            <Users className="w-5 h-5" />
+            Gestion Clients
+          </button>
         </div>
 
         {/* Content by Tab */}
@@ -276,6 +288,8 @@ const AdminDashboard = () => {
                                   src={post.image_url}
                                   alt={post.title}
                                   className="w-10 h-8 md:w-16 md:h-12 object-cover rounded flex-shrink-0"
+                                  loading="lazy"
+                                  decoding="async"
                                   onError={(e) => { e.currentTarget.src = '/placeholder.png'; }}
                                 />
                               )}
@@ -355,6 +369,8 @@ const AdminDashboard = () => {
         {activeTab === 'popups' && <PopupManager />}
 
         {activeTab === 'promo' && <PromoCodeManager />}
+
+        {activeTab === 'clients' && <AdminClientManagement />}
       </div>
     </div>
   );

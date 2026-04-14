@@ -273,6 +273,8 @@ const Library = () => {
                           src={book.cover_image} 
                           alt={book.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          loading="lazy"
+                          decoding="async"
                           onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';

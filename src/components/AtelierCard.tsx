@@ -69,6 +69,8 @@ const AtelierCard = ({ atelier, variant = 'default' }: AtelierCardProps) => {
             src={atelier.image}
             alt={atelier.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+            decoding="async"
           />
           <div className="absolute top-2 right-2 flex gap-1">
             {getCountdownBadge()}
@@ -117,6 +119,8 @@ const AtelierCard = ({ atelier, variant = 'default' }: AtelierCardProps) => {
           src={atelier.image}
           alt={atelier.title}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          loading="lazy"
+          decoding="async"
         />
         {/* Enhanced Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
