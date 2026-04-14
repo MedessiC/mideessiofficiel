@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, LogOut, Target, FileText, Calendar } from 'lucide-react';
+import { ArrowLeft, Users, LogOut, Target, FileText, Calendar, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import AdminWeeklyObjectives from '../components/admin/AdminWeeklyObjectives';
 import AdminReportsEditor from '../components/admin/AdminReportsEditor';
 import AdminEditorialCalendar from '../components/admin/AdminEditorialCalendar';
+import AdminClientsManager from '../components/admin/AdminClientsManager';
 
 type ManagementTab = 'clients' | 'objectives' | 'reports' | 'calendar';
 
@@ -22,6 +23,7 @@ const AdminClientManagement = () => {
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ManagementTab>('clients');
   const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -106,9 +108,33 @@ const AdminClientManagement = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Client Selection */}
-        {!selectedClient ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Show Create Form or Client List */}
+        {showCreateForm ? (
+          <div>
+            <button
+              onClick={() => setShowCreateForm(false)}
+              className="mb-6 text-gold hover:text-gold/80 font-semibold text-sm"
+            >
+              ← Retour à la liste
+            </button>
+            <AdminClientsManager />
+          </div>
+        ) : !selectedClient ? (
+          <div>
+            {/* Header with Create Button */}
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold text-midnight dark:text-white">Liste des clients</h2>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-gold to-yellow-400 hover:from-gold/90 hover:to-yellow-400/90 text-midnight font-bold transition-all"
+              >
+                <Plus className="w-5 h-5" />
+                Nouveau client
+              </button>
+            </div>
+
+            {/* Client Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {clients.map((client) => (
               <button
                 key={client.client_id}
@@ -137,7 +163,8 @@ const AdminClientManagement = () => {
                 </div>
               </button>
             ))}
-          </div>
+            </div>
+            </div>
         ) : (
           // Client Management Tabs
           <div>
