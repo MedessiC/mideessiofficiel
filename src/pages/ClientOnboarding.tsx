@@ -94,6 +94,7 @@ const ClientOnboarding = () => {
                 const Icon = slideIcons[slides[currentSlide].iconIndex];
                 return <Icon className="w-16 h-16 text-gold" />;
               })()}
+            </div>
 
             {/* Title */}
             <h1 className="text-4xl md:text-5xl font-bold text-white text-center mb-3">
