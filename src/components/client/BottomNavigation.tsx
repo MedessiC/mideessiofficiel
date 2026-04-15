@@ -50,7 +50,6 @@ const BottomNavigation = ({ activeSection, onNavigate }: BottomNavigationProps) 
           );
         })}
       </div>
-      </div>
     </nav>
   );
 };
