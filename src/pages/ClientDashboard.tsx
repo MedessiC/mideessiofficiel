@@ -215,13 +215,15 @@ const ClientDashboard = () => {
             {/* Mobile Message Icon - Top Right */}
             <button
               onClick={() => setActiveSection('messages')}
-              className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg relative transition-colors"
+              className="lg:hidden flex items-center justify-center p-2 hover:bg-gold/20 rounded-lg relative transition-all group"
               title="Messages"
             >
-              <MessageCircle className="w-6 h-6 text-midnight dark:text-white" />
+              <MessageCircle className="w-6 h-6 text-midnight dark:text-white group-hover:scale-110 transition-transform" />
               {unreadMessagesCount > 0 && (
-                <span className={`absolute top-0 right-0 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold text-white ${
-                  unreadMessagesCount > 9 ? 'bg-red-600 w-6 h-6 -top-1 -right-1' : 'bg-red-500'
+                <span className={`absolute -top-2 -right-2 flex items-center justify-center rounded-full text-xs font-bold text-white transition-all ${
+                  unreadMessagesCount > 9 
+                    ? 'bg-red-600 w-6 h-6 text-xs' 
+                    : 'bg-red-500 w-5 h-5'
                 }`}>
                   {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
                 </span>
@@ -250,7 +252,7 @@ const ClientDashboard = () => {
       </div>
 
       {/* Bottom Navigation - Mobile only */}
-      <BottomNavigation activeSection={activeSection} onNavigate={setActiveSection} unreadMessagesCount={unreadMessagesCount} />
+      <BottomNavigation activeSection={activeSection} onNavigate={setActiveSection} />
 
       {/* Overlay for mobile */}
       {sidebarOpen && (

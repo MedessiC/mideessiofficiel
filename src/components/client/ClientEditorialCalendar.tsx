@@ -136,9 +136,9 @@ const ClientEditorialCalendar = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusColors[item.statut]}`}>
-                        {item.statut === 'planifie' && '📅 Planifié'}
-                        {item.statut === 'publie' && '✓ Publié'}
-                        {item.statut === 'en_attente_validation' && '⏳ En attente'}
+                        {item.statut === 'planifie' && 'Planifié'}
+                        {item.statut === 'publie' && 'Publié'}
+                        {item.statut === 'en_attente_validation' && 'En attente'}
                       </span>
                     </td>
                   </tr>

@@ -115,7 +115,7 @@ const ClientMessages = () => {
       {/* Info Banner */}
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
         <p className="text-blue-800 dark:text-blue-300">
-          💬 Communiquez directement avec notre équipe MIDEESSI. Nous vous répondons sous 24h.
+          Communiquez directement avec notre équipe MIDEESSI. Nous vous répondons sous 24h.
         </p>
       </div>
 
@@ -192,7 +192,7 @@ const ClientMessages = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
           <p className="text-green-800 dark:text-green-300 text-sm">
-            ✓ {messages.filter(m => m.expediteur === 'admin').length} message{messages.filter(m => m.expediteur === 'admin').length !== 1 ? 's' : ''} de notre équipe
+            Reçu: {messages.filter(m => m.expediteur === 'admin').length} message{messages.filter(m => m.expediteur === 'admin').length !== 1 ? 's' : ''} de notre équipe
           </p>
         </div>
         <div className={`border rounded-lg p-4 text-center ${
@@ -202,8 +202,8 @@ const ClientMessages = () => {
         }`}>
           <p className={unreadAdminMessages > 0 ? 'text-red-800 dark:text-red-300' : 'text-gray-600 dark:text-gray-400'}>
             {unreadAdminMessages > 0
-              ? `🔔 ${unreadAdminMessages} nouveau message${unreadAdminMessages !== 1 ? 's' : ''}`
-              : '✓ Tous les messages lus'}
+              ? `Nouveau: ${unreadAdminMessages} message${unreadAdminMessages !== 1 ? 's' : ''}`
+              : 'À jour: tous les messages lus'}
           </p>
         </div>
       </div>

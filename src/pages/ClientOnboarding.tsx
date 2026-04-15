@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, CheckCircle, Gift, FileText, BarChart3, Calendar } from 'lucide-react';
 import { useClientAuth } from '../contexts/ClientContext';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
@@ -9,30 +9,41 @@ const ClientOnboarding = () => {
   const { user, completeOnboarding } = useClientAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  // Check if already seen
+  useEffect(() => {
+    const onboardingKey = `onboarding_${user?.client_id}`;
+    const hasSeenOnboarding = localStorage.getItem(onboardingKey);
+    if (hasSeenOnboarding) {
+      navigate('/clients/dashboard');
+    }
+  }, [user?.client_id, navigate]);
+
+  const slideIcons = [Gift, FileText, BarChart3, Calendar];
+
   const slides = [
     {
       title: 'Bienvenue sur MIDEESSI!',
       subtitle: `Nous sommes heureux de vous accueillir, ${user?.nom_marque || 'cher client'}`,
       description: 'Votre espace client est prêt. Découvrez les outils qui vous aideront à gérer votre présence digitale.',
-      icon: '🎉',
+      iconIndex: 0,
     },
     {
       title: 'Complétez vos informations',
       subtitle: 'Aidez-nous à mieux vous connaître',
       description: 'Remplissez votre profil avec vos détails, vos accès sociaux et vos préférences de contenu.',
-      icon: '📋',
+      iconIndex: 1,
     },
     {
       title: 'Suivez vos performances',
       subtitle: 'Des données claires chaque mois',
       description: 'Consultez en temps réel vos KPIs : publications, engagement, budget dépensé et plus.',
-      icon: '📊',
+      iconIndex: 2,
     },
     {
       title: 'Planifiez votre calendrier',
       subtitle: 'Restez organisé',
       description: 'Découvrez le calendrier éditorial avec les contenus prévus pour votre marque.',
-      icon: '📅',
+      iconIndex: 3,
     },
   ];
 
@@ -49,6 +60,10 @@ const ClientOnboarding = () => {
   };
 
   const handleComplete = async () => {
+    // Mark onboarding as seen
+    const onboardingKey = `onboarding_${user?.client_id}`;
+    localStorage.setItem(onboardingKey, 'true');
+    
     await completeOnboarding();
     navigate('/clients/dashboard');
   };
@@ -74,7 +89,11 @@ const ClientOnboarding = () => {
           {/* Content */}
           <div className="mb-8">
             {/* Icon */}
-            <div className="text-6xl mb-6 text-center">{slides[currentSlide].icon}</div>
+            <div className="flex justify-center mb-6">
+              {(() => {
+                const Icon = slideIcons[slides[currentSlide].iconIndex];
+                return <Icon className="w-16 h-16 text-gold" />;
+              })()}
 
             {/* Title */}
             <h1 className="text-4xl md:text-5xl font-bold text-white text-center mb-3">

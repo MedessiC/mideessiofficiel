@@ -335,7 +335,7 @@ const ClientInfoForm = () => {
               </div>
 
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                ✓ Vos accès sont chiffrés et sécurisés. Seul notre équipe admin y accède.
+                Sécurise: Vos accès sont chiffrés et sécurisés. Seul notre équipe admin y accède.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -387,7 +387,7 @@ const ClientInfoForm = () => {
               </div>
 
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                ✓ Vos accès sont chiffrés et sécurisés. Seul notre équipe admin y accède.
+                Sécurise: Vos accès sont chiffrés et sécurisés. Seul notre équipe admin y accède.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

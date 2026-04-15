@@ -101,7 +101,7 @@ const ClientWeeklyObjectives = ({ clientId }: ClientWeeklyObjectivesProps) => {
     const labels = {
       pending: 'En attente',
       in_progress: 'En cours',
-      achieved: 'Atteint ✓',
+      achieved: 'Atteint',
       failed: 'Non atteint',
       cancelled: 'Annulé',
     };
@@ -273,7 +273,7 @@ const ClientWeeklyObjectives = ({ clientId }: ClientWeeklyObjectivesProps) => {
                 {getStatusLabel(obj.status)}
               </span>
               {obj.priority === 'high' && (
-                <span className="text-lg">🔥</span>
+                <span className="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-semibold rounded">Haute</span>
               )}
             </div>
           </div>

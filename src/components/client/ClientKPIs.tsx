@@ -145,7 +145,7 @@ const ClientKPIs = () => {
             <TrendingUp className="w-8 h-8 text-gold" />
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            {kpis.taux_engagement > 5 ? '📈 Excellent engagement!' : 'En progression...'}
+            {kpis.taux_engagement > 5 ? 'Excellent engagement !' : 'En progression...'}
           </p>
         </div>
 
