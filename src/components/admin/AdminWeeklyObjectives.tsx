@@ -129,8 +129,6 @@ const AdminWeeklyObjectives = ({ clientId }: AdminWeeklyObjectivesProps) => {
     try {
       const updateData: any = {
         status: newStatus,
-        validated_by_admin: newStatus === 'achieved',
-        validated_at: newStatus === 'achieved' ? new Date().toISOString() : null,
       };
 
       if (actualValue) {
@@ -149,6 +147,24 @@ const AdminWeeklyObjectives = ({ clientId }: AdminWeeklyObjectivesProps) => {
       await fetchObjectives();
     } catch (error) {
       setMessage({ type: 'error', text: 'Erreur lors de la mise à jour' });
+    }
+  };
+
+  const handleValidate = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('weekly_objectives')
+        .update({
+          validated_by_admin: true,
+          validated_at: new Date().toISOString(),
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      setMessage({ type: 'success', text: 'Objectif validé et visible au client' });
+      await fetchObjectives();
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Erreur lors de la validation' });
     }
   };
 
@@ -412,14 +428,19 @@ const AdminWeeklyObjectives = ({ clientId }: AdminWeeklyObjectivesProps) => {
                 >
                   <Edit className="w-5 h-5 text-blue-600" />
                 </button>
-                {obj.status !== 'achieved' && (
+                {!obj.validated_by_admin && (
                   <button
-                    onClick={() => handleStatusChange(obj.id, 'achieved', obj.target_value.toString())}
-                    className="p-2 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors"
-                    title="Valider"
+                    onClick={() => handleValidate(obj.id)}
+                    className="p-2 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors flex items-center gap-2"
+                    title="Publier pour le client"
                   >
                     <CheckCircle className="w-5 h-5 text-green-600" />
                   </button>
+                )}
+                {obj.validated_by_admin && (
+                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-green-600" title="Publié" />
+                  </div>
                 )}
                 <button
                   onClick={() => handleDelete(obj.id)}

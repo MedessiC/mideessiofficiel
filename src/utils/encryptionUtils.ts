@@ -86,3 +86,28 @@ export function generateClientId(existingIds: string[] = []): string {
   const newNum = maxNum + 1;
   return `JASI-${String(newNum).padStart(3, '0')}`;
 }
+
+/**
+ * Generate contract number in format YY-XXX
+ * YY = last 2 digits of current year (26 for 2026, 27 for 2027, etc.)
+ * XXX = sequential number (001, 002, etc.)
+ */
+export function generateContractNumber(existingContracts: string[] = []): string {
+  const now = new Date();
+  const yearSuffix = String(now.getFullYear()).slice(-2);
+  
+  let maxNum = 0;
+  
+  existingContracts.forEach(contract => {
+    // Match format YY-XXX where YY matches current year
+    const regex = new RegExp(`^${yearSuffix}-(\\d+)$`);
+    const match = contract.match(regex);
+    if (match) {
+      const num = parseInt(match[1]);
+      if (num > maxNum) maxNum = num;
+    }
+  });
+  
+  const newNum = maxNum + 1;
+  return `${yearSuffix}-${String(newNum).padStart(3, '0')}`;
+}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Plus, Edit, Eye, Trash2, Copy, CheckCircle, Key } from 'lucide-react';
-import { generateClientId, generateTempPassword, hashPassword } from '../../utils/encryptionUtils';
+import { generateClientId, generateTempPassword, hashPassword, generateContractNumber } from '../../utils/encryptionUtils';
 import ClientDetailsModal from './ClientDetailsModal';
 import ClientCredentialsModal from './ClientCredentialsModal';
 
@@ -42,6 +42,7 @@ const AdminClientsManager = () => {
   });
   const [newClientId, setNewClientId] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [newContractNumber, setNewContractNumber] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -71,6 +72,7 @@ const AdminClientsManager = () => {
 
     try {
       const clientId = generateClientId(clients.map(c => c.client_id));
+      const contractNumber = generateContractNumber(clients.map(c => c.numero_contrat));
       const tempPassword = generateTempPassword();
       
       // Hash the password client-side
@@ -88,7 +90,7 @@ const AdminClientsManager = () => {
           password_temp: tempPassword, // Store temp password
           password_changed: false,
           pack: newClientData.pack,
-          numero_contrat: newClientData.numero_contrat,
+          numero_contrat: contractNumber,
           date_debut: newClientData.date_debut,
           duree_mois: newClientData.duree_mois,
           est_periode_test: newClientData.est_periode_test,
@@ -106,6 +108,7 @@ const AdminClientsManager = () => {
 
       setNewClientId(clientId);
       setNewPassword(tempPassword);
+      setNewContractNumber(contractNumber);
       setShowNewCredentials(true);
       setNewClientData({
         nom_marque: '',
@@ -224,14 +227,10 @@ const AdminClientsManager = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <input
-                type="text"
-                placeholder="Numéro de contrat"
-                value={newClientData.numero_contrat}
-                onChange={(e) => setNewClientData({ ...newClientData, numero_contrat: e.target.value })}
-                required
-                className="px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white"
-              />
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mb-1">Numéro de contrat (auto-généré)</p>
+                <p className="text-lg font-mono font-bold text-midnight dark:text-white">{newClientData.numero_contrat || 'Généré à la création'}</p>
+              </div>
               <input
                 type="date"
                 value={newClientData.date_debut}
@@ -313,6 +312,19 @@ const AdminClientsManager = () => {
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                 >
                   <Copy className="w-5 h-5 text-gold" />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
+              <p className="text-sm text-amber-800 dark:text-amber-300 mb-1 font-semibold">Numéro de contrat</p>
+              <div className="flex items-center justify-between">
+                <code className="text-lg font-mono font-bold text-amber-900 dark:text-amber-100">{newContractNumber}</code>
+                <button
+                  onClick={() => copyToClipboard(newContractNumber, 'Numéro de contrat')}
+                  className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded"
+                >
+                  <Copy className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 </button>
               </div>
             </div>
