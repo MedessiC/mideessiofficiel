@@ -211,13 +211,30 @@ const ClientDashboard = () => {
             {menuItems.find(item => item.id === activeSection)?.label}
           </h1>
 
-          <div className="hidden lg:flex items-center gap-4">
-            <div className="text-right">
-              <p className="font-semibold text-midnight dark:text-white">{user.nom_responsable}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
-            </div>
-            <img
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
+          <div className="flex items-center gap-2 lg:gap-4">
+            {/* Mobile Message Icon - Top Right */}
+            <button
+              onClick={() => setActiveSection('messages')}
+              className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg relative transition-colors"
+              title="Messages"
+            >
+              <MessageCircle className="w-6 h-6 text-midnight dark:text-white" />
+              {unreadMessagesCount > 0 && (
+                <span className={`absolute top-0 right-0 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold text-white ${
+                  unreadMessagesCount > 9 ? 'bg-red-600 w-6 h-6 -top-1 -right-1' : 'bg-red-500'
+                }`}>
+                  {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                </span>
+              )}
+            </button>
+
+            <div className="hidden lg:flex items-center gap-4">
+              <div className="text-right">
+                <p className="font-semibold text-midnight dark:text-white">{user.nom_responsable}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
+              </div>
+              <img
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
               alt={user.nom_responsable}
               className="w-10 h-10 rounded-full"
             />
