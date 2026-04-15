@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useClientAuth } from '../../contexts/ClientContext';
 import { supabase } from '../../lib/supabase';
-import { Calendar, Package, CheckCircle, AlertCircle, TrendingUp, Zap, Clock, Shield } from 'lucide-react';
+import { Calendar, Package, CheckCircle, AlertCircle, TrendingUp, Zap, Clock, Shield, X } from 'lucide-react';
 
 interface ClientData {
   pack: string;
@@ -16,9 +16,17 @@ const ClientDashboardHome = () => {
   const { user } = useClientAuth();
   const [client, setClient] = useState<ClientData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     fetchClientData();
+    // Check if welcome has been seen before
+    const welcomeKey = `welcome_${user?.client_id}`;
+    const hasSeenWelcome = localStorage.getItem(welcomeKey);
+    if (!hasSeenWelcome) {
+      setShowWelcome(true);
+      localStorage.setItem(welcomeKey, 'true');
+    }
   }, [user?.client_id]);
 
   const fetchClientData = async () => {
@@ -81,42 +89,63 @@ const ClientDashboardHome = () => {
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      {/* Hero Welcome Section */}
-      <div className={`relative overflow-hidden rounded-2xl lg:rounded-3xl p-6 sm:p-8 lg:p-10 bg-gradient-to-br ${currentPackInfo.color} text-white shadow-lg`}>
-        <div className="absolute top-0 right-0 w-40 h-40 opacity-20">
-          <div className="absolute inset-0 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
-        </div>
-        
-        <div className="relative z-10">
-          <div className="flex items-start justify-between gap-4 mb-6">
-            <div className="flex-1">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-                Bienvenue, {user?.nom_marque}! {currentPackInfo.icon}
-              </h2>
-              <p className="text-white/80 text-sm sm:text-base lg:text-lg">
-                Votre espace pour gérer votre présence digitale avec MIDEESSI
-              </p>
-            </div>
-            <div className="hidden sm:flex items-center justify-center w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-white/20 backdrop-blur-sm">
-              <span className="text-4xl lg:text-5xl">{currentPackInfo.icon}</span>
-            </div>
+      {/* Hero Welcome Section - Full on first visit, compact on return */}
+      {showWelcome ? (
+        <div className={`relative overflow-hidden rounded-2xl lg:rounded-3xl p-6 sm:p-8 lg:p-10 bg-gradient-to-br ${currentPackInfo.color} text-white shadow-lg`}>
+          <div className="absolute top-0 right-0 w-40 h-40 opacity-20">
+            <div className="absolute inset-0 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
           </div>
+          
+          <div className="relative z-10">
+            <div className="flex items-start justify-between gap-4 mb-6">
+              <div className="flex-1">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+                  Bienvenue, {user?.nom_marque}! {currentPackInfo.icon}
+                </h2>
+                <p className="text-white/80 text-sm sm:text-base lg:text-lg">
+                  Votre espace pour gérer votre présence digitale avec MIDEESSI
+                </p>
+              </div>
+              <button
+                onClick={() => setShowWelcome(false)}
+                className="flex-shrink-0 p-2 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6 text-white" />
+              </button>
+            </div>
 
-          {/* Quick Status */}
-          <div className="flex flex-wrap gap-3">
-            <div className="px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-sm font-medium">
-              📋 {currentPackInfo.label}
-            </div>
-            <div className={`px-4 py-2 rounded-full text-sm font-medium ${
-              client?.statut === 'actif'
-                ? 'bg-green-400/30 border border-green-200/50'
-                : 'bg-orange-400/30 border border-orange-200/50'
-            }`}>
-              {client?.statut === 'actif' ? '✓ Actif' : '⚠️ ' + (client?.statut?.charAt(0).toUpperCase() + client?.statut?.slice(1))}
+            {/* Quick Status */}
+            <div className="flex flex-wrap gap-3">
+              <div className="px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-sm font-medium">
+                📋 {currentPackInfo.label}
+              </div>
+              <div className={`px-4 py-2 rounded-full text-sm font-medium ${
+                client?.statut === 'actif'
+                  ? 'bg-green-400/30 border border-green-200/50'
+                  : 'bg-orange-400/30 border border-orange-200/50'
+              }`}>
+                {client?.statut === 'actif' ? '✓ Actif' : '⚠️ ' + (client?.statut?.charAt(0).toUpperCase() + client?.statut?.slice(1))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className={`relative overflow-hidden rounded-xl p-4 bg-gradient-to-r ${currentPackInfo.color} text-white shadow-md`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold">{user?.nom_marque} {currentPackInfo.icon}</h2>
+              <p className="text-white/70 text-xs sm:text-sm mt-1">{currentPackInfo.label} • {client?.statut === 'actif' ? '✓ Actif' : 'Suspendu'}</p>
+            </div>
+            <button
+              onClick={() => setShowWelcome(true)}
+              className="flex-shrink-0 p-2 hover:bg-white/20 rounded-lg transition-colors"
+              title="Voir le message de bienvenue"
+            >
+              <span className="text-lg">ℹ️</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid - Mobile First */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

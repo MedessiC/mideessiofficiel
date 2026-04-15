@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Menu, X, Home, FileText, BarChart3, Calendar, Download, MessageCircle, Target } from 'lucide-react';
 import { useClientAuth } from '../contexts/ClientContext';
+import { supabase } from '../lib/supabase';
 import SEO from '../components/SEO';
 import ClientDashboardHome from '../components/client/ClientDashboardHome';
 import ClientInfoForm from '../components/client/ClientInfoForm';
@@ -19,6 +20,7 @@ const ClientDashboard = () => {
   const { user, signOut, loading } = useClientAuth();
   const [activeSection, setActiveSection] = useState<DashboardSection>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   const menuItems = [
     { id: 'home', label: 'Accueil', icon: Home },
@@ -29,6 +31,49 @@ const ClientDashboard = () => {
     { id: 'reports', label: 'Rapports', icon: Download },
     { id: 'messages', label: 'Messages', icon: MessageCircle },
   ];
+
+  // Fetch unread messages count
+  useEffect(() => {
+    if (!user?.client_id) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const { data } = await supabase
+          .from('messages')
+          .select('id')
+          .eq('client_id', user.client_id)
+          .eq('expediteur', 'admin')
+          .eq('lu', false);
+
+        setUnreadMessagesCount(data?.length || 0);
+      } catch (error) {
+        console.error('Error fetching unread messages:', error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Subscribe to message changes
+    const subscription = supabase
+      .channel(`client_messages:${user?.client_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `client_id=eq.${user?.client_id}`,
+        },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user?.client_id]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -110,6 +155,7 @@ const ClientDashboard = () => {
           <div className="space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
+              const hasUnread = item.id === 'messages' && unreadMessagesCount > 0;
               return (
                 <button
                   key={item.id}
@@ -117,14 +163,21 @@ const ClientDashboard = () => {
                     setActiveSection(item.id as DashboardSection);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all relative ${
                     activeSection === item.id
                       ? 'bg-gold/20 text-gold border-l-4 border-gold'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium flex-1 text-left">{item.label}</span>
+                  {hasUnread && (
+                    <span className={`inline-flex items-center justify-center px-2 py-1 rounded-full text-xs font-bold text-white ${
+                      unreadMessagesCount > 9 ? 'bg-red-600' : 'bg-red-500'
+                    }`}>
+                      {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -180,7 +233,7 @@ const ClientDashboard = () => {
       </div>
 
       {/* Bottom Navigation - Mobile only */}
-      <BottomNavigation activeSection={activeSection} onNavigate={setActiveSection} />
+      <BottomNavigation activeSection={activeSection} onNavigate={setActiveSection} unreadMessagesCount={unreadMessagesCount} />
 
       {/* Overlay for mobile */}
       {sidebarOpen && (
