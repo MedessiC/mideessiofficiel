@@ -237,11 +237,11 @@ const ClientDashboard = () => {
               </div>
               <img
                 src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
-              alt={user.nom_responsable}
-              className="w-10 h-10 rounded-full"
-            />
+                alt={user.nom_responsable}
+                className="w-10 h-10 rounded-full"
+              />
+            </div>
           </div>
-        </div>
 
       {/* Content Area - Add bottom padding on mobile for nav */}
         <div className="flex-1 overflow-auto pb-24 lg:pb-0">
