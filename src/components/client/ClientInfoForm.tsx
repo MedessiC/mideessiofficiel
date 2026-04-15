@@ -174,7 +174,7 @@ const ClientInfoForm = () => {
           <div>
             <p className="font-semibold text-green-800 dark:text-green-300">Formulaire soumis</p>
             <p className="text-sm text-green-700 dark:text-green-200">
-              Vos informations ont été enregistrées. Pour les modifier, veuillez contacter notre support.
+              Vos informations ont été enregistrées. Vous pouvez les modifier à tout moment en complétant le formulaire ci-dessous.
             </p>
           </div>
         </div>

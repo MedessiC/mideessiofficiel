@@ -176,6 +176,31 @@ const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsModalProps
                         </div>
                       )}
 
+                      {details.client_info.couleurs_marque && (
+                        <div>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">
+                            Couleurs de marque
+                          </p>
+                          <p className="text-midnight dark:text-white">{details.client_info.couleurs_marque}</p>
+                        </div>
+                      )}
+
+                      {details.client_info.lien_logo && (
+                        <div>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">
+                            Logo
+                          </p>
+                          <a
+                            href={details.client_info.lien_logo}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {details.client_info.lien_logo}
+                          </a>
+                        </div>
+                      )}
+
                       {details.client_info.ton_souhaite?.length > 0 && (
                         <div>
                           <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-2">Ton</p>
@@ -310,6 +335,15 @@ const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsModalProps
                               )}
                             </div>
                           )}
+                        </div>
+                      )}
+
+                      {details.client_info.promotions_evenements && (
+                        <div>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">
+                            Promotions et événements
+                          </p>
+                          <p className="text-midnight dark:text-white">{details.client_info.promotions_evenements}</p>
                         </div>
                       )}
 
