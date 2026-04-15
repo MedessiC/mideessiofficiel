@@ -2,6 +2,10 @@
 # Cache headers - HTML never cached, assets cached
 # ============================================================
 
+# Assets - Cache for 1 year (they have hash in filename) - MUST BE FIRST!
+/assets/* /assets/:splat 200!
+  Cache-Control: public, max-age=31536000, immutable
+
 # HTML files - No cache (always check)
 /index.html  /index.html  200!
   Cache-Control: public, max-age=0, must-revalidate
@@ -9,10 +13,6 @@
 # Default redirect with cache headers
 /*  /index.html  200!
   Cache-Control: public, max-age=0, must-revalidate
-
-# Assets - Cache for 1 year (they have hash in filename)
-/assets/* /assets/:splat 200!
-  Cache-Control: public, max-age=31536000, immutable
 
 # ============================================================
 # Redirections pour les crawlers de réseaux sociaux

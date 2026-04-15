@@ -179,11 +179,12 @@
   conditions = {User-Agent = ["TelegramBot*"]}
 
 # Pour TOUS les autres visiteurs (navigateurs normaux)
-# Servir le SPA React normalement
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# NOTE: Les redirects SPA sont gérées par public/_redirects
+# Cette configuration TOML est commentée pour éviter les conflits
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200
 
 # Headers de sécurité
 [[headers]]
