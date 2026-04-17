@@ -75,38 +75,8 @@ const silentReload = () => {
 /**
  * Initialise la vérification périodique de nouvelles versions
  */
-export const initVersionCheck = (config: VersionCheckConfig = {}) => {
-  const { checkInterval = 3 * 60 * 1000 } = config;
-
-  // Vérification initiale au chargement
-  getIndexVersion().then((version) => {
-    currentVersion = version;
-    console.log('✅ Version actuelle:', version);
-  });
-
-  // Vérification périodique
-  const checkForUpdates = async () => {
-    const newVersion = await getIndexVersion();
-
-    if (currentVersion && newVersion !== currentVersion && newVersion !== 'error') {
-      console.log('🔄 Nouvelle version détectée! Recharge en cours...');
-      silentReload();
-      return;
-    }
-
-    currentVersion = newVersion;
-  };
-
-  // Vérifier au chargement initial + périodique
-  checkTimeout = setInterval(checkForUpdates, checkInterval);
-
-  // Vérifier aussi au focus (quand l'utilisateur revient à l'app)
-  window.addEventListener('focus', checkForUpdates);
-
-  return () => {
-    if (checkTimeout) clearInterval(checkTimeout);
-    window.removeEventListener('focus', checkForUpdates);
-  };
+export const initVersionCheck = () => {
+  // Désactivé - cache HTTP navigateur suffit
 };
 
 export default initVersionCheck;

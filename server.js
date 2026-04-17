@@ -238,45 +238,21 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
-// STATIC FILES SERVING - Serve assets from public and dist
+// STATIC FILES - Simple serving
 // ============================================================
-// Serve dist folder (built React app)
-app.use(express.static(path.join(__dirname, 'dist'), {
-  maxAge: '1y',
-  etag: false
-}));
+app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve public folder (static assets)
-app.use(express.static(path.join(__dirname, 'public'), {
-  maxAge: '1y',
-  etag: false
-}));
-
-// ============================================================
-// CACHE HEADERS - Cache busting intelligent
-// ============================================================
+// Cache headers - simple
 app.use((req, res, next) => {
-  // HTML files - Never cache (always check for updates)
-  if (req.path.endsWith('.html') || req.path === '/') {
-    res.set('Cache-Control', 'public, max-age=0, must-revalidate');
+  // Assets with hash - cache 1 year
+  if (/\/assets\/.+\.[0-9a-f]{8}\./.test(req.path)) {
+    res.set('Cache-Control', 'public, max-age=31536000');
   }
-  // Static assets with hash (JS, CSS, images) - Cache for 1 year
-  else if (/\.(js|css|woff2|ttf|eot|svg|png|jpg|jpeg|webp|gif|webmanifest)$/.test(req.path)) {
-    res.set('Cache-Control', 'public, max-age=31536000, immutable');
-  }
-  // API routes and JSON and manifest - Never cache
-  else if (req.path.startsWith('/api/') || req.path.endsWith('.json') || req.path.endsWith('.webmanifest')) {
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-  }
-  // Default - Don't cache
+  // Everything else - no cache
   else {
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Cache-Control', 'no-cache');
   }
-  
-  // Add version header for debugging
-  res.set('X-Cache-Version', '1.0');
   next();
 });
 

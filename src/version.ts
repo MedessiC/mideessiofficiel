@@ -1,35 +1,17 @@
 /**
- * CACHE VERSION MANAGEMENT
- * Update this file to force a new version and invalidate caches
- * Useful for forcing clients to reload all assets
+ * Version info - simple
  */
 
 export const VERSION = {
-  // Main version number - increment this to force full cache bust
   major: 1,
   minor: 0,
   patch: 2,
-  
-  // Cache bust timestamp - auto-update on each deployment
-  timestamp: new Date().toISOString(),
-  
-  // Build number - increment for each deployment
   build: 3,
   
-  // Full version string for debugging
   get fullVersion() {
-    return `${this.major}.${this.minor}.${this.patch} (build ${this.build})`;
-  },
-  
-  // Date for cache busting headers
-  get cacheKey() {
-    return `v${this.major}${this.minor}${this.patch}-${this.build}`;
+    return `${this.major}.${this.minor}.${this.patch}`;
   }
 };
 
-// Log version on console - safe initialization
-if (typeof window !== 'undefined' && typeof console !== 'undefined') {
-  console.log(`🚀 MIDEESSI v${VERSION.fullVersion}`);
-  console.log(`📦 Cache Key: ${VERSION.cacheKey}`);
-  console.log(`⏰ Deploy Time: ${VERSION.timestamp}`);
-}
+// Log version on startup
+console.log(`🚀 MIDEESSI v${VERSION.fullVersion}`);
