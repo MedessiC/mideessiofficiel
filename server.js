@@ -238,6 +238,21 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
+// STATIC FILES SERVING - Serve assets from public and dist
+// ============================================================
+// Serve dist folder (built React app)
+app.use(express.static(path.join(__dirname, 'dist'), {
+  maxAge: '1y',
+  etag: false
+}));
+
+// Serve public folder (static assets)
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1y',
+  etag: false
+}));
+
+// ============================================================
 // CACHE HEADERS - Cache busting intelligent
 // ============================================================
 app.use((req, res, next) => {
@@ -246,11 +261,11 @@ app.use((req, res, next) => {
     res.set('Cache-Control', 'public, max-age=0, must-revalidate');
   }
   // Static assets with hash (JS, CSS, images) - Cache for 1 year
-  else if (/\.(js|css|woff2|ttf|eot|svg|png|jpg|jpeg|webp|gif)$/.test(req.path)) {
+  else if (/\.(js|css|woff2|ttf|eot|svg|png|jpg|jpeg|webp|gif|webmanifest)$/.test(req.path)) {
     res.set('Cache-Control', 'public, max-age=31536000, immutable');
   }
-  // API routes and JSON - Never cache
-  else if (req.path.startsWith('/api/') || req.path.endsWith('.json')) {
+  // API routes and JSON and manifest - Never cache
+  else if (req.path.startsWith('/api/') || req.path.endsWith('.json') || req.path.endsWith('.webmanifest')) {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');

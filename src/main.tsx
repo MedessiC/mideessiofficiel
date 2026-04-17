@@ -29,3 +29,16 @@ if (rootElement.hasChildNodes()) {
 initVersionCheck({
   checkInterval: 3 * 60 * 1000, // 3 minutes
 });
+
+// Enregistrer le service worker pour le cache offline et les optimisations
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+      .then((registration) => {
+        console.log('✅ Service Worker enregistré avec succès:', registration);
+      })
+      .catch((error) => {
+        console.warn('⚠️ Erreur lors de l\'enregistrement du Service Worker:', error);
+      });
+  });
+}
