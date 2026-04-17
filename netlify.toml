@@ -9,65 +9,71 @@
   NODE_VERSION = "18"
 
 # ============================================================
-# 🚀 OPTIMISATIONS DE PERFORMANCE & COMPRESSION
+# Headers - Content types and caching
 # ============================================================
 
-# HTML - Cache court avec revalidation (24h)
+# Manifest - Toujours frais
 [[headers]]
-  for = "/*.html"
+  for = "/site.webmanifest"
   [headers.values]
-    Cache-Control = "public, max-age=86400, must-revalidate"
-    X-Content-Type-Options = "nosniff"
+    Content-Type = "application/manifest+json"
+    Cache-Control = "no-cache"
 
-# index.html - Toujours vérifier la version fraîche
-[[headers]]
-  for = "/index.html"
-  [headers.values]
-    Cache-Control = "public, max-age=3600, must-revalidate"
-    Pragma = "no-cache"
-
-# manifest.json - Vérifier quotidien
 [[headers]]
   for = "/manifest.json"
   [headers.values]
-    Cache-Control = "public, max-age=86400"
+    Content-Type = "application/json"
+    Cache-Control = "no-cache"
 
-# service-worker.js - Toujours frais
+# HTML - No cache
 [[headers]]
-  for = "/service-worker.js"
+  for = "/index.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+    X-Content-Type-Options = "nosniff"
 
-# Assets avec hash (JS, CSS) - Cache 1 AN (immutable car hashé)
+# Assets avec hash (JS, CSS) - Cache 1 AN (immutable)
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Images publiques - Cache 6 mois
-[[headers]]
-  for = "/public/*"
-  [headers.values]
-    Cache-Control = "public, max-age=15778800, immutable"
-
-# WebP images - Plus agressif (1 an)
+# Images statiques - Cache agressif (1 année)
 [[headers]]
   for = "/*.webp"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=31536000"
 
 [[headers]]
-  for = "/public/*.webp"
+  for = "/*.png"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=31536000"
 
-# PNG/JPG - Cache 6 mois
 [[headers]]
   for = "/*.jpg"
   [headers.values]
-    Cache-Control = "public, max-age=15778800"
+    Cache-Control = "public, max-age=31536000"
 
 [[headers]]
+  for = "/*.jpeg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/*.gif"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+# Favicons - Cache agressif
+[[headers]]
+  for = "/*.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
   for = "/*.png"
   [headers.values]
     Cache-Control = "public, max-age=15778800"

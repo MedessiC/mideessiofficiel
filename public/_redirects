@@ -1,24 +1,37 @@
 # ============================================================
-# Cache headers - HTML never cached, assets cached
+# STATIQUES D'ABORD - Ne pas rediriger les fichiers statiques
 # ============================================================
 
-# Assets - Cache for 1 year (they have hash in filename) - MUST BE FIRST!
-/assets/* /assets/:splat 200!
+# Favicon et manifests - servir directement
+/favicon.*  /favicon.:splat  200
+/site.webmanifest  /site.webmanifest  200
+/manifest.json  /manifest.json  200
+/robots.txt  /robots.txt  200
+/sitemap.xml  /sitemap.xml  200
+/sitemap.txt  /sitemap.txt  200
+
+# Images et assets - servir directement
+/**.webp  /**.webp  200
+/**.png  /**.png  200
+/**.jpg  /**.jpg  200
+/**.jpeg  /**.jpeg  200
+/**.svg  /**.svg  200
+/**.gif  /**.gif  200
+/**.ico  /**.ico  200
+
+# ============================================================
+# Cache headers - Assets
+# ============================================================
+
+# Assets avec hash (JS, CSS) - Cache 1 année
+/assets/*  /assets/:splat  200!
   Cache-Control: public, max-age=31536000, immutable
 
-# HTML files - No cache (always check)
-/index.html  /index.html  200!
-  Cache-Control: public, max-age=0, must-revalidate
-
-# Default redirect with cache headers
-/*  /index.html  200!
-  Cache-Control: public, max-age=0, must-revalidate
-
 # ============================================================
+# Routes spéciales
+# ============================================================
+
 # Redirections pour les crawlers de réseaux sociaux
-# ============================================================
-
-# Ces user-agents seront redirigés vers le serveur SEO
 /blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=facebookexternalhit/*
 /blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Facebot/*
 /blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Twitterbot/*
@@ -28,5 +41,13 @@
 /blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Discordbot/*
 /blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Pinterest/*
 
-# Pour tous les autres, servir le SPA React
+# ============================================================
+# SPA React - Tout le reste va à index.html
+# ============================================================
+
+# HTML - No cache
+/index.html  /index.html  200!
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Default - Serve React SPA
 /*  /index.html  200
