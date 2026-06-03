@@ -1,0 +1,176 @@
+# Configuration Netlify pour MIDEESSI
+
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# HTML - No cache
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Manifest - No cache
+[[headers]]
+  for = "/site.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "no-cache"
+
+# Assets - Cache 1 year
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Images - Cache 1 year
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/*.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# ============================================================
+# 📱 REDIRECTIONS RESEAUX SOCIAUX & CRAWLERS
+
+# Facebook
+[[redirects]]
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
+  status = 200
+  force = true
+  conditions = {User-Agent = ["facebookexternalhit*", "Facebot*"]}
+
+# Twitter
+[[redirects]]
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
+  status = 200
+  force = true
+  conditions = {User-Agent = ["Twitterbot*"]}
+
+# LinkedIn
+[[redirects]]
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
+  status = 200
+  force = true
+  conditions = {User-Agent = ["LinkedInBot*"]}
+
+# WhatsApp
+[[redirects]]
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
+  status = 200
+  force = true
+  conditions = {User-Agent = ["WhatsApp*"]}
+
+# Slack
+[[redirects]]
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
+  status = 200
+  force = true
+  conditions = {User-Agent = ["Slackbot*"]}
+
+# Discord
+[[redirects]]
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
+  status = 200
+  force = true
+  conditions = {User-Agent = ["Discordbot*"]}
+
+# Pinterest
+[[redirects]]
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
+  status = 200
+  force = true
+  conditions = {User-Agent = ["Pinterest*"]}
+
+# Google
+[[redirects]]
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
+  status = 200
+  force = true
+  conditions = {User-Agent = ["Googlebot*"]}
+
+# Bing
+[[redirects]]
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
+  status = 200
+  force = true
+  conditions = {User-Agent = ["bingbot*"]}
+
+# Telegram
+[[redirects]]
+  from = "/blog/*"
+  to = "https://mideessi-seo.onrender.com/blog/:splat"
+  status = 200
+  force = true
+  conditions = {User-Agent = ["TelegramBot*"]}
+
+# Pour TOUS les autres visiteurs (navigateurs normaux)
+# NOTE: Les redirects SPA sont gérées par public/_redirects
+# Cette configuration TOML est commentée pour éviter les conflits
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200
+
+# Headers de sécurité
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache pour les assets statiques
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

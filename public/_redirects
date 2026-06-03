@@ -1,0 +1,44 @@
+# ============================================================
+# Fichiers statiques - servir directement (pas de rewrite)
+# ============================================================
+
+# Ne pas rediriger les assets avec hash
+/assets/*  /assets/:splat  200
+
+# Ne pas rediriger les images et fichiers statiques
+/*.js  /:splat
+/*.css  /:splat
+/*.webp  /:splat
+/*.png  /:splat
+/*.jpg  /:splat
+/*.jpeg  /:splat
+/*.svg  /:splat
+/*.gif  /:splat
+/*.ico  /:splat
+/*.woff2  /:splat
+/*.ttf  /:splat
+/*.woff  /:splat
+/*.eot  /:splat
+*.json  /:splat
+*.webmanifest  /:splat
+*.txt  /:splat
+*.xml  /:splat
+
+# ============================================================
+# Redirections pour les crawlers de réseaux sociaux
+# ============================================================
+
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=facebookexternalhit/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Facebot/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Twitterbot/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=LinkedInBot/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=WhatsApp/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Slackbot/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Discordbot/*
+/blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Pinterest/*
+
+# ============================================================
+# SPA React - Route par défaut
+# ============================================================
+
+/*  /index.html  200
