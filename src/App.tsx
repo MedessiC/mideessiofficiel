@@ -15,6 +15,7 @@ import NewHome from './pages/NewHome';
 import About from './pages/About';
 import Learn from './pages/Learn';
 import Library from './pages/Library';
+import BookDetail from './pages/BookDetail';
 import Solutions from './pages/Solutions';
 import Projects from './pages/Projects';
 import SolutionDetail from './pages/SolutionDetail';
@@ -28,25 +29,36 @@ import Offres from './pages/Offres';
 import DetailOffre from './pages/DetailOffre';
 import DetailDevService from './pages/DetailDevService';
 import NotFound from './pages/NotFound';
-import AdminLogin from './pages/AdminLogin';
+import UnifiedLogin from './pages/UnifiedLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminClientManagement from './pages/AdminClientManagement';
+import AdminLogin from './pages/AdminLogin';
 import AdminPostEditor from './pages/AdminPostEditor';
 import AdminPdfs from './pages/AdminPdfs';
 import ShareRedirect from './pages/ShareRedirect';
 import TeamMemberProfile from './pages/TeamMemberProfile';
-import Login from './pages/Login';
 import Signup from './pages/Signup';
 import MyLibrary from './pages/MyLibrary';
 import UserProfile from './pages/UserProfile';
-import ClientLogin from './pages/ClientLogin';
+import UserProfileEdit from './pages/UserProfileEdit';
 import ClientOnboarding from './pages/ClientOnboarding';
 import ClientDashboard from './pages/ClientDashboard';
+import ClientLivrables from './pages/ClientLivrables';
+import ClientMessages from './pages/ClientMessages';
+import ClientFactures from './pages/ClientFactures';
+import ClientCompte from './pages/ClientCompte';
+import ClientInfos from './pages/ClientInfos';
+import ClientKpis from './pages/ClientKpis';
+import ClientCalendar from './pages/ClientCalendar';
+import ClientReportsPage from './pages/ClientReports';
+import ClientObjectives from './pages/ClientObjectives';
+import { ClientShell } from './components/layout/ClientShell';
+import { Navigate } from 'react-router-dom';
 function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const isAuthRoute = location.pathname.startsWith('/login') || location.pathname.startsWith('/signup');
-  const isClientRoute = location.pathname.startsWith('/clients');
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/admin/login' || location.pathname === '/signup' || location.pathname === '/clients';
+  const isClientRoute = location.pathname.startsWith('/clients/');
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
@@ -69,24 +81,38 @@ function AppContent() {
           <Route path="/blog/:slug" element={<NewBlogPost />} />
           <Route path ="/learn" element={<Learn />} />
           <Route path="/library" element={<Library />} />
+          <Route path="/library/:id" element={<BookDetail />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/careers" element={<Careers />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<UnifiedLogin />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/clients" element={<UnifiedLogin />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile/:username" element={<UserProfile />} />
+          <Route path="/profile/edit" element={<ProtectedRoute><UserProfileEdit /></ProtectedRoute>} />
           <Route path="/my-library" element={<ProtectedRoute><MyLibrary /></ProtectedRoute>} />
           
           {/* Client Routes */}
-          <Route path="/clients" element={<ClientLogin />} />
-          <Route path="/clients/onboarding" element={<ClientProtectedRoute><ClientOnboarding /></ClientProtectedRoute>} />
-          <Route path="/clients/dashboard" element={<ClientProtectedRoute><ClientDashboard /></ClientProtectedRoute>} />
+          <Route path="/clients/*" element={<ClientShell />}>
+            <Route index element={<Navigate to="/clients/dashboard" replace />} />
+            <Route path="onboarding" element={<ClientProtectedRoute><ClientOnboarding /></ClientProtectedRoute>} />
+            <Route path="dashboard" element={<ClientProtectedRoute><ClientDashboard /></ClientProtectedRoute>} />
+            <Route path="livrables" element={<ClientProtectedRoute><ClientLivrables /></ClientProtectedRoute>} />
+            <Route path="messages" element={<ClientProtectedRoute><ClientMessages /></ClientProtectedRoute>} />
+            <Route path="factures" element={<ClientProtectedRoute><ClientFactures /></ClientProtectedRoute>} />
+            <Route path="infos" element={<ClientProtectedRoute><ClientInfos /></ClientProtectedRoute>} />
+            <Route path="kpis" element={<ClientProtectedRoute><ClientKpis /></ClientProtectedRoute>} />
+            <Route path="calendar" element={<ClientProtectedRoute><ClientCalendar /></ClientProtectedRoute>} />
+            <Route path="reports" element={<ClientProtectedRoute><ClientReportsPage /></ClientProtectedRoute>} />
+            <Route path="objectives" element={<ClientProtectedRoute><ClientObjectives /></ClientProtectedRoute>} />
+            <Route path="compte" element={<ClientProtectedRoute><ClientCompte /></ClientProtectedRoute>} />
+          </Route>
           
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/clients" element={<AdminClientManagement />} />
-          <Route path="/admin/pdfeditor" element={<AdminPdfs />} />
+          <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/clients" element={<ProtectedRoute requiredRole="admin"><AdminClientManagement /></ProtectedRoute>} />
+          <Route path="/admin/pdfeditor" element={<ProtectedRoute requiredRole="admin"><AdminPdfs /></ProtectedRoute>} />
           <Route path="/share/:slug" element={<ShareRedirect />} />
-          <Route path="/admin/post/:id" element={<AdminPostEditor />} />
+          <Route path="/admin/post/:id" element={<ProtectedRoute requiredRole="admin"><AdminPostEditor /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Plus, Edit, Trash2, Zap, TrendingUp } from 'lucide-react';
+import { Plus, Edit, Trash2, Target, TrendingUp } from 'lucide-react';
 
 interface GlobalObjective {
   id: string;
@@ -164,7 +164,7 @@ const AdminGlobalObjectives = ({ clientId }: AdminGlobalObjectivesProps) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-midnight dark:text-white flex items-center gap-2">
-          <Zap className="w-6 h-6" />
+          <Target className="w-6 h-6" />
           Objectifs globaux (Contrat)
         </h2>
         <button
@@ -396,7 +396,7 @@ const AdminGlobalObjectives = ({ clientId }: AdminGlobalObjectivesProps) => {
 
       {objectives.length === 0 && (
         <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <Zap className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <Target className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-600 dark:text-gray-400">Aucun objectif global. Créez-en un pour ce client.</p>
         </div>
       )}

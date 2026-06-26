@@ -1,4 +1,4 @@
-import { Search, Zap, Calendar, MapPin, Rocket, Code, Globe } from 'lucide-react';
+import { Search, Filter, Calendar, MapPin, Rocket, Code, Globe } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import SEO from '../components/SEO';
 import AtelierCard from '../components/AtelierCard';
@@ -186,7 +186,7 @@ const Ateliers = () => {
                     : 'bg-white/10 text-white hover:bg-white/20'
                 }`}
               >
-                <Zap className="w-3.5 h-3.5" /> Tous
+                <Filter className="w-3.5 h-3.5" /> Tous
               </button>
               <button
                 onClick={() => setFilterOption('this-week')}
@@ -344,7 +344,7 @@ const Ateliers = () => {
             </div>
           ) : (
             <div className="text-center py-16">
-              <Zap className="w-16 h-16 text-gold/50 mx-auto mb-4" />
+              <Calendar className="w-16 h-16 text-gold/50 mx-auto mb-4" />
               <p className="text-lg md:text-2xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
                 Aucun atelier trouvé
               </p>

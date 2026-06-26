@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Search, Star, Users, Download, Filter, X, ChevronLeft, ChevronRight, ArrowLeft, Smartphone } from 'lucide-react';
+import { BookOpen, Search, BadgeCheck, Users, Download, Filter, X, ChevronLeft, ChevronRight, ArrowLeft, Smartphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getIcon } from '../utils/iconMapper';
@@ -43,7 +43,7 @@ const Library = () => {
     { id: 'webdev', name: 'Web Dev', iconName: 'Code' },
     { id: 'design', name: 'Design', iconName: 'Sparkles' },
     { id: 'business', name: 'Business', iconName: 'TrendingUp' },
-    { id: 'data', name: 'Data & IA', iconName: 'Zap' },
+    { id: 'data', name: 'Data & IA', iconName: 'Brain' },
   ];
 
   const levels = [
@@ -331,32 +331,44 @@ const Library = () => {
                         )}
                         {book.rating && (
                           <div className="flex items-center gap-0.5 md:gap-1">
-                            <Star className="w-3 h-3 fill-gold text-gold" />
+                            <BadgeCheck className="w-3 h-3 text-gold" />
                             <span>{book.rating}/5</span>
                           </div>
                         )}
                       </div>
 
                       <div className="space-y-2">
-                        <a 
-                          href={book.article_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full flex items-center justify-center gap-1.5 md:gap-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold py-1.5 md:py-2 rounded-lg transition-all hover:scale-105 text-xs md:text-sm"
+                        <Link
+                          to={`/library/${book.id}`}
+                          className="w-full inline-flex items-center justify-center gap-1.5 md:gap-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-semibold py-1.5 md:py-2 rounded-lg transition-all hover:scale-105 text-xs md:text-sm"
                         >
-                          <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                          Lire l'article
-                        </a>
+                          <BookOpen className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                          Voir le résumé
+                        </Link>
 
-                        <a
-                          href={book.buy_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full flex items-center justify-center gap-1.5 md:gap-2 bg-gold hover:bg-yellow-500 text-midnight font-bold py-1.5 md:py-2 lg:py-2.5 rounded-lg transition-all text-xs md:text-sm"
-                        >
-                          <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                          Acheter maintenant
-                        </a>
+                        {book.pdf_url && (
+                          <a 
+                            href={book.pdf_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full flex items-center justify-center gap-1.5 md:gap-2 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-gray-700 text-slate-900 dark:text-white font-semibold py-1.5 md:py-2 rounded-lg transition-all text-xs md:text-sm"
+                          >
+                            <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            Télécharger le PDF
+                          </a>
+                        )}
+
+                        {book.buy_url && (
+                          <a
+                            href={book.buy_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full flex items-center justify-center gap-1.5 md:gap-2 bg-gold hover:bg-yellow-500 text-midnight font-bold py-1.5 md:py-2 lg:py-2.5 rounded-lg transition-all text-xs md:text-sm"
+                          >
+                            <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            Acheter maintenant
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>

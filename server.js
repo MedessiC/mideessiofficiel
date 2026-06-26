@@ -2,8 +2,10 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,23 +16,36 @@ const app = express();
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = process.env.SITE_URL || 'https://mideessi.com';
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 // Vérifier que les variables sont chargées
 console.log('🔍 Vérification des variables d\'environnement:');
 console.log('SUPABASE_URL:', SUPABASE_URL ? '✅ Défini' : '❌ Manquant');
 console.log('SUPABASE_KEY:', SUPABASE_KEY ? '✅ Défini' : '❌ Manquant');
 console.log('SITE_URL:', SITE_URL);
+console.log('CLOUDINARY_CLOUD_NAME:', CLOUDINARY_CLOUD_NAME ? '✅ Défini' : '❌ Manquant');
+console.log('CLOUDINARY_API_KEY:', CLOUDINARY_API_KEY ? '✅ Défini' : '❌ Manquant');
+console.log('CLOUDINARY_API_SECRET:', CLOUDINARY_API_SECRET ? '✅ Défini' : '❌ Manquant');
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('\n❌ ERREUR: Variables d\'environnement non configurées!');
-  console.error('📝 Sur Render, ajoutez ces variables d\'environnement:');
-  console.error('SUPABASE_URL=votre_url_supabase');
-  console.error('SUPABASE_ANON_KEY=votre_clé_supabase');
-  console.error('SITE_URL=https://mideessi.com\n');
+  console.error('\n❌ ERREUR: SUPABASE_URL ou SUPABASE_KEY manquant — configuration requise!');
   process.exit(1);
 }
 
+if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+  console.warn('\n⚠️  Cloudinary non configuré — certaines routes d\'upload seront désactivées en local.');
+  console.warn('Pour la production, définissez CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET.\n');
+}
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Create a server-side Supabase client using the service role key when available
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  : supabase; // fallback to anon if service key not provided (less secure)
 
 // Liste des User-Agents des crawlers de réseaux sociaux
 const SOCIAL_CRAWLERS = [
@@ -229,10 +244,12 @@ function generateOGHtml(post, siteUrl) {
 // Trust proxy (important pour Netlify/Render)
 app.set('trust proxy', true);
 
+app.use(express.json());
+
 // Middleware CORS pour Netlify
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://mideessi.com');
-  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
@@ -276,6 +293,278 @@ app.get('/health', (req, res) => {
     supabase: SUPABASE_URL ? 'connected' : 'disconnected'
   });
 });
+
+// Debug endpoint to verify database setup
+app.get('/api/debug/db-status', async (req, res) => {
+  try {
+    console.log('🔍 Checking database status...');
+    
+    // Check if sequences table exists
+    const { data: seqData, error: seqError } = await supabaseAdmin
+      .from('sequences')
+      .select('*')
+      .limit(1);
+    
+    if (seqError) {
+      console.error('Sequences table check failed:', seqError);
+      return res.status(400).json({ 
+        error: 'Sequences table not found or accessible',
+        details: seqError.message,
+        hint: 'Run migration: 20260604_add_sequences_and_ids.sql'
+      });
+    }
+
+    // Check if clients table exists
+    const { data: clientsData, error: clientsError } = await supabaseAdmin
+      .from('clients')
+      .select('*')
+      .limit(1);
+    
+    if (clientsError) {
+      console.error('Clients table check failed:', clientsError);
+      return res.status(400).json({ 
+        error: 'Clients table not found or accessible',
+        details: clientsError.message,
+        hint: 'Run migration: 20260414_create_clients_system.sql'
+      });
+    }
+
+    // Test RPC function
+    const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('next_client_id', { pole_input: 'presence_digitale' });
+    if (rpcError) {
+      console.error('RPC function test failed:', rpcError);
+      return res.status(400).json({ 
+        error: 'next_client_id RPC function failed',
+        details: rpcError.message,
+        hint: 'Check migration: 20260604_add_sequences_and_ids.sql'
+      });
+    }
+
+    res.json({ 
+      status: 'ok',
+      message: 'All database tables and functions are properly configured',
+      checks: {
+        sequences_table: 'accessible',
+        clients_table: 'accessible', 
+        client_infos_table: 'accessible',
+        next_client_id_rpc: 'working',
+        last_generated_id: rpcData
+      }
+    });
+  } catch (err) {
+    console.error('DB status check error:', err);
+    res.status(500).json({ error: 'Error checking database', details: err.message });
+  }
+});
+
+// Signature Cloudinary sécurisée pour l'upload client-side
+app.get('/api/cloudinary-signature', (req, res) => {
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+    return res.status(500).json({ error: 'Cloudinary non configuré' });
+  }
+
+  const folder = req.query.folder ? String(req.query.folder) : 'mideessi';
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signatureBase = `folder=${folder}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
+  const signature = crypto.createHash('sha1').update(signatureBase).digest('hex');
+
+  res.json({
+    cloudName: CLOUDINARY_CLOUD_NAME,
+    apiKey: CLOUDINARY_API_KEY,
+    timestamp,
+    signature,
+    folder,
+  });
+});
+
+const EMAIL_HOST = process.env.EMAIL_HOST;
+const EMAIL_PORT = process.env.EMAIL_PORT;
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
+const EMAIL_FROM = process.env.EMAIL_FROM || 'MIDEESSI <no-reply@mideessi.com>';
+
+const emailTransporter = EMAIL_HOST && EMAIL_PORT && EMAIL_USER && EMAIL_PASSWORD
+  ? nodemailer.createTransport({
+      host: EMAIL_HOST,
+      port: Number(EMAIL_PORT),
+      secure: Number(EMAIL_PORT) === 465,
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASSWORD,
+      },
+    })
+  : null;
+
+app.post('/api/send-client-invite', async (req, res) => {
+  if (!emailTransporter) {
+    return res.status(500).json({ error: 'Serveur email non configuré' });
+  }
+
+  const { clientName, email, clientId, tempPassword, contractNumber, contractUrl } = req.body;
+
+  if (!email || !clientId || !tempPassword || !contractNumber) {
+    return res.status(400).json({ error: 'Payload invalide pour email d\'invitation' });
+  }
+
+  const loginUrl = `${SITE_URL}/clients`;
+  const emailHtml = `
+    <p>Bonjour ${clientName || 'client'},</p>
+    <p>Votre espace client MIDEESSI a été créé.</p>
+    <ul>
+      <li><strong>ID client :</strong> ${clientId}</li>
+      <li><strong>Mot de passe temporaire :</strong> ${tempPassword}</li>
+      <li><strong>Numéro de contrat :</strong> ${contractNumber}</li>
+    </ul>
+    ${contractUrl ? `<p>Votre contrat est disponible ici : <a href="${contractUrl}">${contractUrl}</a></p>` : ''}
+    <p>Connectez-vous ici : <a href="${loginUrl}">${loginUrl}</a></p>
+    <p>Pour des raisons de sécurité, changez votre mot de passe après votre première connexion.</p>
+    <p>À bientôt,</p>
+    <p>L'équipe MIDEESSI</p>
+  `;
+
+  try {
+    await emailTransporter.sendMail({
+      from: EMAIL_FROM,
+      to: email,
+      subject: `Bienvenue chez MIDEESSI — accès client ${clientId}`,
+      text: `Bonjour ${clientName || 'client'},\n\nVotre espace client MIDEESSI a été créé.\nID client : ${clientId}\nMot de passe temporaire : ${tempPassword}\nNuméro de contrat : ${contractNumber}\n${contractUrl ? `Contrat : ${contractUrl}\n` : ''}\nConnectez-vous ici : ${loginUrl}\n\nMerci,\nL'équipe MIDEESSI`,
+      html: emailHtml,
+    });
+
+    return res.status(200).json({ status: 'sent' });
+  } catch (error) {
+    console.error('Email send error:', error);
+    return res.status(500).json({ error: 'Échec de l\'envoi de l\'email' });
+  }
+});
+
+// Endpoint to get next client id for a given pole (presence_digitale | dev_tech)
+app.post('/api/next-client-id', async (req, res) => {
+  try {
+    const { pole } = req.body || {};
+    if (!pole || (pole !== 'presence_digitale' && pole !== 'dev_tech')) {
+      return res.status(400).json({ error: 'Pole invalide. Use presence_digitale or dev_tech' });
+    }
+
+    // Call Postgres function next_client_id via Supabase RPC using service role for reliability
+    const { data, error } = await supabaseAdmin.rpc('next_client_id', { pole_input: pole });
+    if (error) {
+      console.error('Error generating next client id:', error);
+      return res.status(500).json({ error: 'Erreur génération ID' });
+    }
+
+    // supabaseAdmin.rpc returns plain value in data
+    return res.json({ client_id: data });
+  } catch (err) {
+    console.error('Unexpected error in /api/next-client-id:', err);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Create client server-side: generate id, hash password, insert and send invite (best-effort)
+app.post('/api/create-client', async (req, res) => {
+  try {
+    const { pole, nom_marque, nom_responsable, email, pack, numero_contrat, date_debut, duree_mois } = req.body || {};
+    
+    // Validate required fields
+    if (!pole || !email || !nom_marque) {
+      return res.status(400).json({ error: 'Payload invalide: pole, email, nom_marque requis' });
+    }
+    if (!['presence_digitale','dev_tech'].includes(pole)) {
+      return res.status(400).json({ error: 'Pole invalide' });
+    }
+
+    // Get client id atomically using admin client for reliability
+    const { data: idData, error: idError } = await supabaseAdmin.rpc('next_client_id', { pole_input: pole });
+    if (idError) {
+      console.error('next_client_id error:', idError);
+      return res.status(500).json({ error: 'Échec génération ID', details: idError.message });
+    }
+    const client_id = idData;
+    console.log(`✅ Generated client_id: ${client_id}`);
+
+    // Generate temporary password server-side
+    const tempPassword = generateTempPassword();
+
+    // Hash with SHA256
+    const hash = crypto.createHash('sha256').update(tempPassword).digest('hex');
+
+    // Optionally create Supabase Auth user when service role key available
+    let authUserId = null;
+    try {
+      if (supabaseAdmin.auth && supabaseAdmin.auth.admin && typeof supabaseAdmin.auth.admin.createUser === 'function') {
+        console.log(`Creating auth user for ${email}...`);
+        const createRes = await supabaseAdmin.auth.admin.createUser({ email, password: tempPassword, user_metadata: { client_id } });
+        if (createRes && createRes.user) {
+          authUserId = createRes.user.id;
+          console.log(`✅ Auth user created: ${authUserId}`);
+        }
+      }
+    } catch (uErr) {
+      console.warn('Supabase auth create user failed (continuing):', uErr.message || uErr);
+    }
+
+    // Prepare client data with proper defaults
+    const clientData = {
+      client_id,
+      nom_marque,
+      nom_responsable,
+      email,
+      password_hash: hash,
+      password_temp: tempPassword,
+      pack: pack || 'kpevi',
+      numero_contrat: numero_contrat || `CONTRAT-${client_id}`,
+      date_debut: date_debut || new Date().toISOString().slice(0, 10),
+      duree_mois: duree_mois || 12,
+      statut: 'actif',
+    };
+
+    // Only add auth_user_id if it's set
+    if (authUserId) {
+      clientData.auth_user_id = authUserId;
+    }
+
+    console.log(`Inserting client data:`, JSON.stringify(clientData, null, 2));
+
+    // Insert into clients table using admin client
+    const { data: insertRes, error: insertError } = await supabaseAdmin.from('clients').insert([clientData]);
+
+    if (insertError) {
+      console.error('Insert client error:', insertError);
+      return res.status(500).json({ error: 'Échec insertion client', details: insertError.message });
+    }
+
+    console.log(`✅ Client inserted successfully`);
+
+    // create client_infos row
+    const { error: infoError } = await supabaseAdmin.from('client_infos').insert([{ client_id }]);
+    if (infoError) {
+      console.warn('client_infos insert warning:', infoError.message);
+    } else {
+      console.log(`✅ client_infos record created`);
+    }
+
+    // send invite email best-effort
+    fetch(`${SITE_URL}/api/send-client-invite`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientName: nom_responsable, email, clientId: client_id, tempPassword, contractNumber: numero_contrat, contractUrl: '' })
+    }).catch(e => console.warn('Invite send failed', e));
+
+    return res.json({ client_id, tempPassword });
+  } catch (err) {
+    console.error('Unexpected /api/create-client error:', err);
+    return res.status(500).json({ error: 'Erreur serveur', details: err.message });
+  }
+});
+
+// Helper server-side generateTempPassword (12 chars)
+function generateTempPassword() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let password = '';
+  for (let i = 0; i < 12; i++) password += chars.charAt(Math.floor(Math.random() * chars.length));
+  return password;
+}
 
 // Route racine
 app.get('/', (req, res) => {

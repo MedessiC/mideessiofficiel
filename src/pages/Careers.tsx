@@ -1,4 +1,4 @@
-import { ArrowRight, Heart, BookOpen, Brain, Zap } from 'lucide-react';
+import { ArrowRight, Heart, BookOpen, Brain, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 
@@ -36,7 +36,7 @@ const Careers = () => {
                 <span>Innovation</span>
               </div>
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <Zap className="w-5 h-5 text-gold" />
+                <Sparkles className="w-5 h-5 text-gold" />
                 <span>Impact</span>
               </div>
             </div>
@@ -67,7 +67,7 @@ const Careers = () => {
                 description: 'Diversité, respect et collaboration. Tous sont bienvenues.',
               },
               {
-                icon: <Zap className="w-8 h-8" />,
+                icon: <Sparkles className="w-8 h-8" />,
                 title: 'Projets Innovants',
                 description: 'Travaillez sur des solutions qui changent l\'Afrique.',
               },

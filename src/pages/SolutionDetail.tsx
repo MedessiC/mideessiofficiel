@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, ExternalLink, CheckCircle, Mail, MessageCircle, Users, Award,
-  Zap, ArrowRight, Briefcase, Code
+  Sparkles, ArrowRight, Briefcase, Code
 } from 'lucide-react';
 import SEO from '../components/SEO';
 import { getSolutionBySlug, Solution } from '../data/solutions';
@@ -122,7 +122,7 @@ const SolutionDetail = () => {
               >
                 {tab === 'features' && (
                   <>
-                    <Zap className="w-4 h-4 inline mr-1 md:mr-2" />
+                    <Sparkles className="w-4 h-4 inline mr-1 md:mr-2" />
                     <span>Fonctionnalités</span>
                   </>
                 )}

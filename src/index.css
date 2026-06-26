@@ -1,14 +1,43 @@
+:root {
+  --brand-midnight: #191970;
+  --brand-gold: #FFD700;
+  --brand-gold-muted: #D8B800;
+  --bg-page: #f4f5fb;
+  --bg-card: #ffffff;
+  --bg-surface: #f8f9ff;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-hint: #718096;
+  --border: #e2e8f0;
+  --danger: #dc2626;
+  --success: #22c55e;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply font-sans;
+    @apply font-sans bg-[color:var(--bg-page)] text-[color:var(--text-primary)];
+    background-color: var(--bg-page);
+  }
+
+  a {
+    color: inherit;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--brand-gold);
+    outline-offset: 2px;
   }
 }
 
@@ -20,5 +49,22 @@
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  .input-float {
+    @apply relative;
+  }
+
+  .input-float input {
+    @apply w-full bg-white/90 border border-slate-200 text-slate-900 rounded-[20px] px-4 pt-6 pb-3 outline-none transition-all duration-200 focus:border-gold focus:ring-2 focus:ring-gold/20;
+  }
+
+  .input-float label {
+    @apply absolute left-4 top-3 text-slate-500 pointer-events-none transition-all duration-200;
+  }
+
+  .input-float input:focus + label,
+  .input-float input:not(:placeholder-shown) + label {
+    @apply -translate-y-3 text-xs text-gold;
   }
 }

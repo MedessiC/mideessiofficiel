@@ -26,7 +26,8 @@
     "react-helmet-async": "^2.0.5",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.3",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "nodemailer": "^6.9.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

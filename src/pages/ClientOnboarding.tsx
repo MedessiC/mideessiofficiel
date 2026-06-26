@@ -73,7 +73,7 @@ const ClientOnboarding = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-midnight via-blue-900 to-indigo-900 dark:from-black dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(255,215,0,0.18),_transparent_45%),_radial-gradient(circle_at_bottom_right,_rgba(25,25,112,0.08),_rgba(255,255,255,0.95))] flex items-center justify-center p-4">
       <SEO
         title="Bienvenue | Espace Client MIDEESSI"
         description="Découvrez votre espace client MIDEESSI"
@@ -81,11 +81,11 @@ const ClientOnboarding = () => {
 
       {/* Background elements */}
       <div className="absolute top-20 left-10 w-72 h-72 bg-gold rounded-full blur-3xl opacity-10"></div>
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-10"></div>
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-[var(--brand-gold)] rounded-full blur-3xl opacity-10"></div>
 
       <div className="relative z-10 w-full max-w-2xl">
         {/* Slide Container */}
-        <div className="bg-white/10 dark:bg-gray-900/40 backdrop-blur-xl rounded-3xl shadow-2xl p-12 border border-white/20 dark:border-gray-700/50 min-h-[500px] flex flex-col justify-between">
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-12 border border-slate-200 min-h-[500px] flex flex-col justify-between">
           {/* Content */}
           <div className="mb-8">
             {/* Icon */}
@@ -97,17 +97,17 @@ const ClientOnboarding = () => {
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl md:text-5xl font-bold text-white text-center mb-3">
+            <h1 className="text-4xl md:text-5xl font-bold text-[var(--brand-midnight)] text-center mb-3">
               {slides[currentSlide].title}
             </h1>
 
             {/* Subtitle */}
-            <p className="text-xl md:text-2xl text-gold text-center font-semibold mb-6">
+            <p className="text-xl md:text-2xl text-[var(--brand-gold)] text-center font-semibold mb-6">
               {slides[currentSlide].subtitle}
             </p>
 
             {/* Description */}
-            <p className="text-gray-300 text-center text-lg leading-relaxed">
+            <p className="text-slate-600 text-center text-lg leading-relaxed">
               {slides[currentSlide].description}
             </p>
 
@@ -153,7 +153,7 @@ const ClientOnboarding = () => {
             <button
               onClick={handlePrev}
               disabled={currentSlide === 0}
-              className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-2 px-6 py-3 rounded-lg bg-slate-100 text-[var(--brand-midnight)] hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <ChevronLeft className="w-5 h-5" />
               <span className="hidden sm:inline">Précédent</span>

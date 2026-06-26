@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, Zap, Target } from 'lucide-react';
+import { Users, Sparkles, Target } from 'lucide-react';
 
 const MIDEESSIStats = () => {
   const [stats, setStats] = useState({
@@ -97,7 +97,7 @@ const MIDEESSIStats = () => {
             color="gold"
           />
           <StatCard
-            icon={<Zap className="w-8 h-8 md:w-10 md:h-10" />}
+            icon={<Sparkles className="w-8 h-8 md:w-10 md:h-10" />}
             value={stats.solutions}
             label="Solutions lancées"
             color="green"

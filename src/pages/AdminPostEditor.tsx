@@ -4,9 +4,10 @@ import {
   Save, ArrowLeft, Eye, Image as ImageIcon, AlertCircle, Check, Copy, Trash2,
   Bold, Italic, Heading, List, Link, Code, Quote, ListOrdered, Minus,
   Table, Undo, Redo,
-  FileText, Download, Upload, Maximize2, Minimize2, Sparkles, Loader, Zap,
+  FileText, Download, Upload, Maximize2, Minimize2, Sparkles, Loader,
   Type, Keyboard, Clock
 } from 'lucide-react';
+import CloudinaryUploader from '../components/admin/CloudinaryUploader';
 import { supabase } from '../lib/supabase';
 
 const AdminPostEditor = () => {
@@ -46,7 +47,6 @@ const AdminPostEditor = () => {
   const [charCount, setCharCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
   const [slugTaken, setSlugTaken] = useState(false);
-  const [imagePreview, setImagePreview] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [editorTheme, setEditorTheme] = useState('light');
@@ -69,12 +69,6 @@ const AdminPostEditor = () => {
     setCharCount(chars);
     setReadingTime(time);
   }, [formData.content]);
-
-  useEffect(() => {
-    if (formData.image_url) {
-      setImagePreview(formData.image_url);
-    }
-  }, [formData.image_url]);
 
   const loadPost = async () => {
     try {
@@ -101,7 +95,6 @@ const AdminPostEditor = () => {
           meta_description: data.meta_description || '',
           focus_keyword: data.focus_keyword || '',
         });
-        setImagePreview(data.image_url || '');
         setLastSaved(new Date(data.updated_at || data.created_at));
       }
     } catch (error) {
@@ -689,7 +682,7 @@ const AdminPostEditor = () => {
                         className="p-1.5 md:p-2 bg-purple-100 dark:bg-purple-900/50 hover:bg-purple-200 dark:hover:bg-purple-900/70 rounded transition-all duration-200 flex items-center gap-0.5 md:gap-1 flex-shrink-0 shadow-sm hover:shadow-md active:scale-95"
                         title="Formatage automatique"
                       >
-                        <Zap className="w-3.5 h-3.5 md:w-4 md:h-4 text-purple-600 dark:text-purple-400" />
+                        <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4 text-purple-600 dark:text-purple-400" />
                         <span className="text-xs text-purple-600 dark:text-purple-400 hidden sm:inline font-semibold">Auto</span>
                       </button>
 
@@ -969,29 +962,15 @@ const AdminPostEditor = () => {
                     />
                   </div>
 
-                  {/* Image URL */}
+                  {/* Cloudinary image upload */}
                   <div>
-                    <label className="block text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1 md:mb-2">
-                      Image mise en avant
-                    </label>
-                    <input
-                      type="url"
-                      name="image_url"
+                    <CloudinaryUploader
+                      label="Image mise en avant"
                       value={formData.image_url}
-                      onChange={handleChange}
-                      className="w-full px-3 md:px-4 py-2 md:py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-gray-900 dark:text-white text-xs md:text-sm"
-                      placeholder="https://..."
+                      onChange={(value) => setFormData(prev => ({ ...prev, image_url: value }))}
+                      folder="blog"
+                      placeholder="https://res.cloudinary.com/..."
                     />
-                    {imagePreview && (
-                      <div className="mt-2 md:mt-3 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
-                        <img
-                          src={imagePreview}
-                          alt="Aperçu"
-                          className="w-full h-24 md:h-32 object-cover"
-                          onError={() => setImagePreview('')}
-                        />
-                      </div>
-                    )}
                   </div>
 
                   {/* Excerpt */}

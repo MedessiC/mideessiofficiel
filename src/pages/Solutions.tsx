@@ -1,4 +1,4 @@
-import { ArrowRight, Zap, Users, TrendingUp, Award, Filter } from 'lucide-react';
+import { ArrowRight, Target, Users, TrendingUp, Award, Filter, Compass, CheckCircle2, ShieldCheck, Layers3 } from 'lucide-react';
 import { useState } from 'react';
 import SEO from '../components/SEO';
 import SolutionCard from '../components/SolutionCard';
@@ -20,37 +20,70 @@ const Solutions = () => {
       />
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white py-16 md:py-24 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 right-5 md:top-20 md:right-10 w-40 h-40 md:w-72 md:h-72 bg-gold rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-10 -left-5 md:bottom-20 md:left-10 w-48 h-48 md:w-96 md:h-96 bg-blue-500 rounded-full blur-3xl"></div>
+      <section className="relative overflow-hidden bg-gradient-to-br from-midnight via-blue-900 to-slate-900 py-16 text-white md:py-24">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute right-5 top-10 h-40 w-40 rounded-full bg-gold blur-3xl md:right-10 md:top-20 md:h-72 md:w-72"></div>
+          <div className="absolute -bottom-10 -left-5 h-48 w-48 rounded-full bg-blue-500 blur-3xl md:bottom-20 md:left-10 md:h-96 md:w-96"></div>
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 text-center tracking-tight leading-tight">
-            Nos <span className="text-gold">Solutions</span>
-          </h1>
-          <p className="text-base md:text-lg lg:text-2xl text-center text-gray-200 max-w-3xl mx-auto font-light leading-relaxed">
-            On crée des outils qui font la différence. Des tech concrètes pour les défis réels du Bénin et de l'Afrique de l'Ouest.
-          </p>
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-gray-100 backdrop-blur-sm">
+              <Compass className="h-4 w-4 text-gold" />
+              Des solutions pensées pour l’Afrique de l’Ouest
+            </div>
+            <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight md:mb-6 md:text-5xl lg:text-6xl">
+              Nos <span className="text-gold">Solutions</span>
+            </h1>
+            <p className="mx-auto max-w-3xl text-base font-light leading-relaxed text-gray-200 md:text-lg lg:text-2xl">
+              On crée des outils concrets, utiles et durables pour répondre aux vrais besoins des entrepreneurs, des familles et des communautés.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-gray-100 backdrop-blur-sm">
+                2 solutions actives
+              </span>
+              <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-gray-100 backdrop-blur-sm">
+                Développées localement
+              </span>
+              <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-gray-100 backdrop-blur-sm">
+                Orientées impact réel
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {[
+              { icon: CheckCircle2, title: 'Simple', text: 'Des parcours rapides et accessibles.' },
+              { icon: ShieldCheck, title: 'Fiable', text: 'Des services pensés pour durer.' },
+              { icon: Layers3, title: 'Adapté', text: 'Un niveau de personnalisation utile.' }
+            ].map((item, idx) => (
+              <div key={idx} className="rounded-2xl border border-white/15 bg-white/10 p-5 text-left backdrop-blur-sm">
+                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-gold/20 text-gold">
+                  <item.icon className="h-5 w-5" />
+                </div>
+                <h3 className="mb-1 text-lg font-semibold text-white">{item.title}</h3>
+                <p className="text-sm text-gray-300">{item.text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Solutions Grid */}
-      <section className="py-20 bg-white dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-white py-20 dark:bg-gray-900">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Category Filter */}
-          <div className="mb-12 md:mb-16">
-            <div className="flex items-center gap-2 mb-6 md:mb-8">
-              <Filter className="w-5 h-5 md:w-6 md:h-6 text-gold" />
-              <h3 className="text-base md:text-lg font-bold text-midnight dark:text-white">Filtrer par catégorie</h3>
+          <div className="mb-12 rounded-3xl border border-gray-200/80 bg-gradient-to-br from-gray-50 via-white to-gray-50 p-5 shadow-sm md:mb-16 md:p-8 dark:border-gray-700 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
+            <div className="mb-6 flex items-center gap-2 md:mb-8">
+              <Filter className="h-5 w-5 text-gold md:h-6 md:w-6" />
+              <h3 className="text-base font-bold text-midnight dark:text-white md:text-lg">Filtrer par catégorie</h3>
             </div>
             <div className="flex flex-wrap gap-2 md:gap-3">
               <button
                 onClick={() => setActiveCategory(null)}
-                className={`px-3 md:px-4 py-2 md:py-2.5 rounded-full font-semibold transition-all text-sm md:text-base whitespace-nowrap ${
+                className={`rounded-full px-3 py-2 text-sm font-semibold transition-all md:px-4 md:py-2.5 md:text-base ${
                   activeCategory === null
                     ? 'bg-gold text-midnight shadow-md'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gold/30'
+                    : 'bg-white text-gray-700 shadow-sm hover:bg-gold/20 dark:bg-gray-700 dark:text-gray-300'
                 }`}
               >
                 Toutes les catégories
@@ -61,13 +94,13 @@ const Solutions = () => {
                   <button
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id)}
-                    className={`px-3 md:px-4 py-2 md:py-2.5 rounded-full font-semibold transition-all flex items-center gap-1.5 md:gap-2 text-sm md:text-base whitespace-nowrap ${
+                    className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition-all md:gap-2 md:px-4 md:py-2.5 md:text-base ${
                       activeCategory === cat.id
                         ? 'bg-gold text-midnight shadow-md'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gold/30'
+                        : 'bg-white text-gray-700 shadow-sm hover:bg-gold/20 dark:bg-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    <Icon className="w-4 h-4 md:w-5 md:h-5" />
+                    <Icon className="h-4 w-4 md:h-5 md:w-5" />
                     <span>{cat.name}</span>
                   </button>
                 );
@@ -81,20 +114,24 @@ const Solutions = () => {
             return (
               <div key={item.category.id} className="mb-12 md:mb-16">
                 {/* Category Header */}
-                <div className="mb-8 md:mb-10">
-                  <div className="flex items-center gap-3 md:gap-4 mb-2 md:mb-3">
-                    <CategoryIcon className="w-8 h-8 md:w-10 md:h-10 text-gold flex-shrink-0" />
-                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-midnight dark:text-white">
-                      {item.category.name}
-                    </h2>
+                <div className="mb-8 rounded-3xl border border-gray-200/80 bg-gradient-to-br from-white via-gray-50 to-white p-6 shadow-sm md:mb-10 md:p-8 dark:border-gray-700 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
+                  <div className="mb-3 flex items-center gap-3 md:gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/15 text-gold md:h-14 md:w-14">
+                      <CategoryIcon className="h-6 w-6 md:h-7 md:w-7" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-midnight dark:text-white md:text-3xl lg:text-4xl">
+                        {item.category.name}
+                      </h2>
+                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 md:text-base">
+                        {item.category.description}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
-                    {item.category.description}
-                  </p>
                 </div>
 
                 {/* Solutions Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mb-12 md:mb-16">
+                <div className="mb-12 grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-2 md:mb-16">
                   {item.solutions.map((solution) => (
                     <SolutionCard key={solution.id} solution={solution} />
                   ))}
@@ -102,7 +139,7 @@ const Solutions = () => {
 
                 {/* Divider */}
                 {filteredCategories.length > 1 && item.category.id !== filteredCategories[filteredCategories.length - 1].category.id && (
-                  <div className="h-px bg-gray-200 dark:bg-gray-700 my-8 md:my-12"></div>
+                  <div className="my-8 h-px bg-gray-200 dark:bg-gray-700 md:my-12"></div>
                 )}
               </div>
             );
@@ -110,8 +147,8 @@ const Solutions = () => {
 
           {/* Empty State */}
           {filteredCategories.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-600 dark:text-gray-400 text-lg">
+            <div className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 py-12 text-center dark:border-gray-700 dark:bg-gray-800/60">
+              <p className="text-lg text-gray-600 dark:text-gray-400">
                 Aucune solution dans cette catégorie pour le moment.
               </p>
             </div>
@@ -120,16 +157,16 @@ const Solutions = () => {
       </section>
 
       {/* Categories Overview Section */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-midnight dark:text-white mb-4">
+      <section className="bg-gray-50 py-20 dark:bg-gray-800">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <h2 className="mb-4 text-4xl font-bold text-midnight dark:text-white">
               Nos Catégories de Solutions
             </h2>
-            <div className="w-20 h-1 bg-gold mx-auto rounded-full"></div>
+            <div className="mx-auto h-1 w-20 rounded-full bg-gold"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {categories.map((cat) => {
               const count = solutionsByCategories.find(item => item.category.id === cat.id)?.solutions.length || 0;
               if (count === 0) return null;
@@ -138,25 +175,25 @@ const Solutions = () => {
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
-                  className="group bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 text-left border-l-4 border-transparent hover:border-gold"
+                  className="group rounded-3xl border border-gray-200/80 bg-white p-6 text-left shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:border-gray-700 dark:bg-gray-900 md:p-8"
                 >
-                  <div className="mb-4">
+                  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gold/15 text-gold transition-all group-hover:scale-105">
                     {(() => {
                       const Icon = getIcon(cat.iconName);
-                      return <Icon className="w-10 h-10 md:w-12 md:h-12 text-gold" />;
+                      return <Icon className="h-7 w-7 md:h-8 md:w-8" />;
                     })()}
                   </div>
-                  <h3 className="text-lg md:text-xl font-bold text-midnight dark:text-white group-hover:text-gold transition-colors mb-2">
+                  <h3 className="mb-2 text-lg font-bold text-midnight transition-colors group-hover:text-gold dark:text-white md:text-xl">
                     {cat.name}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
                     {cat.description}
                   </p>
                   <div className="flex items-center justify-between">
-                    <span className="inline-block px-3 py-1 bg-gold/20 text-gold rounded-full text-xs md:text-sm font-semibold">
+                    <span className="inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-gold md:text-sm">
                       {count} solution{count > 1 ? 's' : ''}
                     </span>
-                    <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-gold group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="h-4 w-4 text-gold transition-transform group-hover:translate-x-1 md:h-5 md:w-5" />
                   </div>
                 </button>
               );
@@ -164,19 +201,19 @@ const Solutions = () => {
           </div>
         </div>
       </section>
-      <section className="py-12 md:py-20 bg-gray-50 dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-midnight dark:text-white mb-4">
+      <section className="bg-gray-50 py-12 dark:bg-gray-800 md:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center md:mb-16">
+            <h2 className="mb-4 text-3xl font-bold text-midnight dark:text-white md:text-4xl lg:text-5xl">
               Pourquoi Choisir Nos Solutions ?
             </h2>
-            <div className="w-16 md:w-20 h-1 bg-gold mx-auto rounded-full"></div>
+            <div className="mx-auto h-1 w-16 rounded-full bg-gold md:w-20"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 md:gap-8">
             {[
               {
-                icon: Zap,
+                icon: Target,
                 title: 'Vrai Impact',
                 description: 'Pas juste de la théorie. Ça marche. Les chiffres parlent d\'eux-mêmes.'
               },
@@ -198,15 +235,15 @@ const Solutions = () => {
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8 shadow-md hover:shadow-lg transition-all duration-300 group"
+                className="group rounded-3xl border border-gray-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:border-gray-700 dark:bg-gray-900 md:p-8"
               >
-                <div className="w-12 h-12 md:w-14 md:h-14 bg-gold/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-gold/30 transition-colors">
-                  <item.icon className="w-6 h-6 md:w-7 md:h-7 text-gold" />
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/20 transition-colors group-hover:bg-gold/30 md:h-14 md:w-14">
+                  <item.icon className="h-6 w-6 text-gold md:h-7 md:w-7" />
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-midnight dark:text-white mb-3">
+                <h3 className="mb-3 text-lg font-bold text-midnight dark:text-white md:text-xl">
                   {item.title}
                 </h3>
-                <p className="text-sm md:text-base text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300 md:text-base">
                   {item.description}
                 </p>
               </div>

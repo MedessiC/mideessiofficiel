@@ -1,11 +1,12 @@
 import {
-  ArrowRight, TrendingUp, Shield, Zap, Users, Award,
+  ArrowRight, TrendingUp, Shield, Sparkles, Users, Award,
   CheckCircle, Building2, Heart, Lightbulb, HandHeart, Globe, ChevronLeft, ChevronRight, ChevronUp,
-  BookOpen, Download, Star, ExternalLink
+  BookOpen, Download, BadgeCheck, ExternalLink
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import PopupDisplay from '../components/PopupDisplay';
+import NewsletterSignup from '../components/NewsletterSignup';
 
 interface HeroSlide {
   id: string;
@@ -461,7 +462,7 @@ const NewHome = () => {
                     <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
                       <div className="bg-gray-50 dark:bg-gray-800 p-2 sm:p-3 md:p-4 rounded-lg">
                         <div className="flex items-center gap-1 mb-1 justify-center sm:justify-start">
-                          <Star className="w-3 h-3 sm:w-4 sm:h-4 text-[#ffd700] fill-[#ffd700]" />
+                          <BadgeCheck className="w-3 h-3 sm:w-4 sm:h-4 text-[#ffd700]" />
                           <span className="font-bold text-xs sm:text-sm">{weeklyPDF.rating || 0}</span>
                         </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400">Note</p>
@@ -898,58 +899,84 @@ const NewHome = () => {
         </div>
       </section>
 
-      {/* MIDEESSI Stats Section */}
-      {/* <MIDEESSIStats /> */}
-
       {/* Newsletter Section */}
-      {/* <NewsletterSignup variant="hero" /> */}
+      <NewsletterSignup variant="hero" />
 
-      {/* CTA Section */}
-      <section className="py-16 sm:py-20 bg-[#191970] dark:bg-gray-900 text-white transition-colors duration-300 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-20 w-32 h-32 border-4 border-[#ffd700] rounded-full animate-pulse hidden sm:block"></div>
-          <div className="absolute bottom-20 right-20 w-40 h-40 border-4 border-[#ffd700] diamond-shape animate-pulse hidden sm:block" style={{ animationDelay: '1s' }}></div>
+      {/* Animated MIDEESSI Impact Section */}
+      <section className="relative py-24 md:py-28 bg-gradient-to-br from-[#08122d] via-[#101f49] to-[#0e255d] text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-15">
+          <div className="absolute top-10 left-1/4 w-40 h-40 rounded-full bg-[#ffd700]/30 blur-3xl" />
+          <div className="absolute bottom-12 right-1/4 w-56 h-56 rounded-full bg-[#00d1ff]/20 blur-3xl" />
+          <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-[#ffffff]/5 to-transparent" />
         </div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.9fr] gap-12 items-center">
             <div>
-              <Globe className="w-12 h-12 sm:w-16 sm:h-16 text-[#ffd700] mb-4 sm:mb-6" />
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">
-                Commence maintenant
+              <p className="text-xs uppercase tracking-[0.4em] text-[#ffd700] mb-4 font-semibold">MIDEESSI en action</p>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
+                Une plateforme animée qui met en valeur ce qui compte vraiment.
               </h2>
-              <p className="text-base sm:text-lg md:text-xl text-gray-200 mb-6 sm:mb-8 leading-relaxed">
-                PDFs, articles, apprentissage. Tout pour bâtir l'indépendance tech du Bénin.
+              <p className="mt-6 max-w-2xl text-base sm:text-lg text-slate-300 leading-8">
+                Contenus exclusifs, apprentissage ciblé et communauté connectée pour soutenir l'indépendance technologique du Bénin.
               </p>
+
+              <div className="mt-10 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl backdrop-blur-sm">
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#00d1ff] font-semibold mb-3">Contenu</p>
+                  <p className="text-sm leading-6 text-slate-200">Articles, PDFs et guides MIDEESSI pour monter en compétences rapidement.</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl backdrop-blur-sm">
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#ffd700] font-semibold mb-3">Communauté</p>
+                  <p className="text-sm leading-6 text-slate-200">Un réseau de talents béninois, des updates produits et des opportunités de collaboration.</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl backdrop-blur-sm">
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#7cffb2] font-semibold mb-3">Newsletter</p>
+                  <p className="text-sm leading-6 text-slate-200">Des infos régulièrement envoyées à ceux qui veulent rester à la pointe.</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl backdrop-blur-sm">
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#ff6b6b] font-semibold mb-3">Objectifs</p>
+                  <p className="text-sm leading-6 text-slate-200">Plus d'indépendance, plus d'impact, plus de solutions locales en action.</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm p-6 sm:p-8 rounded-lg border-2 border-[#ffd700] shadow-2xl transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#ffd700]/10 rounded-full -translate-y-16 translate-x-16"></div>
-              <Zap className="w-10 h-10 sm:w-12 sm:h-12 text-[#ffd700] mb-3 sm:mb-4 relative z-10" />
-              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 relative z-10">Go Learn</h3>
-              <p className="text-xs sm:text-sm md:text-base text-gray-200 mb-6 relative z-10 leading-relaxed">
-                Accès à notre platform d'apprentissage. Des PDFs disponibles maintenant.
-              </p>
-              <a
-                href="/learn"
-                className="inline-flex items-center justify-center w-full px-6 sm:px-8 py-3 sm:py-4 bg-[#ffd700] hover:bg-[#ffed4e] text-[#191970] font-bold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg relative z-10 focus:outline-none focus:ring-4 focus:ring-[#ffd700]/50 text-sm sm:text-base"
-              >
-                MIDEESSI Learn
-                <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
-              </a>
+
+            <div className="relative mx-auto flex items-center justify-center">
+              <div className="relative w-[300px] h-[300px] sm:w-[340px] sm:h-[340px]">
+                <div className="absolute inset-0 rounded-full border border-white/10" />
+                <div className="absolute inset-10 rounded-full bg-white/5 blur-2xl animate-pulse-slow" />
+                <div className="absolute inset-0 rounded-full border border-[#ffd700]/20 animate-spin-slow" />
+
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#ffd700]/15 border border-[#ffd700]/30 shadow-lg">
+                    <Sparkles className="w-6 h-6 text-[#ffd700]" />
+                  </div>
+                </div>
+                <div className="absolute top-1/2 left-0 -translate-y-1/2">
+                  <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#00d1ff]/15 border border-[#00d1ff]/30 shadow-lg animate-spin-reverse-slow">
+                    <Globe className="w-5 h-5 text-[#00d1ff]" />
+                  </div>
+                </div>
+                <div className="absolute bottom-4 right-10">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#7cffb2]/15 border border-[#7cffb2]/30 shadow-lg animate-bounce-slow">
+                    <Users className="w-4 h-4 text-[#7cffb2]" />
+                  </div>
+                </div>
+                <div className="absolute top-1/2 right-0 -translate-y-1/2">
+                  <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#ff6b6b]/15 border border-[#ff6b6b]/30 shadow-lg animate-spin-slow">
+                    <BookOpen className="w-5 h-5 text-[#ff6b6b]" />
+                  </div>
+                </div>
+
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="flex flex-col items-center justify-center rounded-full bg-white/10 border border-white/10 w-32 h-32 backdrop-blur-sm shadow-2xl">
+                    <p className="text-sm uppercase tracking-[0.35em] text-slate-300">MIDEESSI</p>
+                    <p className="mt-2 text-2xl font-bold text-white">Impact</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Quote Section */}
-      <section className="py-12 sm:py-16 bg-gradient-to-r from-[#191970] via-[#ffd700] to-[#191970] text-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <p className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-[#191970]">
-            « On crée. On innove. On est indépendants. »
-          </p>
-          <p className="text-sm sm:text-base md:text-lg text-[#191970] font-semibold">
-            MIDEESSI - Mouvement d'indépendance technologique du Bénin, depuis 2025
-          </p>
         </div>
       </section>
 
@@ -994,6 +1021,43 @@ const NewHome = () => {
 
         .diamond-shape {
           transform: rotate(45deg);
+        }
+
+        .animate-pulse-slow {
+          animation: pulse 4s ease-in-out infinite;
+        }
+
+        .animate-spin-slow {
+          animation: spin 12s linear infinite;
+        }
+
+        .animate-spin-reverse-slow {
+          animation: spin-reverse 12s linear infinite;
+        }
+
+        .animate-bounce-slow {
+          animation: bounce 3.5s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes spin-reverse {
+          to {
+            transform: rotate(-360deg);
+          }
+        }
+
+        @keyframes bounce {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-8px);
+          }
         }
 
         @media (max-width: 768px) {

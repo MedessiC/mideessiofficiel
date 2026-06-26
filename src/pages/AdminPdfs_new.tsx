@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BookOpen, Plus, Edit2, Trash2, Save, X, Eye, Star, Users, Loader, LogOut, TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle
+  BookOpen, Plus, Edit2, Trash2, Save, X, Eye, Palette, Sparkles, Users, Loader, LogOut, TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -65,7 +65,7 @@ const AdminDashboard = () => {
     { id: 'mobile', name: 'Mobile', icon: <Download className="w-4 h-4" /> },
     { id: 'cybersec', name: 'Cybersec', icon: <Award className="w-4 h-4" /> },
     { id: 'webdev', name: 'Web Dev', icon: <TrendingUp className="w-4 h-4" /> },
-    { id: 'design', name: 'Design', icon: <Star className="w-4 h-4" /> },
+    { id: 'design', name: 'Design', icon: <Palette className="w-4 h-4" /> },
     { id: 'business', name: 'Business', icon: <Users className="w-4 h-4" /> },
     { id: 'data', name: 'Data & IA', icon: <Clock className="w-4 h-4" /> },
   ];
@@ -348,7 +348,7 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
             { label: 'Total', value: books.length, icon: BookOpen, color: 'blue' },
-            { label: 'Nouveaux', value: books.filter(b => b.is_new).length, icon: Star, color: 'yellow' },
+            { label: 'Nouveaux', value: books.filter(b => b.is_new).length, icon: Sparkles, color: 'yellow' },
             { label: 'Best', value: books.filter(b => b.is_bestseller).length, icon: Award, color: 'red' },
             { label: 'Étudiants', value: books.reduce((sum, b) => sum + b.students, 0), icon: Users, color: 'green' },
           ].map((stat) => {
@@ -428,7 +428,7 @@ const AdminDashboard = () => {
                     <div className="grid grid-cols-3 gap-2 py-3 border-t border-b border-gray-200 dark:border-gray-700 mb-3">
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                          <Sparkles className="w-3 h-3 text-yellow-400" />
                           <span className="font-bold text-xs">{book.rating}</span>
                         </div>
                       </div>

@@ -1,14 +1,14 @@
 import BlogCard from '../components/BlogCard';
 import SEO from '../components/SEO';
 import { blogPosts } from '../data/blogPosts';
-import { Rss, BookOpen, Lightbulb, Zap, Rocket, ArrowRight, Mail } from 'lucide-react';
+import { Rss, BookOpen, Lightbulb, Cpu, Rocket, ArrowRight, Mail } from 'lucide-react';
 import { getIcon } from '../utils/iconMapper';
 import PopupDisplay from '../components/PopupDisplay';
 
 const Blog = () => {
   const topics = [
     { name: 'Intelligence Artificielle', icon: 'Lightbulb' },
-    { name: 'Automatisation', icon: 'Zap' },
+    { name: 'Automatisation', icon: 'Cpu' },
     { name: 'Innovation', icon: 'Rocket' },
     { name: 'Développement', icon: 'Code' },
   ];

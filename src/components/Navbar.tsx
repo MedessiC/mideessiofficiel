@@ -269,70 +269,79 @@ const Navbar = () => {
               </button>
 
               {/* Auth Section */}
-              {user ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="p-2 rounded-lg bg-gold/10 hover:bg-gold/20 dark:bg-gold/20 dark:hover:bg-gold/30 transition-all duration-300 hover:scale-110 active:scale-95"
-                    aria-label="User menu"
-                    title={user.email}
-                  >
-                    <UserCircle className="w-5 h-5 text-gold" />
-                  </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="p-2 rounded-lg bg-gold/10 hover:bg-gold/20 dark:bg-gold/20 dark:hover:bg-gold/30 transition-all duration-300 hover:scale-110 active:scale-95"
+                  aria-label="User menu / Connexion"
+                  title={user ? user.email : "Connexion / S'inscrire"}
+                >
+                  <UserCircle className="w-5 h-5 text-gold" />
+                </button>
 
-                  {/* User Menu Dropdown */}
-                  {showUserMenu && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-midnight rounded-xl shadow-2xl border-2 border-gold/30 z-50 overflow-hidden">
-                      <div className="px-4 py-4 bg-gradient-to-r from-gold/10 to-yellow-100/10 dark:from-gold/20 dark:to-blue-900/20 border-b-2 border-gold/20">
-                        <p className="text-sm font-semibold text-midnight dark:text-gold truncate">
-                          {user.email}
-                        </p>
-                      </div>
-                      <Link
-                        to={`/profile/${user.user_metadata?.username || user.email?.split('@')[0]}`}
-                        className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-2 text-sm font-medium"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        <UserCircle size={18} className="text-gold" />
-                        Mon Profil
-                      </Link>
-                      <Link
-                        to="/my-library"
-                        className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-2 text-sm font-medium border-b border-gold/10"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        <BookOpen size={18} className="text-gold" />
-                        Ma Bibliothèque
-                      </Link>
-                      <button
-                        onClick={async () => {
-                          await signOut();
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full text-left px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2 text-sm font-medium"
-                      >
-                        <LogOut size={18} />
-                        Déconnexion
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Link
-                    to="/login"
-                    className="hidden px-3 py-2 rounded-lg text-midnight dark:text-white border-2 border-gold/40 hover:border-gold hover:bg-gold/5 transition-all text-xs md:text-sm font-bold"
-                  >
-                    Connexion
-                  </Link>
-                  <Link
-                    to="/signup"
-                    className="hidden px-3 py-2 rounded-lg bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight transition-all text-xs md:text-sm font-bold shadow-lg hover:shadow-gold/50"
-                  >
-                    S'inscrire
-                  </Link>
-                </div>
-              )}
+                {/* User Menu Dropdown */}
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-midnight rounded-xl shadow-2xl border-2 border-gold/30 z-50 overflow-hidden">
+                    {user ? (
+                      <>
+                        <div className="px-4 py-4 bg-gradient-to-r from-gold/10 to-yellow-100/10 dark:from-gold/20 dark:to-blue-900/20 border-b-2 border-gold/20">
+                          <p className="text-sm font-semibold text-midnight dark:text-gold truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                        <Link
+                          to={`/profile/${user.user_metadata?.username || user.email?.split('@')[0]}`}
+                          className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-2 text-sm font-medium"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <UserCircle size={18} className="text-gold" />
+                          Mon Profil
+                        </Link>
+                        <Link
+                          to="/my-library"
+                          className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-2 text-sm font-medium border-b border-gold/10"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <BookOpen size={18} className="text-gold" />
+                          Ma Bibliothèque
+                        </Link>
+                        <button
+                          onClick={async () => {
+                            await signOut();
+                            setShowUserMenu(false);
+                          }}
+                          className="w-full text-left px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2 text-sm font-medium"
+                        >
+                          <LogOut size={18} />
+                          Déconnexion
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="px-4 py-3 bg-gradient-to-r from-gold/10 to-yellow-100/10 dark:from-gold/20 dark:to-blue-900/20 border-b-2 border-gold/20">
+                          <p className="text-xs font-bold text-gold uppercase tracking-widest">Connexion</p>
+                        </div>
+                        <Link
+                          to="/login"
+                          className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-2 text-sm font-medium border-b border-gold/10"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <UserCircle size={18} className="text-gold" />
+                          Se connecter
+                        </Link>
+                        <Link
+                          to="/signup"
+                          className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-2 text-sm font-medium"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <UserCircle size={18} className="text-gold" />
+                          S'inscrire
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

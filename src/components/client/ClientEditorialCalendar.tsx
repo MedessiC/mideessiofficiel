@@ -18,7 +18,7 @@ const ClientEditorialCalendar = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   useEffect(() => {
-    fetchEditorialCalendar();
+    if (user?.client_id) fetchEditorialCalendar();
   }, [user?.client_id, currentMonth]);
 
   const fetchEditorialCalendar = async () => {
@@ -32,8 +32,7 @@ const ClientEditorialCalendar = () => {
         .order('date_publication', { ascending: true });
 
       if (data) {
-        // Filter for current month
-        const filtered = data.filter(item => {
+        const filtered = (data as EditorialItem[]).filter((item) => {
           const itemDate = new Date(item.date_publication);
           return (
             itemDate.getMonth() === currentMonth.getMonth() &&
@@ -50,123 +49,101 @@ const ClientEditorialCalendar = () => {
   };
 
   const monthName = currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-  const platformColors = {
-    facebook: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-    tiktok: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  const platformBadges = {
+    facebook: 'bg-[var(--brand-gold)]/15 text-[var(--brand-midnight)]',
+    tiktok: 'bg-[var(--brand-midnight)]/10 text-[var(--brand-gold)]',
   };
-
-  const statusColors = {
-    planifie: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-    publie: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-    en_attente_validation: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+  const statusBadges = {
+    planifie: 'bg-yellow-100 text-yellow-800',
+    publie: 'bg-green-100 text-green-800',
+    en_attente_validation: 'bg-orange-100 text-orange-800',
   };
 
   if (loading) {
-    return <div className="animate-pulse space-y-4">
-      <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-    </div>;
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="h-24 rounded-3xl bg-slate-200"></div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="h-48 rounded-3xl bg-slate-200" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-8">
-      {/* Month Selector */}
-      <div className="flex items-center justify-center gap-4">
-        <button
-          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-          className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-midnight dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
-        >
-          ← Mois précédent
-        </button>
-        <div className="text-xl font-bold text-midnight dark:text-white min-w-[200px] text-center">
-          {monthName}
+      <section className="rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-soft sm:p-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.24em] text-[var(--brand-gold)]/80">Calendrier éditorial</p>
+            <h1 className="mt-2 text-3xl font-semibold text-[var(--brand-midnight)]">Contenus planifiés</h1>
+            <p className="mt-3 max-w-2xl text-sm text-slate-600">
+              Suivez vos publications sociales et vos statuts de validation chaque mois.
+            </p>
+          </div>
+          <div className="rounded-3xl bg-slate-50 p-4 text-center">
+            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Mois</p>
+            <p className="mt-3 text-xl font-semibold text-[var(--brand-midnight)]">{monthName}</p>
+          </div>
         </div>
-        <button
-          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-          disabled={new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1) > new Date()}
-          className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-midnight dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Mois suivant →
-        </button>
-      </div>
+      </section>
 
-      {/* Calendar Table */}
+      <section className="rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-soft">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 overflow-x-auto pb-2">
+            <button
+              onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+              className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[var(--brand-midnight)] transition hover:border-[var(--brand-gold)]/70 hover:bg-[var(--brand-gold)]/10 sm:px-4 sm:py-2 sm:text-sm"
+            >
+              ← Précédent
+            </button>
+            <button
+              onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+              disabled={new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1) > new Date()}
+              className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[var(--brand-midnight)] transition hover:border-[var(--brand-gold)]/70 hover:bg-[var(--brand-gold)]/10 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:py-2 sm:text-sm"
+            >
+              Suivant →
+            </button>
+          </div>
+          <div className="text-sm text-slate-500">
+            Mise à jour en temps réel pour votre contenu du mois.
+          </div>
+        </div>
+      </section>
+
       {items.length === 0 ? (
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-12 text-center border border-gray-200 dark:border-gray-700">
-          <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Aucun contenu planifié pour {monthName}.
-          </p>
-        </div>
+        <section className="rounded-[32px] border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
+          <Calendar className="mx-auto h-12 w-12 text-slate-400" />
+          <h2 className="mt-4 text-2xl font-semibold text-[var(--brand-midnight)]">Aucun contenu planifié</h2>
+          <p className="mt-3 text-sm text-slate-600">Votre équipe prépare déjà la prochaine sélection de publications.</p>
+        </section>
       ) : (
-        <div className="overflow-x-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                  <th className="px-6 py-4 text-left text-sm font-bold text-midnight dark:text-white">Date</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-midnight dark:text-white">Plateforme</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-midnight dark:text-white">Thème</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-midnight dark:text-white">Statut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map(item => (
-                  <tr key={item.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-semibold text-midnight dark:text-white">
-                        {new Date(item.date_publication).toLocaleDateString('fr-FR', {
-                          weekday: 'short',
-                          day: 'numeric',
-                          month: 'short',
-                        })}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${platformColors[item.plateforme]}`}>
-                        {item.plateforme === 'facebook' ? (
-                          <Facebook className="w-4 h-4" />
-                        ) : (
-                          <Music className="w-4 h-4" />
-                        )}
-                        {item.plateforme.charAt(0).toUpperCase() + item.plateforme.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 max-w-xs">
-                      <p className="text-midnight dark:text-white truncate">{item.theme}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusColors[item.statut]}`}>
-                        {item.statut === 'planifie' && 'Planifié'}
-                        {item.statut === 'publie' && 'Publié'}
-                        {item.statut === 'en_attente_validation' && 'En attente'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <section className="space-y-6">
+          {items.map((item) => (
+            <article key={item.id} className="rounded-[28px] border border-slate-200/80 bg-slate-50 p-5 shadow-sm sm:p-6">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">{new Date(item.date_publication).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
+                  <h3 className="mt-2 text-xl font-semibold text-[var(--brand-midnight)]">{item.theme}</h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <span className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold ${platformBadges[item.plateforme]}`}>
+                    {item.plateforme === 'facebook' ? <Facebook className="w-4 h-4" /> : <Music className="w-4 h-4" />}
+                    {item.plateforme.charAt(0).toUpperCase() + item.plateforme.slice(1)}
+                  </span>
+                  <span className={`inline-flex rounded-full px-3 py-2 text-xs font-semibold ${statusBadges[item.statut]}`}>
+                    {item.statut === 'planifie' && 'Planifié'}
+                    {item.statut === 'publie' && 'Publié'}
+                    {item.statut === 'en_attente_validation' && 'En attente'}
+                  </span>
+                </div>
+              </div>
+            </article>
+          ))}
+        </section>
       )}
-
-      {/* Legend */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-        <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-3">Légende des statuts</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="inline-block px-2 py-0.5 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded text-xs font-semibold">Planifié</span>
-            <span className="text-gray-600 dark:text-gray-400">Contenu à venir</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block px-2 py-0.5 bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 rounded text-xs font-semibold">En attente</span>
-            <span className="text-gray-600 dark:text-gray-400">Validation en cours</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block px-2 py-0.5 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 rounded text-xs font-semibold">Publié</span>
-            <span className="text-gray-600 dark:text-gray-400">En ligne</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

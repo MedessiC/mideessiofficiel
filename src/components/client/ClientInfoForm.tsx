@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useClientAuth } from '../../contexts/ClientContext';
+import { FormEvent, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, AlertCircle, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react';
+import { useClientAuth } from '../../contexts/ClientContext';
+import { Save, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { encryptCredential } from '../../utils/encryptionUtils';
 
 interface ClientInfo {
@@ -41,18 +41,13 @@ const ClientInfoForm = () => {
     contact_urgence_nom: '',
     contact_urgence_tel: '',
   });
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [showPasswords, setShowPasswords] = useState({
-    facebook: false,
-    tiktok: false,
-  });
+  const [showPasswords, setShowPasswords] = useState({ facebook: false, tiktok: false });
 
   useEffect(() => {
-    fetchClientInfo();
+    if (user?.client_id) fetchClientInfo();
   }, [user?.client_id]);
 
   const fetchClientInfo = async () => {
@@ -82,7 +77,6 @@ const ClientInfoForm = () => {
           contact_urgence_nom: data.contact_urgence_nom || '',
           contact_urgence_tel: data.contact_urgence_tel || '',
         });
-        setIsSubmitted(!!data.soumis_le);
       }
     } catch (error) {
       console.error('Error fetching client info:', error);
@@ -91,31 +85,26 @@ const ClientInfoForm = () => {
     }
   };
 
-  const handleChange = (field: keyof ClientInfo, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleChange = (field: keyof ClientInfo, value: string | string[]) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const toggleTonSouhaite = (ton: string) => {
+  const toggleTon = (ton: string) => {
     setFormData(prev => ({
       ...prev,
       ton_souhaite: prev.ton_souhaite.includes(ton)
-        ? prev.ton_souhaite.filter(t => t !== ton)
+        ? prev.ton_souhaite.filter(item => item !== ton)
         : [...prev.ton_souhaite, ton],
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!user?.client_id) return;
     setSaving(true);
     setMessage(null);
 
     try {
-      if (!user?.client_id) return;
-
-      // Encrypt sensitive data
       const encryptedFbPass = formData.acces_facebook_password
         ? encryptCredential(formData.acces_facebook_password)
         : null;
@@ -139,7 +128,6 @@ const ClientInfoForm = () => {
         promotions_evenements: formData.promotions_evenements,
         contact_urgence_nom: formData.contact_urgence_nom,
         contact_urgence_tel: formData.contact_urgence_tel,
-        soumis_le: new Date().toISOString(),
         modifie_le: new Date().toISOString(),
       };
 
@@ -148,11 +136,9 @@ const ClientInfoForm = () => {
         .upsert(dataToSave, { onConflict: 'client_id' });
 
       if (error) throw error;
-
-      setMessage({ type: 'success', text: 'Vos informations ont été sauvegardées avec succès!' });
-      setIsSubmitted(true);
-    } catch (error) {
-      console.error('Error saving client info:', error);
+      setMessage({ type: 'success', text: 'Vos informations ont été sauvegardées avec succès.' });
+    } catch (err) {
+      console.error('Error saving client info:', err);
       setMessage({ type: 'error', text: 'Erreur lors de la sauvegarde. Veuillez réessayer.' });
     } finally {
       setSaving(false);
@@ -160,343 +146,230 @@ const ClientInfoForm = () => {
   };
 
   if (loading) {
-    return <div className="animate-pulse space-y-4">
-      <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-    </div>;
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="h-32 bg-slate-200 rounded-3xl"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Info Banner */}
-      {isSubmitted && (
-        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+    <div className="space-y-8">
+      <div className="rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-soft sm:p-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="font-semibold text-green-800 dark:text-green-300">Formulaire soumis</p>
-            <p className="text-sm text-green-700 dark:text-green-200">
-              Vos informations ont été enregistrées. Vous pouvez les modifier à tout moment en complétant le formulaire ci-dessous.
+            <p className="text-sm uppercase tracking-[0.24em] text-[var(--brand-gold)]/80">Profil marque</p>
+            <h1 className="mt-2 text-2xl font-semibold text-[var(--brand-midnight)] sm:text-3xl">Informations clients</h1>
+            <p className="mt-3 max-w-2xl text-sm text-slate-600">
+              Complétez les données de votre marque pour que l'équipe MIDEESSI puisse piloter votre stratégie premium.
             </p>
+          </div>
+          <div className="rounded-3xl bg-slate-50 p-4 text-center">
+            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Identifiant client</p>
+            <p className="mt-3 text-xl font-semibold text-[var(--brand-midnight)]">{user?.client_id || '—'}</p>
+          </div>
+        </div>
+      </div>
+
+      {message && (
+        <div className={`rounded-[28px] border px-5 py-4 ${message.type === 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'}`}>
+          <div className="flex items-center gap-3">
+            {message.type === 'success' ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
+            <p className="text-sm font-medium">{message.text}</p>
           </div>
         </div>
       )}
 
-      {/* Messages */}
-      {message && (
-        <div className={`mb-6 p-4 rounded-lg flex items-start gap-3 ${
-          message.type === 'success'
-            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
-        }`}>
-          {message.type === 'success' ? (
-            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          )}
-          <p className={message.type === 'success' ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'}>
-            {message.text}
-          </p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Section 1: Business Info */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 border border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-midnight dark:text-white mb-6">À propos de votre activité</h2>
-
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                Description de l'activité
-              </label>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-soft">
+            <h2 className="text-xl font-semibold text-[var(--brand-midnight)] mb-5">Marque & positionnement</h2>
+            <div className="space-y-5">
+              <label className="block text-sm font-semibold text-slate-900">Description de l'activité</label>
               <textarea
                 value={formData.description_activite}
                 onChange={(e) => handleChange('description_activite', e.target.value)}
-                disabled={isSubmitted}
-                placeholder="Décrivez votre activité, votre mission..."
-                className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed resize-none"
-                rows={4}
+                className="w-full min-h-[110px] rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                placeholder="Présentez votre activité en quelques lignes"
               />
-            </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                Produits/services phares
-              </label>
+              <label className="block text-sm font-semibold text-slate-900">Produits/services phares</label>
               <textarea
                 value={formData.produits_phares}
                 onChange={(e) => handleChange('produits_phares', e.target.value)}
-                disabled={isSubmitted}
-                placeholder="Listez vos produits ou services principaux..."
-                className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed resize-none"
-                rows={3}
+                className="w-full min-h-[90px] rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                placeholder="Listez vos produits ou services clés"
               />
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                  Couleurs de la marque
-                </label>
+                <label className="text-sm font-semibold text-slate-900">Couleurs de la marque</label>
                 <input
-                  type="text"
                   value={formData.couleurs_marque}
                   onChange={(e) => handleChange('couleurs_marque', e.target.value)}
-                  disabled={isSubmitted}
-                  placeholder="Ex: Or #FFD700, Noir #191970"
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                  Lien du logo
-                </label>
-                <input
-                  type="url"
-                  value={formData.lien_logo}
-                  onChange={(e) => handleChange('lien_logo', e.target.value)}
-                  disabled={isSubmitted}
-                  placeholder="https://..."
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                  placeholder="Par exemple : noir, or, ivoire"
                 />
               </div>
             </div>
+          </div>
 
-            {/* Ton souhaité */}
-            <div>
-              <label className="block text-sm font-semibold text-midnight dark:text-white mb-3">
-                Ton souhaité pour votre contenu
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {tonOptions.map(ton => (
-                  <label
-                    key={ton}
-                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                      formData.ton_souhaite.includes(ton)
-                        ? 'border-gold bg-gold/10 dark:bg-gold/5'
-                        : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/30'
-                    } ${isSubmitted ? 'opacity-50 cursor-not-allowed' : ''}`}
+          <div className="rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-soft">
+            <h2 className="text-xl font-semibold text-[var(--brand-midnight)] mb-5">Accès & réseaux</h2>
+            <div className="space-y-5">
+              <div>
+                <label className="text-sm font-semibold text-slate-900">Site web ou logo</label>
+                <input
+                  value={formData.lien_logo}
+                  onChange={(e) => handleChange('lien_logo', e.target.value)}
+                  className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                  placeholder="URL du logo ou du site"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-sm font-semibold text-slate-900">Facebook</label>
+                  <input
+                    value={formData.lien_facebook}
+                    onChange={(e) => handleChange('lien_facebook', e.target.value)}
+                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                    placeholder="Lien page Facebook"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-900">TikTok</label>
+                  <input
+                    value={formData.lien_tiktok}
+                    onChange={(e) => handleChange('lien_tiktok', e.target.value)}
+                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                    placeholder="Lien page TikTok"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-slate-900">Identifiant Facebook</label>
+                  <input
+                    value={formData.acces_facebook_login}
+                    onChange={(e) => handleChange('acces_facebook_login', e.target.value)}
+                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                    placeholder="Login Facebook"
+                  />
+                </div>
+                <div className="relative">
+                  <label className="text-sm font-semibold text-slate-900">Mot de passe Facebook</label>
+                  <input
+                    type={showPasswords.facebook ? 'text' : 'password'}
+                    value={formData.acces_facebook_password}
+                    onChange={(e) => handleChange('acces_facebook_password', e.target.value)}
+                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                    placeholder="Mot de passe"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, facebook: !prev.facebook }))}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"
                   >
-                    <input
-                      type="checkbox"
-                      checked={formData.ton_souhaite.includes(ton)}
-                      onChange={() => toggleTonSouhaite(ton)}
-                      disabled={isSubmitted}
-                      className="w-4 h-4 rounded border-gray-300 text-gold focus:ring-2 focus:ring-gold"
-                    />
-                    <span className="font-medium text-midnight dark:text-white text-sm">{ton}</span>
-                  </label>
+                    {showPasswords.facebook ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-slate-900">Identifiant TikTok</label>
+                  <input
+                    value={formData.acces_tiktok_login}
+                    onChange={(e) => handleChange('acces_tiktok_login', e.target.value)}
+                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                    placeholder="Login TikTok"
+                  />
+                </div>
+                <div className="relative">
+                  <label className="text-sm font-semibold text-slate-900">Mot de passe TikTok</label>
+                  <input
+                    type={showPasswords.tiktok ? 'text' : 'password'}
+                    value={formData.acces_tiktok_password}
+                    onChange={(e) => handleChange('acces_tiktok_password', e.target.value)}
+                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                    placeholder="Mot de passe"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, tiktok: !prev.tiktok }))}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"
+                  >
+                    {showPasswords.tiktok ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[32px] border border-slate-200/80 bg-white/95 p-5 shadow-soft sm:p-6">
+          <h2 className="text-xl font-semibold text-[var(--brand-midnight)] mb-5">Communication & urgences</h2>
+          <div className="space-y-5">
+            <div>
+              <label className="text-sm font-semibold text-slate-900">Ton de communication souhaité</label>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {tonOptions.map((ton) => (
+                  <button
+                    key={ton}
+                    type="button"
+                    onClick={() => toggleTon(ton)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${
+                      formData.ton_souhaite.includes(ton)
+                        ? 'border-[var(--brand-gold)] bg-[var(--brand-gold)]/10 text-[var(--brand-midnight)]'
+                        : 'border-slate-300 bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    {ton}
+                  </button>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Section 2: Social Media */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 border border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-midnight dark:text-white mb-6">Vos réseaux sociaux</h2>
+            <label className="text-sm font-semibold text-slate-900">Promotions & événements clés</label>
+            <textarea
+              value={formData.promotions_evenements}
+              onChange={(e) => handleChange('promotions_evenements', e.target.value)}
+              className="w-full min-h-[90px] rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+              placeholder="Indiquez les campagnes ou temps forts à venir"
+            />
 
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                  Lien page Facebook
-                </label>
+                <label className="text-sm font-semibold text-slate-900">Contact d'urgence</label>
                 <input
-                  type="url"
-                  value={formData.lien_facebook}
-                  onChange={(e) => handleChange('lien_facebook', e.target.value)}
-                  disabled={isSubmitted}
-                  placeholder="https://facebook.com/..."
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                  Lien compte TikTok
-                </label>
-                <input
-                  type="url"
-                  value={formData.lien_tiktok}
-                  onChange={(e) => handleChange('lien_tiktok', e.target.value)}
-                  disabled={isSubmitted}
-                  placeholder="https://tiktok.com/..."
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
-            </div>
-
-            {/* Facebook Credentials */}
-            <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Lock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <h3 className="font-semibold text-midnight dark:text-white">Accès Facebook</h3>
-              </div>
-
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                Sécurise: Vos accès sont chiffrés et sécurisés. Seul notre équipe admin y accède.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                    Email du compte à gérer
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.acces_facebook_login}
-                    onChange={(e) => handleChange('acces_facebook_login', e.target.value)}
-                    disabled={isSubmitted}
-                    placeholder="email@facebook.com"
-                    className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                    Mot de passe
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPasswords.facebook ? 'text' : 'password'}
-                      value={formData.acces_facebook_password}
-                      onChange={(e) => handleChange('acces_facebook_password', e.target.value)}
-                      disabled={isSubmitted}
-                      placeholder="••••••••"
-                      className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed pr-12"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswords(p => ({ ...p, facebook: !p.facebook }))}
-                      disabled={isSubmitted}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-                    >
-                      {showPasswords.facebook ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* TikTok Credentials */}
-            <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Lock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                <h3 className="font-semibold text-midnight dark:text-white">Accès TikTok</h3>
-              </div>
-
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                Sécurise: Vos accès sont chiffrés et sécurisés. Seul notre équipe admin y accède.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                    Email/utilisateur TikTok
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.acces_tiktok_login}
-                    onChange={(e) => handleChange('acces_tiktok_login', e.target.value)}
-                    disabled={isSubmitted}
-                    placeholder="utilisateur@tiktok.com"
-                    className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                    Mot de passe
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPasswords.tiktok ? 'text' : 'password'}
-                      value={formData.acces_tiktok_password}
-                      onChange={(e) => handleChange('acces_tiktok_password', e.target.value)}
-                      disabled={isSubmitted}
-                      placeholder="••••••••"
-                      className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed pr-12"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswords(p => ({ ...p, tiktok: !p.tiktok }))}
-                      disabled={isSubmitted}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-                    >
-                      {showPasswords.tiktok ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 3: Additional Info */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 border border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-midnight dark:text-white mb-6">Plus d'informations</h2>
-
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                Promotions et événements prévus ce mois
-              </label>
-              <textarea
-                value={formData.promotions_evenements}
-                onChange={(e) => handleChange('promotions_evenements', e.target.value)}
-                disabled={isSubmitted}
-                placeholder="Décrivez les promotions, soldes ou événements prévus..."
-                className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed resize-none"
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                  Contact d'urgence - Nom
-                </label>
-                <input
-                  type="text"
                   value={formData.contact_urgence_nom}
                   onChange={(e) => handleChange('contact_urgence_nom', e.target.value)}
-                  disabled={isSubmitted}
-                  placeholder="Nom complet"
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                  placeholder="Nom du contact"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                  Contact d'urgence - Téléphone
-                </label>
+                <label className="text-sm font-semibold text-slate-900">Téléphone</label>
                 <input
-                  type="tel"
                   value={formData.contact_urgence_tel}
                   onChange={(e) => handleChange('contact_urgence_tel', e.target.value)}
-                  disabled={isSubmitted}
-                  placeholder="+229 XX XX XX XX"
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-midnight dark:text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/20"
+                  placeholder="+221 77 123 45 67"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Submit Button */}
-        {!isSubmitted && (
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg bg-gradient-to-r from-gold to-yellow-400 hover:from-gold/90 hover:to-yellow-400/90 text-midnight font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95"
-            >
-              <Save className="w-5 h-5" />
-              {saving ? 'Sauvegarde...' : 'Soumettre mes informations'}
-            </button>
-          </div>
-        )}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-gold)] px-4 py-2 text-sm font-semibold text-[var(--brand-midnight)] transition hover:bg-[var(--brand-gold)]/90 disabled:opacity-60 sm:px-6 sm:py-3"
+          >
+            <Save className="h-4 w-4" />
+            {saving ? 'Enregistrement...' : 'Sauvegarder'}
+          </button>
+        </div>
       </form>
     </div>
   );

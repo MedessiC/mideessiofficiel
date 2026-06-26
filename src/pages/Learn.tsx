@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Star, Users, Download, Award, Clock, Zap, Smartphone, Lightbulb, CheckCircle2, MessageCircle, ArrowRight } from 'lucide-react';
+import { BookOpen, BadgeCheck, Users, Download, Award, Clock, Brain, Smartphone, Lightbulb, CheckCircle2, MessageCircle, ArrowRight, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getIcon } from '../utils/iconMapper';
@@ -34,7 +34,7 @@ const Learn = () => {
     { id: 'webdev', name: 'Développement Web', iconName: 'Code' },
     { id: 'design', name: 'Design & UI/UX', iconName: 'Sparkles' },
     { id: 'business', name: 'Tech Business', iconName: 'TrendingUp' },
-    { id: 'data', name: 'Data & IA', iconName: 'Zap' },
+    { id: 'data', name: 'Data & IA', iconName: 'Brain' },
   ];
 
   useEffect(() => {
@@ -189,7 +189,7 @@ const Learn = () => {
                               )}
                               {book.is_bestseller && (
                                 <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 md:px-3 md:py-1.5 rounded-full shadow-lg flex items-center gap-1">
-                                  <Zap className="w-3 h-3 md:w-4 md:h-4" />
+                                  <Trophy className="w-3 h-3 md:w-4 md:h-4" />
                                   <span>BEST</span>
                                 </div>
                               )}
@@ -216,7 +216,7 @@ const Learn = () => {
                             <div className="grid grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4 pb-3 md:pb-4 border-b border-gray-200 dark:border-gray-700">
                               <div className="text-center">
                                 <div className="flex items-center justify-center gap-1 mb-1">
-                                  <Star className="w-3 h-3 md:w-4 md:h-4 text-gold fill-gold" />
+                                  <BadgeCheck className="w-3 h-3 md:w-4 md:h-4 text-gold" />
                                   <span className="font-bold text-xs md:text-sm">{book.rating || 4.8}</span>
                                 </div>
                                 <p className="text-xs text-gray-500">Note</p>

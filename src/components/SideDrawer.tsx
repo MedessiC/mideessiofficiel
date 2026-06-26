@@ -1,4 +1,4 @@
-import { X, Home, BookOpen, Lightbulb, Tag, Rocket, Info, Book, MessageCircle, Building, Wrench, Library, Zap, Briefcase } from 'lucide-react';
+import { X, Home, BookOpen, Lightbulb, Tag, Rocket, Info, Book, MessageCircle, Building, Wrench, Library, Users, Briefcase } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 interface SideDrawerProps {
@@ -18,7 +18,7 @@ const SideDrawer = ({ isOpen, onClose }: SideDrawerProps) => {
       items: [
         { id: 'home', label: 'Accueil', href: '/', icon: <Home className="w-5 h-5" /> },
         { id: 'about', label: 'À propos', href: '/about', icon: <Info className="w-5 h-5" /> },
-        { id: 'team', label: 'Équipe', href: '/about#team', icon: <Zap className="w-5 h-5" /> },
+        { id: 'team', label: 'Équipe', href: '/about#team', icon: <Users className="w-5 h-5" /> },
         { id: 'contact', label: 'Contact', href: '/contact', icon: <MessageCircle className="w-5 h-5" /> },
         { id: 'careers', label: 'Carrières', href: '/careers', icon: <Briefcase className="w-5 h-5" /> },
       ]

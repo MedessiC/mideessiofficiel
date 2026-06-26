@@ -27,9 +27,10 @@ interface ClientDetailsModalProps {
   client: ClientInfo;
   isOpen: boolean;
   onClose: () => void;
+  onDelete?: () => void;
 }
 
-const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsModalProps) => {
+const ClientDetailsModal = ({ client, isOpen, onClose, onDelete }: ClientDetailsModalProps) => {
   const [details, setDetails] = useState<ClientDetailsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPasswords, setShowPasswords] = useState({
@@ -360,6 +361,22 @@ const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsModalProps
                         </div>
                       )}
 
+                      {details.client_info.contract_url && (
+                        <div className="mt-4 rounded-2xl bg-gray-50 dark:bg-gray-900/50 p-4 border border-gray-200 dark:border-gray-700">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-2">
+                            Document de contrat
+                          </p>
+                          <a
+                            href={details.client_info.contract_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 dark:text-blue-300 font-semibold underline break-all"
+                          >
+                            {details.client_info.contract_url}
+                          </a>
+                        </div>
+                      )}
+
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
                         Soumis le:{' '}
                         {new Date(details.client_info.soumis_le).toLocaleDateString('fr-FR')}
@@ -392,10 +409,18 @@ const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsModalProps
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 dark:border-gray-700 px-8 py-6 bg-gray-50 dark:bg-gray-700/50 flex justify-end">
+        <div className="border-t border-gray-200 dark:border-gray-700 px-8 py-6 bg-gray-50 dark:bg-gray-700/50 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="w-full sm:w-auto px-6 py-2 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 font-semibold hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+            >
+              Supprimer le client
+            </button>
+          )}
           <button
             onClick={onClose}
-            className="px-6 py-2 rounded-lg bg-gray-300 dark:bg-gray-600 text-midnight dark:text-white font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+            className="w-full sm:w-auto px-6 py-2 rounded-lg bg-gray-300 dark:bg-gray-600 text-midnight dark:text-white font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
           >
             Fermer
           </button>

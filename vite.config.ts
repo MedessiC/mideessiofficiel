@@ -26,5 +26,14 @@ export default defineConfig({
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
     }
+    ,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '/api')
+      }
+    }
   }
 });

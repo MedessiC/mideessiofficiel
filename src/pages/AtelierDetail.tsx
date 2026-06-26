@@ -11,7 +11,7 @@ import {
   Mail,
   MessageCircle,
   Globe,
-  Zap,
+  Sparkles,
   Share2,
   Heart,
   AlertCircle,
@@ -241,7 +241,7 @@ const AtelierDetail = () => {
                   </p>
                 </div>
                 <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4 border border-white/20">
-                  <Zap className="w-5 h-5 text-gold mb-2" />
+                  <Sparkles className="w-5 h-5 text-gold mb-2" />
                   <p className="text-xs text-gray-300 mb-1">Catégorie</p>
                   <p className="text-sm font-bold text-white capitalize">{atelier.category}</p>
                 </div>

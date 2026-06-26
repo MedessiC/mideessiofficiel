@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BookOpen, Plus, Edit2, Trash2, Save, X, Eye, Star, Users, Loader, LogOut, TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle
+  BookOpen, Plus, Edit2, Trash2, Save, X, Eye, Palette, Sparkles, Users, Loader, LogOut, TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 type Book = {
-  id: number | null;
+  id: string | null;
   title: string;
   category: string;
   description: string;
@@ -16,6 +16,7 @@ type Book = {
   cover_image: string;
   article_url: string;
   buy_url: string;
+  pdf_url: string;
   week_added: string;
   is_new: boolean;
   is_bestseller: boolean;
@@ -52,6 +53,7 @@ const AdminDashboard = () => {
     cover_image: '',
     article_url: '',
     buy_url: '',
+    pdf_url: '',
     week_added: new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }),
     is_new: true,
     is_bestseller: false,
@@ -60,12 +62,13 @@ const AdminDashboard = () => {
     pages: 50,
     level: 'Débutant'
   });
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
 
   const categories = [
     { id: 'mobile', name: 'Mobile', icon: <Download className="w-4 h-4" /> },
     { id: 'cybersec', name: 'Cybersec', icon: <Award className="w-4 h-4" /> },
     { id: 'webdev', name: 'Web Dev', icon: <TrendingUp className="w-4 h-4" /> },
-    { id: 'design', name: 'Design', icon: <Star className="w-4 h-4" /> },
+    { id: 'design', name: 'Design', icon: <Palette className="w-4 h-4" /> },
     { id: 'business', name: 'Business', icon: <Users className="w-4 h-4" /> },
     { id: 'data', name: 'Data & IA', icon: <Clock className="w-4 h-4" /> },
   ];
@@ -146,71 +149,96 @@ const AdminDashboard = () => {
     navigate('/admin/login');
   };
 
+  const uploadPdfToStorage = async (file: File) => {
+    const filePath = `pdfs/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('pdfs')
+      .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data: publicUrlData, error: publicUrlError } = supabase.storage
+      .from('pdfs')
+      .getPublicUrl(filePath);
+
+    if (publicUrlError) {
+      throw publicUrlError;
+    }
+
+    return publicUrlData.publicUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.article_url || !formData.buy_url || !formData.description) {
+    if (!formData.title || !formData.buy_url || !formData.description) {
       addToast('error', 'Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    if (!editingBook && !pdfFile && !formData.pdf_url) {
+      addToast('error', 'Veuillez uploader un fichier PDF');
       return;
     }
 
     setLoading(true);
 
     try {
+      let pdfUrl = formData.pdf_url;
+
+      if (pdfFile) {
+        pdfUrl = await uploadPdfToStorage(pdfFile);
+      }
+
+      if (!pdfUrl) {
+        addToast('error', 'Le lien PDF est requis');
+        return;
+      }
+
+      const payload = {
+        title: formData.title,
+        category: formData.category,
+        description: formData.description,
+        price: formData.price,
+        author: formData.author,
+        cover_color: formData.cover_color,
+        cover_image: formData.cover_image,
+        article_url: formData.article_url,
+        buy_url: formData.buy_url,
+        pdf_url: pdfUrl,
+        week_added: formData.week_added,
+        is_new: formData.is_new,
+        is_bestseller: formData.is_bestseller,
+        rating: formData.rating,
+        students: formData.students,
+        pages: formData.pages,
+        level: formData.level,
+      };
+
       if (editingBook) {
         const { error } = await supabase
           .from('books')
-          .update({
-            title: formData.title,
-            category: formData.category,
-            description: formData.description,
-            price: formData.price,
-            author: formData.author,
-            cover_color: formData.cover_color,
-            cover_image: formData.cover_image,
-            article_url: formData.article_url,
-            buy_url: formData.buy_url,
-            week_added: formData.week_added,
-            is_new: formData.is_new,
-            is_bestseller: formData.is_bestseller,
-            rating: formData.rating,
-            students: formData.students,
-            pages: formData.pages,
-            level: formData.level,
-          })
+          .update(payload)
           .eq('id', editingBook.id);
 
         if (error) throw error;
-        setBooks(books.map(b => b.id === editingBook.id ? { ...formData, id: editingBook.id } : b));
-        addToast('success', 'PDF mis à jour ✓');
+        setBooks(books.map(b => b.id === editingBook.id ? { ...formData, id: editingBook.id, pdf_url: pdfUrl } : b));
+        addToast('success', 'PDF mis à jour');
       } else {
         const { error } = await supabase
           .from('books')
           .insert([
             {
-              title: formData.title,
-              category: formData.category,
-              description: formData.description,
-              price: formData.price,
-              author: formData.author,
-              cover_color: formData.cover_color,
-              cover_image: formData.cover_image,
-              article_url: formData.article_url,
-              buy_url: formData.buy_url,
-              week_added: formData.week_added,
-              is_new: formData.is_new,
-              is_bestseller: formData.is_bestseller,
-              rating: formData.rating,
-              students: formData.students,
-              pages: formData.pages,
-              level: formData.level,
+              ...payload,
               created_at: new Date().toISOString(),
             }
           ]);
 
         if (error) throw error;
         await fetchBooks();
-        addToast('success', 'PDF publié ✓');
+        addToast('success', 'PDF publié');
       }
 
       resetForm();
@@ -222,7 +250,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce PDF ?')) return;
     
     try {
@@ -258,6 +286,7 @@ const AdminDashboard = () => {
       cover_image: '',
       article_url: '',
       buy_url: '',
+      pdf_url: '',
       week_added: new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }),
       is_new: true,
       is_bestseller: false,
@@ -266,6 +295,7 @@ const AdminDashboard = () => {
       pages: 50,
       level: 'Débutant'
     });
+    setPdfFile(null);
     setEditingBook(null);
     setShowForm(false);
   };
@@ -348,7 +378,7 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
             { label: 'Total', value: books.length, icon: BookOpen, color: 'blue' },
-            { label: 'Nouveaux', value: books.filter(b => b.is_new).length, icon: Star, color: 'yellow' },
+            { label: 'Nouveaux', value: books.filter(b => b.is_new).length, icon: Sparkles, color: 'yellow' },
             { label: 'Best', value: books.filter(b => b.is_bestseller).length, icon: Award, color: 'red' },
             { label: 'Étudiants', value: books.reduce((sum, b) => sum + b.students, 0), icon: Users, color: 'green' },
           ].map((stat) => {
@@ -428,7 +458,7 @@ const AdminDashboard = () => {
                     <div className="grid grid-cols-3 gap-2 py-3 border-t border-b border-gray-200 dark:border-gray-700 mb-3">
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                          <Sparkles className="w-3 h-3 text-yellow-400" />
                           <span className="font-bold text-xs">{book.rating}</span>
                         </div>
                       </div>
@@ -489,7 +519,7 @@ const AdminDashboard = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                {editingBook ? '✏️ Modifier' : '✨ Nouveau PDF'}
+                {editingBook ? 'Modifier le PDF' : 'Nouveau PDF'}
               </h2>
               <button
                 onClick={resetForm}
@@ -504,7 +534,7 @@ const AdminDashboard = () => {
               <div className="p-4 sm:p-6 space-y-6">
                 {/* Section: Basic Info */}
                 <div className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">📚 Infos</h3>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">Infos</h3>
                   
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Titre *</label>
@@ -561,7 +591,7 @@ const AdminDashboard = () => {
 
                 {/* Section: Appearance */}
                 <div className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">🎨 Apparence</h3>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">Apparence</h3>
                   
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Couleur</label>
@@ -594,9 +624,26 @@ const AdminDashboard = () => {
 
                 {/* Section: URLs & Metadata */}
                 <div className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">🔗 Liens</h3>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">Liens</h3>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Fichier PDF *</label>
+                        <input
+                          type="file"
+                          accept="application/pdf"
+                          onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gold file:text-midnight hover:file:bg-yellow-400"
+                        />
+                        {formData.pdf_url && !pdfFile && (
+                          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                            Lien PDF actuel : <a href={formData.pdf_url} target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-300 hover:underline">Ouvrir</a>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Article *</label>
                       <input
@@ -697,7 +744,7 @@ const AdminDashboard = () => {
 
                 {/* Section: Badges */}
                 <div className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">🏷️ Badges</h3>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">Badges</h3>
                   
                   <div className="space-y-3">
                     <label className="flex items-center gap-3 p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-yellow-400 transition-colors cursor-pointer">

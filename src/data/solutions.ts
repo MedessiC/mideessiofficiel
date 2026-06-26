@@ -86,7 +86,7 @@ export const categories: SolutionCategoryInfo[] = [
     id: 'autre',
     name: 'Autres Solutions',
     description: 'Des trucs innovants qui changent la donne. Reste à l\'affût.',
-    iconName: 'Sparkles',
+    iconName: 'Compass',
     color: 'from-gray-500 to-slate-600'
   }
 ];
@@ -124,7 +124,7 @@ export const mikpleSolution: Solution = {
       id: 'simple-quick',
       title: 'Simple & Rapide',
       description: 'Inscription en quelques clics. Pas de compte à créer, pas de paperasse',
-      iconName: 'Zap'
+      iconName: 'CircleCheckBig'
     },
     {
       id: 'guaranteed-savings',
@@ -221,7 +221,7 @@ export const ekpeSolution: Solution = {
       id: 'restaurant-ratings',
       title: 'Évaluations & Avis',
       description: 'Consultez les notes et avis des clients pour choisir en confiance',
-      iconName: 'Star'
+      iconName: 'MessageCircle'
     },
     {
       id: 'local-cuisine',
@@ -233,7 +233,7 @@ export const ekpeSolution: Solution = {
       id: 'instant-recommendations',
       title: 'Recommandations Instantanées',
       description: 'Obtenez les meilleures propositions en quelques secondes',
-      iconName: 'Zap'
+      iconName: 'CircleCheckBig'
     }
   ],
   benefits: [

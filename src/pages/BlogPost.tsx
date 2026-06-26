@@ -5,6 +5,7 @@ import {
   Copy, Clock, Tag, Eye, ChevronRight 
 } from 'lucide-react';
 import SEO from '../components/SEO';
+import BlogLikesComments from '../components/BlogLikesComments';
 import { blogPosts } from '../data/blogPosts';
 
 // Extraire les headings pour la table of contents
@@ -366,6 +367,9 @@ const BlogPost = () => {
                 </div>
               </div>
             </div>
+
+            {/* Comments and Likes Section */}
+            <BlogLikesComments blogId={post.id} blogTitle={post.title} />
           </div>
 
           {/* Sidebar */}

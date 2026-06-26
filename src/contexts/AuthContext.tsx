@@ -2,13 +2,17 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 
+export type UserRole = 'user' | 'admin' | 'client';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  userRole: UserRole | null;
   signUp: (email: string, password: string, username: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  detectRole: (userId: string) => Promise<UserRole>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,22 +21,116 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+
+  // Detect user role (admin, client, or regular user)
+  const detectRole = async (userId: string): Promise<UserRole> => {
+    try {
+      // Check if admin
+      const { data: adminData } = await supabase
+        .from('admins')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (adminData) return 'admin';
+
+      // Check if client
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (clientData) return 'client';
+
+      // Default to regular user
+      return 'user';
+    } catch (error) {
+      console.error('Error detecting user role:', error);
+      return 'user';
+    }
+  };
+
+  const ensureUserProfile = async (authUser: User | null) => {
+    if (!authUser) return;
+
+    try {
+      const { data: existingProfile } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      if (existingProfile) return;
+
+      const metadataUsername = (authUser.user_metadata?.username as string | undefined)?.trim();
+      const emailPrefix = authUser.email?.split('@')[0]?.toLowerCase();
+      const baseUsername = (metadataUsername || emailPrefix || `user${authUser.id.slice(0, 8)}`)
+        .replace(/[^a-zA-Z0-9._-]/g, '')
+        .toLowerCase()
+        .slice(0, 24) || `user${authUser.id.slice(0, 8)}`;
+
+      const { error } = await supabase.from('users').insert({
+        id: authUser.id,
+        email: authUser.email || '',
+        username: baseUsername,
+      });
+
+      if (error && !error.message.toLowerCase().includes('permission')) {
+        console.error('Error creating user profile:', error);
+      }
+    } catch (error) {
+      console.error('Error ensuring user profile:', error);
+    }
+  };
 
   useEffect(() => {
-    // Vérifier la session actuelle
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
 
-    // Écouter les changements d'authentification
+        if (session?.user) {
+          await ensureUserProfile(session.user);
+          const role = await detectRole(session.user.id);
+          setUserRole(role);
+        } else {
+          setUserRole(null);
+        }
+      } catch (error) {
+        console.error('Error initializing auth session:', error);
+        setSession(null);
+        setUser(null);
+        setUserRole(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      try {
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await ensureUserProfile(session.user);
+          const role = await detectRole(session.user.id);
+          setUserRole(role);
+        } else {
+          setUserRole(null);
+        }
+      } catch (error) {
+        console.error('Error handling auth state change:', error);
+        setUserRole(null);
+      } finally {
+        setLoading(false);
+      }
     });
 
     return () => subscription?.unsubscribe();
@@ -119,9 +217,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         loading,
+        userRole,
         signUp,
         signIn,
         signOut,
+        detectRole,
       }}
     >
       {children}

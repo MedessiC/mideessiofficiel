@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Zap, CheckCircle, Gift, Clock, Sparkles } from 'lucide-react';
+import { X, Bell, CheckCircle, Gift, Clock, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Popup {
@@ -376,7 +376,7 @@ const PopupDisplay = ({ currentPage }: PopupDisplayProps) => {
                   <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-1.5 xs:gap-2 sm:gap-3">
                     <div className="flex-1 flex items-start xs:items-center gap-1.5 xs:gap-2 sm:gap-3 min-w-0">
                       <div className="flex-shrink-0 p-1 xs:p-1.5 bg-[#ffd700]/20 rounded">
-                        <Zap className="w-3 xs:w-3.5 sm:w-4 h-3 xs:h-3.5 sm:h-4 text-[#ffd700]" />
+                        <Bell className="w-3 xs:w-3.5 sm:w-4 h-3 xs:h-3.5 sm:h-4 text-[#ffd700]" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-xs xs:text-xs sm:text-sm text-white leading-tight line-clamp-1">

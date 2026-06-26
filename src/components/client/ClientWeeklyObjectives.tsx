@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Calendar, Target, TrendingUp, CheckCircle2, AlertCircle } from 'lucide-react';
 
@@ -23,45 +23,58 @@ interface ClientWeeklyObjectivesProps {
   clientId: string;
 }
 
+const statusStyles: Record<string, { bg: string; border: string; icon: JSX.Element }> = {
+  pending: { bg: 'from-slate-100 to-slate-50', border: 'border-slate-300', icon: <Calendar className="w-5 h-5 text-slate-500" /> },
+  in_progress: { bg: 'from-[var(--brand-gold)]/15 to-[var(--brand-gold)]/5', border: 'border-[var(--brand-gold)]/40', icon: <TrendingUp className="w-5 h-5 text-[var(--brand-gold)]" /> },
+  achieved: { bg: 'from-emerald-100 to-emerald-50', border: 'border-emerald-300', icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" /> },
+  failed: { bg: 'from-red-100 to-red-50', border: 'border-red-300', icon: <AlertCircle className="w-5 h-5 text-red-600" /> },
+  cancelled: { bg: 'from-slate-200 to-slate-100', border: 'border-slate-400', icon: <Target className="w-5 h-5 text-slate-600" /> },
+};
+
 const ClientWeeklyObjectives = ({ clientId }: ClientWeeklyObjectivesProps) => {
   const [objectives, setObjectives] = useState<WeeklyObjective[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedWeek, setSelectedWeek] = useState<string>('');
+  const [selectedWeek, setSelectedWeek] = useState('');
   const [weeks, setWeeks] = useState<{ start: string; end: string; label: string }[]>([]);
 
   useEffect(() => {
     generateWeekOptions();
-    fetchObjectives();
+  }, []);
+
+  useEffect(() => {
+    if (clientId) fetchObjectives();
   }, [clientId]);
 
+  useEffect(() => {
+    if (!selectedWeek && weeks.length) setSelectedWeek(weeks[2]?.start || weeks[0]?.start);
+  }, [weeks]);
+
   const generateWeekOptions = () => {
-    const weeksList = [];
+    const weeksList: { start: string; end: string; label: string }[] = [];
     const today = new Date();
 
-    // Générer 13 semaines (semaine en cours + 12 après)
-    for (let i = -2; i < 11; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - date.getDay() + i * 7);
-
-      const startDate = new Date(date);
-      startDate.setDate(startDate.getDate() - (startDate.getDay() === 0 ? 6 : startDate.getDay() - 1));
-
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + 6);
+    for (let offset = -2; offset <= 8; offset += 1) {
+      const current = new Date(today);
+      current.setDate(current.getDate() + offset * 7);
+      const start = new Date(current);
+      const day = start.getDay();
+      start.setDate(start.getDate() - (day === 0 ? 6 : day - 1));
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
 
       weeksList.push({
-        start: startDate.toISOString().split('T')[0],
-        end: endDate.toISOString().split('T')[0],
-        label: `${startDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} - ${endDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}`,
+        start: start.toISOString().split('T')[0],
+        end: end.toISOString().split('T')[0],
+        label: `${start.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} - ${end.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}`,
       });
     }
 
     setWeeks(weeksList);
-    setSelectedWeek(weeksList[2].start); // Semaine en cours par défaut
   };
 
   const fetchObjectives = async () => {
     try {
+      setLoading(true);
       const { data } = await supabase
         .from('weekly_objectives')
         .select('*')
@@ -69,9 +82,7 @@ const ClientWeeklyObjectives = ({ clientId }: ClientWeeklyObjectivesProps) => {
         .eq('validated_by_admin', true)
         .order('week_start', { ascending: false });
 
-      if (data) {
-        setObjectives(data);
-      }
+      setObjectives((data as WeeklyObjective[]) || []);
     } catch (error) {
       console.error('Error fetching objectives:', error);
     } finally {
@@ -79,219 +90,116 @@ const ClientWeeklyObjectives = ({ clientId }: ClientWeeklyObjectivesProps) => {
     }
   };
 
-  const selectedWeekData = weeks.find(w => w.start === selectedWeek);
-  const weekObjectives = objectives.filter(
-    obj => obj.week_start === selectedWeek && obj.week_end
-  );
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'achieved':
-        return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-      case 'failed':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
-      case 'in_progress':
-        return <TrendingUp className="w-5 h-5 text-blue-500" />;
-      default:
-        return <Target className="w-5 h-5 text-gray-400" />;
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels = {
-      pending: 'En attente',
-      in_progress: 'En cours',
-      achieved: 'Atteint',
-      failed: 'Non atteint',
-      cancelled: 'Annulé',
-    };
-    return labels[status as keyof typeof labels] || status;
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors = {
-      pending: 'from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-600',
-      in_progress: 'from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20',
-      achieved: 'from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/20',
-      failed: 'from-red-100 to-red-50 dark:from-red-900/30 dark:to-red-800/20',
-      cancelled: 'from-gray-300 to-gray-200 dark:from-gray-600 dark:to-gray-500',
-    };
-    return colors[status as keyof typeof colors] || colors.pending;
-  };
-
-  const getStatusBorder = (status: string) => {
-    const borders = {
-      pending: 'border-gray-300 dark:border-gray-600',
-      in_progress: 'border-blue-300 dark:border-blue-600',
-      achieved: 'border-green-300 dark:border-green-600',
-      failed: 'border-red-300 dark:border-red-600',
-      cancelled: 'border-gray-400 dark:border-gray-500',
-    };
-    return borders[status as keyof typeof borders] || borders.pending;
-  };
-
-  const getTotalProgress = () => {
-    if (weekObjectives.length === 0) return 0;
-    const totalProgress = weekObjectives.reduce((sum, obj) => sum + obj.progress_percentage, 0);
-    return Math.round(totalProgress / weekObjectives.length);
-  };
-
-  const achievedCount = weekObjectives.filter(obj => obj.status === 'achieved').length;
+  const weekObjectives = objectives.filter((obj) => obj.week_start === selectedWeek);
+  const totalProgress = weekObjectives.length ? Math.round(weekObjectives.reduce((sum, item) => sum + item.progress_percentage, 0) / weekObjectives.length) : 0;
+  const achievedCount = weekObjectives.filter((obj) => obj.status === 'achieved').length;
 
   if (loading) {
-    return <div className="animate-pulse space-y-4">
-      <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-    </div>;
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="h-12 bg-slate-200 rounded-3xl"></div>
+        <div className="h-64 bg-slate-200 rounded-3xl"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-midnight dark:text-white flex items-center gap-2 mb-4">
-          <Target className="w-6 h-6" />
-          Mes Objectifs Hebdomadaires
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          Suivi des objectifs définis chaque semaine pour votre service
-        </p>
-      </div>
-
-      {/* Week Selector */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {weeks.map((week) => (
-          <button
-            key={week.start}
-            onClick={() => setSelectedWeek(week.start)}
-            className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-all ${
-              selectedWeek === week.start
-                ? 'bg-gold text-midnight'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-          >
-            {week.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Week Summary */}
-      {selectedWeekData && weekObjectives.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 rounded-lg p-4 border border-blue-300 dark:border-blue-600">
-            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">Total</p>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{weekObjectives.length}</p>
-          </div>
-          <div className="bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/20 rounded-lg p-4 border border-green-300 dark:border-green-600">
-            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">Atteints</p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{achievedCount}</p>
-          </div>
-          <div className="bg-gradient-to-br from-gold/20 to-yellow-50 dark:from-yellow-900/30 dark:to-yellow-800/20 rounded-lg p-4 border border-gold/30">
-            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">Progression</p>
-            <p className="text-2xl font-bold text-gold">{getTotalProgress()}%</p>
-          </div>
-          <div className="bg-gradient-to-br from-purple-100 to-purple-50 dark:from-purple-900/30 dark:to-purple-800/20 rounded-lg p-4 border border-purple-300 dark:border-purple-600">
-            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">Taux</p>
-            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-              {weekObjectives.length > 0 ? Math.round((achievedCount / weekObjectives.length) * 100) : 0}%
+    <div className="space-y-8">
+      <section className="rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-soft sm:p-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.24em] text-[var(--brand-gold)]/80">Objectifs hebdomadaires</p>
+            <h1 className="mt-2 text-2xl font-semibold text-[var(--brand-midnight)] sm:text-3xl">Votre rythme de croissance</h1>
+            <p className="mt-3 max-w-2xl text-sm text-slate-600">
+              Suivez vos priorités, les progrès de l'équipe et les résultats calculés chaque semaine.
             </p>
           </div>
-        </div>
-      )}
-
-      {/* Overall Progress Bar */}
-      {weekObjectives.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Progression globale</p>
-          <div className="w-full h-3 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-gold via-yellow-400 to-gold transition-all duration-500"
-              style={{ width: `${getTotalProgress()}%` }}
-            ></div>
+          <div className="rounded-3xl bg-slate-50 p-4 text-center">
+            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Objectifs validés</p>
+            <p className="mt-3 text-2xl font-semibold text-[var(--brand-midnight)] sm:text-3xl">{objectives.length}</p>
           </div>
-          <p className="text-right text-xs font-bold text-gold mt-2">{getTotalProgress()}% complété</p>
         </div>
-      )}
+      </section>
 
-      {/* Objectives Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-        {weekObjectives.map((obj) => (
-          <div
-            key={obj.id}
-            className={`bg-gradient-to-br ${getStatusColor(obj.status)} rounded-xl p-5 border-2 ${getStatusBorder(obj.status)} transition-all hover:shadow-lg`}
-          >
-            {/* Header */}
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <h3 className="font-bold text-midnight dark:text-white text-lg">{obj.title}</h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{obj.category}</p>
-              </div>
-              {getStatusIcon(obj.status)}
-            </div>
-
-            {/* Description */}
-            {obj.description && (
-              <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">{obj.description}</p>
-            )}
-
-            {/* Metrics */}
-            <div className="space-y-3 mb-4">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-700 dark:text-gray-400">Objectif</span>
-                <span className="font-bold text-midnight dark:text-white">
-                  {obj.target_value} {obj.unit}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-700 dark:text-gray-400">Atteint</span>
-                <span className="font-bold text-gold">{obj.actual_value} / {obj.target_value}</span>
-              </div>
-
-              {/* Progress Bar */}
-              <div>
-                <div className="w-full h-2 bg-white/50 dark:bg-black/20 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-gold to-yellow-400 transition-all"
-                    style={{ width: `${Math.min(obj.progress_percentage, 100)}%` }}
-                  ></div>
-                </div>
-                <p className="text-right text-xs font-semibold text-gold mt-1">{obj.progress_percentage}%</p>
-              </div>
-            </div>
-
-            {/* Status Badge */}
-            <div className="flex items-center justify-between pt-3 border-t border-white/30 dark:border-black/20">
-              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                obj.status === 'achieved'
-                  ? 'bg-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-300'
-                  : obj.status === 'failed'
-                  ? 'bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300'
-                  : obj.status === 'in_progress'
-                  ? 'bg-blue-200 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
-                  : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-              }`}>
-                {getStatusLabel(obj.status)}
-              </span>
-              {obj.priority === 'high' && (
-                <span className="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-semibold rounded">Haute</span>
-              )}
-            </div>
-          </div>
-        ))}
+      <div className="overflow-x-auto pb-2">
+        <div className="inline-flex gap-3">
+          {weeks.map((week) => (
+            <button
+              key={week.start}
+              type="button"
+              onClick={() => setSelectedWeek(week.start)}
+              className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${selectedWeek === week.start ? 'bg-[var(--brand-gold)] text-[var(--brand-midnight)] border-[var(--brand-gold)]' : 'bg-slate-100 text-slate-700 border-slate-200'}`}
+            >
+              {week.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Empty State */}
-      {weekObjectives.length === 0 && (
-        <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600">
-          <Target className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
-            Aucun objectif pour cette semaine
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-500">
-            Les objectifs seront ajoutés par votre équipe MIDEESSI
-          </p>
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-[28px] border border-slate-200/80 bg-slate-50 p-5 text-center sm:p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Total</p>
+          <p className="mt-3 text-2xl font-semibold text-[var(--brand-midnight)] sm:text-3xl">{weekObjectives.length}</p>
         </div>
-      )}
+        <div className="rounded-[28px] border border-slate-200/80 bg-slate-50 p-5 text-center sm:p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Atteints</p>
+          <p className="mt-3 text-2xl font-semibold text-[var(--brand-gold)] sm:text-3xl">{achievedCount}</p>
+        </div>
+        <div className="rounded-[28px] border border-slate-200/80 bg-slate-50 p-5 text-center sm:p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Progression</p>
+          <p className="mt-3 text-2xl font-semibold text-[var(--brand-midnight)] sm:text-3xl">{totalProgress}%</p>
+        </div>
+      </section>
+
+      <section className="rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-soft sm:p-8">
+        {weekObjectives.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Aucune donnée</p>
+            <h2 className="mt-4 text-2xl font-semibold text-[var(--brand-midnight)]">Aucun objectif planifié pour cette semaine</h2>
+            <p className="mt-3 text-sm text-slate-600">Votre équipe MIDEESSI met en place votre plan d'actions. Retrouvez les objectifs dès qu'ils seront validés.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {weekObjectives.map((objective) => {
+              const style = statusStyles[objective.status] || statusStyles.pending;
+              return (
+                <article key={objective.id} className={`rounded-[28px] border ${style.border} bg-gradient-to-br ${style.bg} p-5 shadow-sm sm:p-6`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">{objective.category}</p>
+                      <h3 className="mt-2 text-xl font-semibold text-[var(--brand-midnight)]">{objective.title}</h3>
+                    </div>
+                    <div className="rounded-2xl bg-white/80 p-3 text-slate-900">{style.icon}</div>
+                  </div>
+
+                  <p className="mt-4 text-sm text-slate-700 leading-relaxed">{objective.description}</p>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-3xl bg-white/80 p-4"> 
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Objectif</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--brand-midnight)]">{objective.target_value} {objective.unit}</p>
+                    </div>
+                    <div className="rounded-3xl bg-white/80 p-4">
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Atteint</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--brand-gold)]">{objective.actual_value} {objective.unit}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="flex items-center justify-between text-sm text-slate-600 mb-2">
+                      <span>Progression</span>
+                      <span>{objective.progress_percentage}%</span>
+                    </div>
+                    <div className="h-3 overflow-hidden rounded-full bg-slate-200">
+                      <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400" style={{ width: `${Math.min(objective.progress_percentage, 100)}%` }} />
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 };

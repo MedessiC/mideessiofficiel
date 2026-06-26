@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Plus, Edit, Eye, Trash2, Copy, CheckCircle, Key } from 'lucide-react';
+import { Plus, Eye, Trash2, Copy, CheckCircle, Key } from 'lucide-react';
 import { generateClientId, generateTempPassword, hashPassword, generateContractNumber } from '../../utils/encryptionUtils';
 import ClientDetailsModal from './ClientDetailsModal';
 import ClientCredentialsModal from './ClientCredentialsModal';
+import CloudinaryUploader from './CloudinaryUploader';
 
 interface Client {
   id: string;
@@ -17,6 +18,7 @@ interface Client {
   duree_mois: number;
   est_periode_test: boolean;
   statut: 'actif' | 'inactif' | 'suspendu';
+  contract_url?: string;
   password_temp?: string;
   password_changed?: boolean;
 }
@@ -41,8 +43,11 @@ const AdminClientsManager = () => {
     est_periode_test: false,
   });
   const [newClientId, setNewClientId] = useState('');
+  const [newClientEmail, setNewClientEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newContractNumber, setNewContractNumber] = useState('');
+  const [newContractUrl, setNewContractUrl] = useState('');
+  const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -64,6 +69,29 @@ const AdminClientsManager = () => {
       setMessage({ type: 'error', text: 'Erreur lors du chargement des clients' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+
+  const sendClientInvite = async (payload: { clientName: string; email: string; clientId: string; tempPassword: string; contractNumber: string; contractUrl?: string; }) => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/send-client-invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        console.warn('sendClientInvite failed:', body.error || 'Impossible d\'envoyer l\'email d\'invitation');
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.warn('sendClientInvite network error:', err);
+      return false;
     }
   };
 
@@ -99,14 +127,20 @@ const AdminClientsManager = () => {
 
       if (clientError) throw clientError;
 
-      // Create empty client_infos record
-      await supabase
+      // Create client_infos record and optionally save contract URL
+      const { error: clientInfoError } = await supabase
         .from('client_infos')
         .insert({
           client_id: clientId,
+          ...(newContractUrl ? { contract_url: newContractUrl } : {}),
         });
 
+      if (clientInfoError) {
+        console.warn('Impossible de sauvegarder le lien du contrat dans client_infos:', clientInfoError);
+      }
+
       setNewClientId(clientId);
+      setNewClientEmail(newClientData.email);
       setNewPassword(tempPassword);
       setNewContractNumber(contractNumber);
       setShowNewCredentials(true);
@@ -121,8 +155,25 @@ const AdminClientsManager = () => {
         est_periode_test: false,
       });
 
+      const invitePayload = {
+        clientName: newClientData.nom_responsable || newClientData.nom_marque,
+        email: newClientData.email,
+        clientId,
+        tempPassword,
+        contractNumber,
+        contractUrl: newContractUrl || undefined,
+      };
+
+      const inviteSent = await sendClientInvite(invitePayload);
+      if (inviteSent) {
+        setMessage({ type: 'success', text: 'Client créé et email d\'invitation envoyé.' });
+      } else {
+        console.warn('Email invite failed for', invitePayload.email);
+        setMessage({ type: 'error', text: 'Client créé, mais l\'email d\'invitation n\'a pas pu être envoyée.' });
+      }
+
+      setNewContractUrl('');
       await fetchClients();
-      setMessage({ type: 'success', text: 'Client créé avec succès!' });
     } catch (error) {
       console.error('Error creating client:', error);
       setMessage({ type: 'error', text: 'Erreur lors de la création du client' });
@@ -133,6 +184,72 @@ const AdminClientsManager = () => {
     navigator.clipboard.writeText(text);
     setMessage({ type: 'success', text: `${label} copié!` });
     setTimeout(() => setMessage(null), 2000);
+  };
+
+  const handleDeleteClient = async (client: Client) => {
+    if (!confirm(`Supprimer le client ${client.nom_marque} (${client.client_id}) ? Cette action est irréversible.`)) {
+      return;
+    }
+
+    setDeletingClientId(client.id);
+    try {
+      // Delete related records first
+      const relatedDeletes = [
+        await supabase.from('messages').delete().eq('client_id', client.client_id),
+        await supabase.from('kpis').delete().eq('client_id', client.client_id),
+        await supabase.from('client_infos').delete().eq('client_id', client.client_id),
+      ];
+
+      for (const res of relatedDeletes) {
+        if (res.error) {
+          // If any related delete fails, abort and show the error
+          throw res.error;
+        }
+      }
+
+      // Prefer deleting by primary `id` (safer). Fall back to deleting by `client_id`.
+      let clientDeleteError = null;
+      if (client.id) {
+        const { error } = await supabase.from('clients').delete().eq('id', client.id);
+        clientDeleteError = error;
+      }
+
+      if (clientDeleteError) {
+        // Try fallback deletion by client_id
+        const { error } = await supabase.from('clients').delete().eq('client_id', client.client_id);
+        clientDeleteError = error || clientDeleteError;
+      }
+
+      if (clientDeleteError) {
+        // If deletion still fails (e.g. FK constraints / RLS), try marking inactive as a safe fallback
+        console.warn('Delete failed, attempting to mark client as inactif:', clientDeleteError);
+        const { error: softError } = await supabase
+          .from('clients')
+          .update({ statut: 'inactif' })
+          .eq('id', client.id)
+          .eq('client_id', client.client_id);
+
+        if (softError) throw softError;
+
+        // Remove from UI optimistically
+        setClients(prev => prev.filter(c => c.id !== client.id));
+        setMessage({ type: 'success', text: 'Client marqué comme inactif (suppression partielle).' });
+        return;
+      }
+
+      // Successful full deletion: remove from UI immediately
+      setClients(prev => prev.filter(c => c.id !== client.id));
+      if (selectedClient?.id === client.id) {
+        setShowDetailsModal(false);
+        setSelectedClient(null);
+      }
+      setMessage({ type: 'success', text: 'Client supprimé avec succès.' });
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      setMessage({ type: 'error', text: 'Erreur lors de la suppression du client.' });
+    } finally {
+      setDeletingClientId(null);
+    }
   };
 
   const handleStatusChange = async (client: Client, newStatus: string) => {
@@ -149,6 +266,30 @@ const AdminClientsManager = () => {
     } catch (error) {
       console.error('Error updating status:', error);
       setMessage({ type: 'error', text: 'Erreur lors de la mise à jour' });
+    }
+  };
+
+  const handleResetPassword = async (client: Client) => {
+    try {
+      const tempPassword = generateTempPassword();
+      const passwordHash = await hashPassword(tempPassword);
+
+      const { error } = await supabase
+        .from('clients')
+        .update({ password_hash: passwordHash, password_temp: tempPassword, password_changed: false })
+        .eq('id', client.id);
+
+      if (error) throw error;
+
+      setMessage({ type: 'success', text: 'Mot de passe réinitialisé avec succès.' });
+      await fetchClients();
+
+      if (selectedClientForCredentials?.id === client.id) {
+        setSelectedClientForCredentials({ ...client, password_temp: tempPassword, password_changed: false });
+      }
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      setMessage({ type: 'error', text: 'Erreur lors de la réinitialisation du mot de passe.' });
     }
   };
 
@@ -226,6 +367,20 @@ const AdminClientsManager = () => {
               </select>
             </div>
 
+            <div className="grid grid-cols-1 gap-6">
+              <CloudinaryUploader
+                label="Contrat PDF / Document contractuel (optionnel)"
+                value={newContractUrl}
+                onChange={setNewContractUrl}
+                folder="mideessi/contracts"
+                accept="application/pdf,application/*"
+                placeholder="https://... ou téléversez un PDF"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Uploadez un contrat pour que le client puisse y accéder directement depuis son espace. Si le lien est déjà disponible, collez-le ci-dessus.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
                 <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mb-1">Numéro de contrat (auto-généré)</p>
@@ -293,9 +448,9 @@ const AdminClientsManager = () => {
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Email du client</p>
               <div className="flex items-center justify-between">
-                <code className="text-lg font-bold text-midnight dark:text-white">{newClientData.email}</code>
+                <code className="text-lg font-bold text-midnight dark:text-white">{newClientEmail}</code>
                 <button
-                  onClick={() => copyToClipboard(newClientData.email, 'Email')}
+                  onClick={() => copyToClipboard(newClientEmail, 'Email')}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                 >
                   <Copy className="w-5 h-5 text-gold" />
@@ -359,83 +514,89 @@ const AdminClientsManager = () => {
       )}
 
       {/* Clients Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50">
-              <th className="px-6 py-4 text-left text-sm font-bold text-midnight dark:text-white">ID/Marque</th>
-              <th className="px-6 py-4 text-left text-sm font-bold text-midnight dark:text-white">Email</th>
-              <th className="px-6 py-4 text-left text-sm font-bold text-midnight dark:text-white">Pack</th>
-              <th className="px-6 py-4 text-left text-sm font-bold text-midnight dark:text-white">Statut</th>
-              <th className="px-6 py-4 text-left text-sm font-bold text-midnight dark:text-white">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((client) => (
-              <tr key={client.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="font-bold text-midnight dark:text-white">{client.client_id}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{client.nom_marque}</p>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-midnight dark:text-white">{client.email}</td>
-                <td className="px-6 py-4">
-                  <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                    {client.pack.toUpperCase()}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <select
-                    value={client.statut}
-                    onChange={(e) => handleStatusChange(client, e.target.value)}
-                    className={`px-2 py-1 rounded text-xs font-bold border-0 cursor-pointer ${
-                      client.statut === 'actif'
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                        : client.statut === 'suspendu'
-                        ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                    }`}
-                  >
-                    <option value="actif">Actif</option>
-                    <option value="suspendu">Suspendu</option>
-                    <option value="inactif">Inactif</option>
-                  </select>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedClient(client);
-                        setShowDetailsModal(true);
-                      }}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                      title="Voir les détails"
-                    >
-                      <Eye className="w-5 h-5 text-gold" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedClientForCredentials(client);
-                        setShowCredentialsModal(true);
-                      }}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                      title="Voir les identifiants"
-                    >
-                      <Key className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                    </button>
-                    <button
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                      title="Modifier"
-                    >
-                      <Edit className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="grid gap-4">
+        {clients.map((client) => (
+          <div
+            key={client.id}
+            className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mb-2">
+                  {client.client_id}
+                </p>
+                <h3 className="text-xl font-bold text-midnight dark:text-white">{client.nom_marque}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{client.email}</p>
+                <p className="mt-3 text-xs uppercase tracking-[0.2em] font-semibold text-gray-500 dark:text-gray-400">
+                  {client.password_changed ? 'Mot de passe changé' : 'Mot de passe temporaire'}
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Cliquez sur « Identifiants » pour voir le mot de passe.</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs font-semibold">
+                  {client.pack.toUpperCase()}
+                </span>
+                <select
+                  value={client.statut}
+                  onChange={(e) => handleStatusChange(client, e.target.value)}
+                  className={`px-3 py-2 rounded-full text-xs font-semibold border-0 cursor-pointer focus:outline-none ${
+                    client.statut === 'actif'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                      : client.statut === 'suspendu'
+                      ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                  }`}
+                >
+                  <option value="actif">Actif</option>
+                  <option value="suspendu">Suspendu</option>
+                  <option value="inactif">Inactif</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600 dark:text-gray-400">
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-3xl p-4">
+                <p className="font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">N° contrat</p>
+                <p className="mt-2 font-bold text-midnight dark:text-white">{client.numero_contrat}</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-3xl p-4">
+                <p className="font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">Début</p>
+                <p className="mt-2 font-bold text-midnight dark:text-white">{client.date_debut}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  setSelectedClient(client);
+                  setShowDetailsModal(true);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-semibold transition-colors"
+              >
+                <Eye className="w-4 h-4 text-gold" />
+                Détails
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedClientForCredentials(client);
+                  setShowCredentialsModal(true);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-800 text-sm font-semibold transition-colors"
+              >
+                <Key className="w-4 h-4 text-blue-700 dark:text-blue-300" />
+                Identifiants
+              </button>
+              <button
+                onClick={() => handleDeleteClient(client)}
+                disabled={deletingClientId === client.id}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-800 text-sm font-semibold text-red-700 dark:text-red-300 transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" />
+                {deletingClientId === client.id ? 'Suppression...' : 'Supprimer'}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {clients.length === 0 && (
@@ -453,6 +614,7 @@ const AdminClientsManager = () => {
             setShowDetailsModal(false);
             setSelectedClient(null);
           }}
+          onDelete={() => selectedClient && handleDeleteClient(selectedClient)}
         />
       )}
 
@@ -464,6 +626,7 @@ const AdminClientsManager = () => {
           clientEmail={selectedClientForCredentials.email}
           tempPassword={selectedClientForCredentials.password_temp || null}
           passwordChanged={selectedClientForCredentials.password_changed || false}
+          onResetPassword={() => selectedClientForCredentials && handleResetPassword(selectedClientForCredentials)}
           onClose={() => {
             setShowCredentialsModal(false);
             setSelectedClientForCredentials(null);

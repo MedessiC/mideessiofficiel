@@ -12,11 +12,35 @@ CREATE TABLE IF NOT EXISTS users (
 -- Create a trigger function to automatically create a user record on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  username_value TEXT;
+  base_username TEXT;
+  candidate_username TEXT;
+  suffix INTEGER := 0;
 BEGIN
+  IF NEW.email IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  username_value := COALESCE(NULLIF(TRIM(COALESCE(NEW.raw_user_meta_data->>'username', '')), ''), split_part(NEW.email, '@', 1));
+  base_username := LOWER(REGEXP_REPLACE(username_value, '[^a-zA-Z0-9._-]+', '-', 'g'));
+  base_username := REGEXP_REPLACE(base_username, '(^-|-$)', '', 'g');
+
+  IF base_username = '' THEN
+    base_username := 'user';
+  END IF;
+
+  candidate_username := base_username;
+  WHILE EXISTS (SELECT 1 FROM public.users WHERE username = candidate_username) LOOP
+    suffix := suffix + 1;
+    candidate_username := base_username || '-' || suffix::TEXT;
+  END LOOP;
+
   INSERT INTO public.users (id, email, username)
-  VALUES (new.id, new.email, new.raw_user_meta_data->>'username')
+  VALUES (NEW.id, NEW.email, candidate_username)
   ON CONFLICT (id) DO NOTHING;
-  RETURN new;
+
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
@@ -85,6 +109,7 @@ ALTER TABLE leaderboard_monthly ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for users table
 CREATE POLICY "Users can read their own data" ON users FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can create their own profile" ON users FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Users can update their own data" ON users FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Anyone can view profiles" ON users FOR SELECT USING (true);
 

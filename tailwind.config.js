@@ -49,8 +49,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Montserrat', 'sans-serif'],
-        sans: ['Open Sans', 'sans-serif'],
+        display: ['Poppins', 'sans-serif'],
+        sans: ['Poppins', 'sans-serif'],
         mono: ['Fira Code', 'Monaco', 'Consolas', 'monospace'],
       },
       spacing: {

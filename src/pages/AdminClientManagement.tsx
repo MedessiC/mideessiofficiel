@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, LogOut, Target, FileText, Calendar, Plus, Mail, Zap, Info } from 'lucide-react';
+import { ArrowLeft, Users, LogOut, Target, FileText, Calendar, Plus, Mail, Sparkles, Info, Key } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import AdminWeeklyObjectives from '../components/admin/AdminWeeklyObjectives';
 import AdminGlobalObjectives from '../components/admin/AdminGlobalObjectives';
 import AdminReportsEditor from '../components/admin/AdminReportsEditor';
 import AdminEditorialCalendar from '../components/admin/AdminEditorialCalendar';
-import AdminClientsManager from '../components/admin/AdminClientsManager';
+import CreateClientWizard from '../components/admin/CreateClientWizard';
 import AdminMessagesManager from '../components/admin/AdminMessagesManager';
 import AdminClientInfos from '../components/admin/AdminClientInfos';
+import AdminClientCredentials from '../components/admin/AdminClientCredentials';
 
-type ManagementTab = 'clients' | 'infos' | 'objectives' | 'global_objectives' | 'reports' | 'calendar' | 'messages';
+type ManagementTab = 'clients' | 'infos' | 'credentials' | 'objectives' | 'global_objectives' | 'reports' | 'calendar' | 'messages';
 
 interface Client {
   client_id: string;
@@ -120,7 +121,7 @@ const AdminClientManagement = () => {
             >
               ← Retour à la liste
             </button>
-            <AdminClientsManager />
+            <CreateClientWizard />
           </div>
         ) : !selectedClient ? (
           <div>
@@ -150,6 +151,9 @@ const AdminClientManagement = () => {
                       {client.nom_marque}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{client.email}</p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
+                      Identifiant client : <span className="font-semibold text-gray-800 dark:text-white">{client.client_id}</span>
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -202,6 +206,17 @@ const AdminClientManagement = () => {
                 Mes infos
               </button>
               <button
+                onClick={() => setActiveTab('credentials')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                  activeTab === 'credentials'
+                    ? 'bg-gold text-midnight shadow-md'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <Key className="w-5 h-5" />
+                Identifiants
+              </button>
+              <button
                 onClick={() => setActiveTab('objectives')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
                   activeTab === 'objectives'
@@ -220,7 +235,7 @@ const AdminClientManagement = () => {
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
-                <Zap className="w-5 h-5" />
+                <Sparkles className="w-5 h-5" />
                 Obj. Globaux
               </button>
               <button
@@ -262,6 +277,9 @@ const AdminClientManagement = () => {
             <div className={`${activeTab === 'messages' ? '' : 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700'}`}>
               {activeTab === 'infos' && (
                 <AdminClientInfos clientId={selectedClient} />
+              )}
+              {activeTab === 'credentials' && (
+                <AdminClientCredentials clientId={selectedClient} />
               )}
               {activeTab === 'objectives' && (
                 <AdminWeeklyObjectives clientId={selectedClient} />

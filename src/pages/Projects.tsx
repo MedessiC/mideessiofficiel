@@ -1,4 +1,4 @@
-import { ArrowRight, ExternalLink, CheckCircle, Users, Zap, Award } from 'lucide-react';
+import { ArrowRight, ExternalLink, CheckCircle, Users, Award } from 'lucide-react';
 import SEO from '../components/SEO';
 import { solutions } from '../data/solutions';
 
