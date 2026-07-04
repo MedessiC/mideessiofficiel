@@ -36,9 +36,18 @@ export async function uploadFileToCloudinary(file: File, folder = 'mideessi', re
     body: formData,
   });
 
-  const result = await uploadResponse.json();
+  let result: any;
+  try {
+    result = await uploadResponse.json();
+  } catch (err) {
+    const bodyText = await uploadResponse.text();
+    throw new Error(
+      `Erreur Cloudinary lors de l’upload : réponse invalide (${uploadResponse.status} ${uploadResponse.statusText}) ${bodyText}`
+    );
+  }
+
   if (!uploadResponse.ok) {
-    throw new Error(result.error?.message || 'Erreur Cloudinary lors de l’upload');
+    throw new Error(result?.error?.message || `Erreur Cloudinary lors de l’upload (${uploadResponse.status} ${uploadResponse.statusText})`);
   }
 
   return result.secure_url || result.url;
