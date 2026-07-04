@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import BookQuizModal from './BookQuizModal';
 
 interface PdfReaderProps {
   pdfUrl: string;
@@ -38,6 +39,10 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const [readerMode, setReaderMode] = useState<ReaderMode>('page');
   const [readerTheme, setReaderTheme] = useState<ReaderTheme>('midnight');
   const [showToolbar, setShowToolbar] = useState(true);
+  const [bookmarks, setBookmarks] = useState<number[]>([]);
+  const [showBookmarksList, setShowBookmarksList] = useState(false);
+  const [currentBookId, setCurrentBookId] = useState<string | null>(null);
+  const [quizTriggered, setQuizTriggered] = useState(true);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isCloudinary = pdfUrl.includes('cloudinary.com');
@@ -61,6 +66,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           .maybeSingle();
 
         if (bookData?.id) {
+          // Nous sauvegardons aussi les bookmarks courants
           await supabase.from('book_progress').upsert({
             book_id: bookData.id,
             user_id: user.id,
@@ -75,6 +81,42 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     }
   }, [user, pageCount, pdfUrl, getBookIdentifier]);
 
+  // Sauvegarder les marque-pages
+  const saveBookmarksToDb = useCallback(async (newBookmarks: number[]) => {
+    localStorage.setItem(`pdf_bookmarks_${getBookIdentifier()}`, JSON.stringify(newBookmarks));
+    if (user) {
+      try {
+        const { data: bookData } = await supabase
+          .from('books')
+          .select('id')
+          .eq('pdf_url', pdfUrl)
+          .maybeSingle();
+
+        if (bookData?.id) {
+          await supabase.from('book_progress').upsert({
+            book_id: bookData.id,
+            user_id: user.id,
+            bookmarks: JSON.stringify(newBookmarks),
+            last_read_at: new Date().toISOString()
+          }, { onConflict: 'book_id,user_id' });
+        }
+      } catch (err) {
+        console.error('Error saving bookmarks to database:', err);
+      }
+    }
+  }, [user, pdfUrl, getBookIdentifier]);
+
+  // Ajouter / Retirer un marque-page
+  const toggleBookmark = useCallback(() => {
+    setBookmarks(prev => {
+      const updated = prev.includes(pageNum)
+        ? prev.filter(p => p !== pageNum)
+        : [...prev, pageNum].sort((a, b) => a - b);
+      saveBookmarksToDb(updated);
+      return updated;
+    });
+  }, [pageNum, saveBookmarksToDb]);
+
   // Charger la dernière progression
   const loadSavedProgress = useCallback(async (doc: any) => {
     let savedPage = 1;
@@ -87,9 +129,10 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           .maybeSingle();
 
         if (bookData?.id) {
+          setCurrentBookId(bookData.id);
           const { data: progressData } = await supabase
             .from('book_progress')
-            .select('last_page_read')
+            .select('last_page_read, bookmarks')
             .eq('book_id', bookData.id)
             .eq('user_id', user.id)
             .maybeSingle();
@@ -97,13 +140,33 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           if (progressData?.last_page_read) {
             savedPage = progressData.last_page_read;
           }
+          if (progressData?.bookmarks) {
+            const parsed = typeof progressData.bookmarks === 'string'
+              ? JSON.parse(progressData.bookmarks)
+              : progressData.bookmarks;
+            if (Array.isArray(parsed)) setBookmarks(parsed);
+          }
         }
       } catch (err) {
         console.error('Error loading progress:', err);
       }
     } else {
+      // Pour les utilisateurs anonymes, on essaye aussi de charger le bookId en base pour les quizz
+      supabase
+        .from('books')
+        .select('id')
+        .eq('pdf_url', pdfUrl)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.id) setCurrentBookId(data.id);
+        });
+
       const local = localStorage.getItem(`pdf_progress_${getBookIdentifier()}`);
       if (local) savedPage = parseInt(local, 10);
+      const localBookmarks = localStorage.getItem(`pdf_bookmarks_${getBookIdentifier()}`);
+      if (localBookmarks) {
+        try { setBookmarks(JSON.parse(localBookmarks)); } catch {}
+      }
     }
 
     if (savedPage >= 1 && savedPage <= doc.numPages) {
@@ -296,6 +359,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       setPageNum(currentPage);
       setPageInput(String(currentPage));
       saveProgress(currentPage);
+      setQuizTriggered(true); // Autoriser le déclenchement d'un nouveau quiz pour cette nouvelle page
     }
   }, [readerMode, pageCount, pageNum, saveProgress]);
 
@@ -325,6 +389,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     if (!isNaN(num) && num >= 1 && num <= pageCount) {
       setPageNum(num);
       saveProgress(num);
+      setQuizTriggered(true); // Réinitialiser le déclencheur de quiz
       if (readerMode === 'scroll') {
         const canvas = canvasRefs.current[num];
         if (canvas) {
@@ -480,6 +545,53 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           >
             {readerMode === 'page' ? <Layers size={16} /> : <BookOpenCheck size={16} />}
           </button>
+
+          {/* Bookmarks toggle & list popover */}
+          <div className="relative">
+            <button
+              onClick={toggleBookmark}
+              title={bookmarks.includes(pageNum) ? 'Retirer le marque-page' : 'Ajouter un marque-page'}
+              className={`min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center rounded-lg ${
+                bookmarks.includes(pageNum)
+                  ? 'bg-[var(--brand-gold)] text-midnight'
+                  : theme.btnBg
+              } transition-all active:scale-95`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill={bookmarks.includes(pageNum) ? 'currentColor' : 'none'} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+              </svg>
+            </button>
+          </div>
+
+          {bookmarks.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setShowBookmarksList(s => !s)}
+                title="Liste des marque-pages"
+                className={`min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center rounded-lg ${theme.btnBg} transition-all active:scale-95`}
+              >
+                <span className="text-[10px] font-black">{bookmarks.length}🔖</span>
+              </button>
+              {showBookmarksList && (
+                <div className={`absolute top-full left-0 mt-1 z-[60] w-40 rounded-xl shadow-2xl p-2 border ${
+                  readerTheme === 'light' ? 'bg-white border-gray-200 text-gray-800' : 'bg-slate-800 border-white/10 text-white'
+                }`}>
+                  <p className="text-[10px] font-black uppercase tracking-wider opacity-60 mb-1 px-2">Marque-pages</p>
+                  <div className="max-h-32 overflow-y-auto space-y-0.5 scrollbar-none">
+                    {bookmarks.map(page => (
+                      <button
+                        key={page}
+                        onClick={() => { goToPage(String(page)); setShowBookmarksList(false); }}
+                        className="w-full text-left px-2 py-1 text-xs font-bold rounded-lg hover:bg-gold hover:text-midnight transition-colors"
+                      >
+                        Page {page}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Center */}
@@ -645,6 +757,15 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       )}
       {toolbar}
       {content}
+
+      {/* Interactive quiz overlay trigger */}
+      {currentBookId && quizTriggered && (
+        <BookQuizModal
+          bookId={currentBookId}
+          currentPage={pageNum}
+          onClose={() => setQuizTriggered(false)}
+        />
+      )}
     </div>
   );
 }

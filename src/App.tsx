@@ -43,6 +43,7 @@ import TeamMemberProfile from './pages/TeamMemberProfile';
 import Signup from './pages/Signup';
 import MyLibrary from './pages/MyLibrary';
 import ProfileOverview from './pages/ProfileOverview';
+import SearchProfiles from './pages/SearchProfiles';
 import UserProfileEdit from './pages/UserProfileEdit';
 import ClientOnboarding from './pages/ClientOnboarding';
 import ClientDashboard from './pages/ClientDashboard';
@@ -102,6 +103,7 @@ function AppContent() {
           <Route path="/profile/:username" element={<ProfileOverview />} />
           <Route path="/profile/edit" element={<ProtectedRoute><UserProfileEdit /></ProtectedRoute>} />
           <Route path="/my-library" element={<ProtectedRoute><MyLibrary /></ProtectedRoute>} />
+          <Route path="/search-profiles" element={<SearchProfiles />} />
           
           {/* Client Routes */}
           <Route path="/clients/*" element={<ClientShell />}>

@@ -10,6 +10,14 @@ import BookLikesComments from '../components/BookLikesComments';
 import PdfReader from '../components/PdfReader';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { Avatar } from '../components/ui/Avatar';
+
+interface TopReader {
+  username: string;
+  avatar_url: string | null;
+  score: number;
+  total_questions: number;
+}
 
 interface Book {
   id: string;
@@ -55,6 +63,7 @@ export default function BookDetail() {
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [shareToast, setShareToast] = useState(false);
+  const [topReaders, setTopReaders] = useState<TopReader[]>([]);
 
   const readerRef = useRef<HTMLDivElement>(null);
 
@@ -128,6 +137,44 @@ export default function BookDetail() {
         .select('id', { count: 'exact', head: true })
         .eq('book_id', id);
       setLikeCount(count || 0);
+
+      // Récupérer le Top 3 des meilleurs lecteurs pour ce livre
+      try {
+        const { data: quizzes } = await supabase
+          .from('book_quizzes')
+          .select('id')
+          .eq('book_id', id);
+
+        if (quizzes && quizzes.length > 0) {
+          const quizIds = quizzes.map((q: any) => q.id);
+          const { data: attempts } = await supabase
+            .from('user_quiz_attempts')
+            .select('score, total_questions, users(username, avatar_url)')
+            .in('quiz_id', quizIds);
+
+          if (attempts) {
+            // Regrouper par utilisateur pour sommer leurs points
+            const userScores: Record<string, { username: string; avatar_url: string | null; score: number; total: number }> = {};
+            attempts.forEach((a: any) => {
+              const u = a.users;
+              if (!u) return;
+              if (!userScores[u.username]) {
+                userScores[u.username] = { username: u.username, avatar_url: u.avatar_url, score: 0, total: 0 };
+              }
+              userScores[u.username].score += Number(a.score || 0);
+              userScores[u.username].total += Number(a.total_questions || 0);
+            });
+
+            const sorted = Object.values(userScores)
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 3) as TopReader[];
+            
+            setTopReaders(sorted);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching book leaderboard:', err);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
     } finally {
@@ -504,6 +551,42 @@ export default function BookDetail() {
                   </button>
                 </div>
               </div>
+
+              {/* Leaderboard Top 3 Readers */}
+              {topReaders.length > 0 && (
+                <div className="bg-gradient-to-br from-[var(--brand-midnight)] to-blue-950 rounded-2xl p-5 border border-gold/20 shadow-xl text-white">
+                  <h3 className="font-bold text-sm mb-4 flex items-center gap-2 text-white">
+                    <Award className="w-5 h-5 text-gold animate-bounce" /> Top Lecteurs
+                  </h3>
+                  <div className="space-y-3">
+                    {topReaders.map((reader, index) => {
+                      const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+                      return (
+                        <Link
+                          key={reader.username}
+                          to={`/profile/${reader.username}`}
+                          className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5 hover:border-gold/30 hover:bg-white/10 transition-all group"
+                        >
+                          <span className="text-base font-bold">{medal}</span>
+                          <Avatar
+                            src={reader.avatar_url || undefined}
+                            name={reader.username}
+                            className="w-8 h-8 rounded-full border border-white/10"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-white truncate group-hover:text-gold transition-colors">
+                              @{reader.username}
+                            </p>
+                            <p className="text-[10px] text-gray-400 mt-0.5">
+                              {reader.score} / {reader.total_questions} réponses
+                            </p>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Related books */}
               {relatedBooks.length > 0 && (

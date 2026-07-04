@@ -20,3 +20,12 @@ if (rootElement.hasChildNodes()) {
     </StrictMode>
   );
 }
+
+// Enregistrement du Service Worker pour la PWA et le cache PDF
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => console.log('🚀 Service Worker enregistré avec succès:', reg.scope))
+      .catch((err) => console.error('❌ Échec de l\'enregistrement du Service Worker:', err));
+  });
+}

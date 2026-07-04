@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { 
   Mail, Globe, Heart, MapPin, MessageSquare, BookOpen, Sparkles, 
   Camera, ShieldCheck, Users, Edit3, Settings, ChevronLeft, Save, 
-  X, Trash2, ShieldAlert, Award
+  X, Trash2, ShieldAlert, Award, Lock
 } from 'lucide-react';
 import SEO from '../components/SEO';
 import { Avatar } from '../components/ui/Avatar';
@@ -24,6 +24,7 @@ interface ProfileData {
   location?: string | null;
   phone?: string | null;
   social_links?: Record<string, string> | null;
+  is_library_public?: boolean;
 }
 
 interface ProfileStats {
@@ -45,6 +46,8 @@ export default function ProfileOverview() {
     articlesCommented: 0,
     booksReviewed: 0,
     contributionsScore: 0,
+    attemptsCount: 0,
+    avgQuizScore: 0,
   });
   
   const [loading, setLoading] = useState(true);
@@ -57,6 +60,8 @@ export default function ProfileOverview() {
   const [activeTab, setActiveTab] = useState<'activity' | 'about' | 'settings'>('activity');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [isLibraryPublic, setIsLibraryPublic] = useState(true);
+  const [readBooks, setReadBooks] = useState<{ id: string; title: string; cover_url: string | null; progress_percent: number }[]>([]);
 
   useEffect(() => {
     fetchProfile();
@@ -77,7 +82,7 @@ export default function ProfileOverview() {
 
       let result = await supabase
         .from('users')
-        .select('id,email,username,avatar_url,bio,website,location,social_links,created_at')
+        .select('id,email,username,avatar_url,bio,website,location,social_links,created_at,is_library_public')
         .eq('username', lookupUsername)
         .maybeSingle();
 
@@ -114,6 +119,7 @@ export default function ProfileOverview() {
       } else {
         const profileData = data as ProfileData;
         setProfile(profileData);
+        setIsLibraryPublic(profileData.is_library_public !== false); // default true
         setFormData({
           username: profileData.username || '',
           avatar_url: profileData.avatar_url || '',
@@ -125,23 +131,62 @@ export default function ProfileOverview() {
 
       const userId = data?.id || currentUser?.id;
       if (userId) {
-        const [{ data: blogComments }, { data: blogLikes }, { data: bookComments }, { data: bookLikes }] = await Promise.all([
+        const [{ data: blogComments }, { data: blogLikes }, { data: bookComments }, { data: bookLikes }, { data: quizAttempts }] = await Promise.all([
           supabase.from('blog_comments').select('id').eq('user_id', userId),
           supabase.from('blog_likes').select('id').eq('user_id', userId),
           supabase.from('book_comments').select('id').eq('user_id', userId),
           supabase.from('book_likes').select('id').eq('user_id', userId),
+          supabase.from('user_quiz_attempts').select('score, total_questions').eq('user_id', userId),
         ]);
 
         const commentCount = (blogComments?.length || 0) + (bookComments?.length || 0);
         const likeCount = (blogLikes?.length || 0) + (bookLikes?.length || 0);
+
+        let totalCorrect = 0;
+        let totalQuestions = 0;
+        if (quizAttempts) {
+          quizAttempts.forEach((a: any) => {
+            totalCorrect += Number(a.score || 0);
+            totalQuestions += Number(a.total_questions || 0);
+          });
+        }
+        const avgScore = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
 
         setStats({
           totalComments: commentCount,
           totalLikes: likeCount,
           articlesCommented: blogComments?.length || 0,
           booksReviewed: bookComments?.length || 0,
-          contributionsScore: commentCount * 2 + likeCount,
+          contributionsScore: commentCount * 2 + likeCount + (totalCorrect * 5),
+          attemptsCount: quizAttempts?.length || 0,
+          avgQuizScore: avgScore
         });
+
+        // Fetch read books (from book_progress joined with books)
+        const profileIsPublic = (data as any)?.is_library_public !== false;
+        const canSeeBooks = profileIsPublic || data?.id === currentUser?.id;
+        if (canSeeBooks) {
+          const { data: progressData } = await supabase
+            .from('book_progress')
+            .select('progress_percent, books(id, title, cover_url)')
+            .eq('user_id', userId)
+            .gte('progress_percent', 5)
+            .order('updated_at', { ascending: false })
+            .limit(12);
+
+          if (progressData) {
+            setReadBooks(
+              progressData
+                .filter((p: any) => p.books)
+                .map((p: any) => ({
+                  id: p.books.id,
+                  title: p.books.title,
+                  cover_url: p.books.cover_url,
+                  progress_percent: p.progress_percent,
+                }))
+            );
+          }
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de charger le profil');
@@ -196,7 +241,8 @@ export default function ProfileOverview() {
 
       let lastError: Error | null = null;
       for (const payload of payloadAttempts) {
-        const { error } = await supabase.from('users').upsert(payload, { onConflict: 'id' });
+        const fullPayload = { ...payload, is_library_public: isLibraryPublic };
+        const { error } = await supabase.from('users').upsert(fullPayload, { onConflict: 'id' });
         if (!error) { lastError = null; break; }
         lastError = error as Error;
       }
@@ -425,6 +471,39 @@ export default function ProfileOverview() {
                   </div>
                 )}
               </div>
+              
+              {/* Quiz progress card (Midnight/Gold style) */}
+              <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-midnight dark:text-white flex items-center gap-1.5">
+                  <Award size={14} className="text-gold" /> Quiz Académiques
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-400">Quiz complétés</span>
+                    <span className="font-bold text-midnight dark:text-white">{stats.attemptsCount}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-400">Score de réussite moyen</span>
+                    <span className="font-bold text-gold">{stats.avgQuizScore}%</span>
+                  </div>
+                  
+                  {stats.attemptsCount > 0 && (
+                    <div className="pt-2 border-t border-[var(--border)] space-y-1.5">
+                      <div className="flex justify-between text-[10px] font-bold text-gray-500">
+                        <span>Réussite moyenne</span>
+                        <span>{stats.avgQuizScore}%</span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400 rounded-full transition-all" 
+                          style={{ width: `${stats.avgQuizScore}%` }} 
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm">
                 <h3 className="text-xs font-black uppercase tracking-wider text-midnight dark:text-white flex items-center gap-1">
                   <Award size={14} className="text-gold" /> Contributions
@@ -466,8 +545,61 @@ export default function ProfileOverview() {
                     Parcourir les articles
                   </Link>
                 </div>
+
+                {/* Bibliothèque lue */}
+                <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm">
+                  <h3 className="text-sm font-black text-midnight dark:text-white mb-4 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-[var(--brand-gold)]" />
+                    Bibliothèque lue
+                    {!isOwnProfile && !profile.is_library_public && (
+                      <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold text-gray-400">
+                        <Lock className="w-3 h-3" /> Privée
+                      </span>
+                    )}
+                  </h3>
+                  {readBooks.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {readBooks.map((book) => (
+                        <Link
+                          key={book.id}
+                          to={`/library/${book.id}`}
+                          className="group flex flex-col gap-2 p-2 rounded-xl border border-[var(--border)] hover:border-[var(--brand-gold)]/40 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
+                        >
+                          <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                            {book.cover_url ? (
+                              <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <BookOpen className="w-6 h-6 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-[10px] font-bold text-midnight dark:text-white line-clamp-2 leading-tight">{book.title}</p>
+                          <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1">
+                            <div
+                              className="bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400 h-1 rounded-full transition-all"
+                              style={{ width: `${Math.min(book.progress_percent, 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-[9px] text-gray-400 font-semibold">{book.progress_percent}% lu</span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      {!isOwnProfile && !profile.is_library_public ? (
+                        <p className="text-xs text-gray-400 flex items-center justify-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5" /> Cet utilisateur a rendu sa bibliothèque privée.
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-400">Aucun livre lu pour le moment.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
+
             {activeTab === 'about' && (
               <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-6 shadow-sm space-y-6">
                 <div>
@@ -587,6 +719,40 @@ export default function ProfileOverview() {
                     </h3>
                     <p className="text-[10px] text-gray-400 leading-normal">
                       Votre compte est actuellement actif et configuré. Les informations ci-dessus définissent votre présence publique.
+                    </p>
+                  </div>
+
+                  {/* Privacy toggle */}
+                  <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm space-y-4">
+                    <h3 className="text-sm font-black text-midnight dark:text-white pb-2 border-b border-[var(--border)] flex items-center gap-2">
+                      <ShieldCheck size={15} className="text-emerald-500" /> Confidentialité
+                    </h3>
+                    <div className="flex items-start gap-3">
+                      <button
+                        id="library-public-toggle"
+                        onClick={() => setIsLibraryPublic(p => !p)}
+                        className={`relative flex-shrink-0 mt-0.5 w-10 h-5 rounded-full transition-all duration-300 focus:outline-none ${
+                          isLibraryPublic ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}
+                        aria-label="Rendre la bibliothèque publique"
+                      >
+                        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${
+                          isLibraryPublic ? 'translate-x-5' : 'translate-x-0'
+                        }`} />
+                      </button>
+                      <div>
+                        <p className="text-xs font-bold text-midnight dark:text-white">
+                          Bibliothèque publique
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5 leading-normal">
+                          {isLibraryPublic
+                            ? 'Votre liste de livres lus est visible par tous les autres utilisateurs sur votre profil.'
+                            : 'Votre bibliothèque est privée. Seul vous pouvez voir vos livres lus.'}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-gray-400 leading-normal border-t border-[var(--border)] pt-3">
+                      ⚠️ Votre score de quiz reste toujours visible publiquement.
                     </p>
                   </div>
                   <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-2xl p-5 shadow-sm space-y-3.5">
