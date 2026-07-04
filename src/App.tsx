@@ -25,6 +25,7 @@ import ModernBlog from './pages/ModernBlog';
 import NewBlogPost from './pages/NewBlogPost';
 import Contact from './pages/Contact';
 import Careers from './pages/Careers';
+import OfferApplication from './pages/OfferApplication';
 import Legal from './pages/Legal';
 import Offres from './pages/Offres';
 import DetailOffre from './pages/DetailOffre';
@@ -89,6 +90,7 @@ function AppContent() {
           <Route path="/library/:id" element={<BookDetail />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/careers" element={<Careers />} />
+          <Route path="/careers/apply/:offerId" element={<OfferApplication />} />
           <Route path="/legal" element={<Legal />} />
           <Route path="/login" element={<UnifiedLogin />} />
           <Route path="/admin/login" element={<AdminLogin />} />

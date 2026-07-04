@@ -1,22 +1,12 @@
-import { ArrowRight, Heart, BookOpen, Brain, Sparkles, Briefcase, MapPin, Send, X } from 'lucide-react';
+import { ArrowRight, Heart, BookOpen, Brain, Sparkles, Briefcase, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import SEO from '../components/SEO';
-import { createRecruitmentApplication, getRecruitmentOffers, syncRecruitmentOffers, type RecruitmentOffer } from '../lib/contentManagement';
+import { getRecruitmentOffers, syncRecruitmentOffers, type RecruitmentOffer } from '../lib/contentManagement';
 
 const Careers = () => {
   const [offers, setOffers] = useState(getRecruitmentOffers());
-  const [selectedOffer, setSelectedOffer] = useState<RecruitmentOffer | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState('');
-  const [applicationForm, setApplicationForm] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    cvUrl: '',
-    portfolioUrl: '',
-    coverLetter: '',
-  });
 
   useEffect(() => {
     const loadOffers = async () => {
@@ -33,38 +23,6 @@ const Careers = () => {
     return () => window.removeEventListener('mideessi-content-updated', handler);
   }, []);
 
-  const openApplicationForm = (offer: RecruitmentOffer) => {
-    setSelectedOffer(offer);
-    setFeedback('');
-    setApplicationForm({
-      fullName: '',
-      email: '',
-      phone: '',
-      cvUrl: '',
-      portfolioUrl: '',
-      coverLetter: '',
-    });
-  };
-
-  const handleApplicationSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedOffer) return;
-
-    setIsSubmitting(true);
-    await createRecruitmentApplication({
-      offerId: selectedOffer.id,
-      fullName: applicationForm.fullName,
-      email: applicationForm.email,
-      phone: applicationForm.phone,
-      cvUrl: applicationForm.cvUrl,
-      portfolioUrl: applicationForm.portfolioUrl,
-      coverLetter: applicationForm.coverLetter,
-    });
-
-    setFeedback(`Votre candidature pour “${selectedOffer.title}” a bien été envoyée.`);
-    setIsSubmitting(false);
-    setSelectedOffer(null);
-  };
 
   return (
     <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
@@ -192,65 +150,14 @@ const Careers = () => {
                       ))}
                     </ul>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => openApplicationForm(offer)}
+                  <Link
+                    to={`/careers/apply/${offer.id}`}
                     className="mt-6 inline-flex items-center gap-2 rounded-full bg-midnight px-4 py-2 text-sm font-semibold text-white"
                   >
                     Postuler <ArrowRight className="h-4 w-4" />
-                  </button>
+                  </Link>
                 </div>
               ))}
-            </div>
-          )}
-
-          {selectedOffer && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-8">
-              <div className="w-full max-w-2xl rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold">Candidature</p>
-                    <h3 className="mt-2 text-2xl font-bold text-midnight dark:text-white">{selectedOffer.title}</h3>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Remplissez ce formulaire pour postuler à cette offre.</p>
-                  </div>
-                  <button type="button" onClick={() => setSelectedOffer(null)} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleApplicationSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Nom complet</label>
-                    <input required value={applicationForm.fullName} onChange={(e) => setApplicationForm({ ...applicationForm, fullName: e.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="Votre nom" />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Email</label>
-                    <input required type="email" value={applicationForm.email} onChange={(e) => setApplicationForm({ ...applicationForm, email: e.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="you@example.com" />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Téléphone</label>
-                    <input value={applicationForm.phone} onChange={(e) => setApplicationForm({ ...applicationForm, phone: e.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="+229 ..." />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Lien CV</label>
-                    <input value={applicationForm.cvUrl} onChange={(e) => setApplicationForm({ ...applicationForm, cvUrl: e.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="https://..." />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Portfolio / LinkedIn</label>
-                    <input value={applicationForm.portfolioUrl} onChange={(e) => setApplicationForm({ ...applicationForm, portfolioUrl: e.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="https://..." />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Motivation</label>
-                    <textarea required rows={5} value={applicationForm.coverLetter} onChange={(e) => setApplicationForm({ ...applicationForm, coverLetter: e.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="Expliquez pourquoi vous êtes intéressé(e) par ce poste." />
-                  </div>
-                  <div className="md:col-span-2 flex flex-wrap items-center justify-end gap-3">
-                    <button type="button" onClick={() => setSelectedOffer(null)} className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Annuler</button>
-                    <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-full bg-midnight px-4 py-2 text-sm font-semibold text-white">
-                      <Send className="h-4 w-4" /> {isSubmitting ? 'Envoi...' : 'Envoyer la candidature'}
-                    </button>
-                  </div>
-                </form>
-              </div>
             </div>
           )}
         </div>
