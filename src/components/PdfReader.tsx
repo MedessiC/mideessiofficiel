@@ -44,13 +44,13 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     setLoading(true);
     setError(null);
 
-    (async () => {
+    const loadPdf = async (urlToFetch: string, isFallback: boolean = false) => {
       try {
         const pdfjs = await import('pdfjs-dist/legacy/build/pdf');
         // @ts-ignore
         pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.js', import.meta.url).toString();
 
-        const loadingTask = pdfjs.getDocument(effectiveUrl);
+        const loadingTask = pdfjs.getDocument(urlToFetch);
         const doc = await loadingTask.promise;
         if (cancelled) return;
         setPdfDoc(doc);
@@ -65,7 +65,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           const viewport = firstPage.getViewport({ scale: 1.0 });
           const container = scrollContainerRef.current;
           if (container) {
-            const availWidth = container.clientWidth - 48; // 24px padding each side
+            const availWidth = container.clientWidth - 48;
             const fitScale = Math.min(availWidth / viewport.width, 2.0);
             setScale(Math.max(0.5, +(fitScale).toFixed(2)));
           } else {
@@ -75,15 +75,32 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           setScale(1.0);
         }
       } catch (err: any) {
-        console.error('PDF load error', err);
-        if (!cancelled) setError(err?.message || 'Erreur chargement PDF');
+        console.error(`PDF load error (url: ${urlToFetch})`, err);
+        if (cancelled) return;
+
+        // Fallback: If proxy failed, try fetching directly
+        if (!isFallback && isCloudinary && urlToFetch !== pdfUrl) {
+          console.log('Proxy failed, retrying directly with original URL...');
+          loadPdf(pdfUrl, true);
+        } else {
+          if (err?.message?.includes('404') || err?.message?.includes('Missing PDF') || err?.message?.includes('Failed to fetch')) {
+            setError('Le fichier PDF est introuvable ou inaccessible (Erreur 404/502). Veuillez vérifier le lien du document.');
+          } else {
+            setError(err?.message || 'Erreur lors du chargement du PDF');
+          }
+          setLoading(false);
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && (urlToFetch === pdfUrl || !isCloudinary)) {
+          setLoading(false);
+        }
       }
-    })();
+    };
+
+    loadPdf(effectiveUrl);
 
     return () => { cancelled = true; };
-  }, [effectiveUrl]);
+  }, [effectiveUrl, pdfUrl, isCloudinary]);
 
   // Render current page
   useEffect(() => {
