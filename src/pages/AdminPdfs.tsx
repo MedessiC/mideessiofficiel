@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
-  BookOpen, Plus, Edit2, Trash2, Save, X, Eye, Palette, Sparkles, Users, Loader, LogOut,
+  BookOpen, Plus, Edit2, Trash2, Save, X, Palette, Sparkles, Users, Loader, LogOut,
   TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle, FileText, Upload, Image, ExternalLink
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -431,7 +431,7 @@ const AdminDashboard = () => {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 ${showForm ? 'hidden' : ''}`}>
         {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
@@ -586,27 +586,40 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* ── Form Modal ──────────────────────────────────────────────────────── */}
+      {/* ── Form Page ───────────────────────────────────────────────────────── */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
-          <div className="bg-white dark:bg-gray-800 w-full sm:max-w-3xl sm:rounded-2xl shadow-2xl sm:my-8 h-screen sm:h-auto max-h-screen sm:max-h-[90vh] flex flex-col rounded-t-3xl sm:rounded-2xl">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-[var(--brand-midnight)] text-white rounded-t-3xl sm:rounded-t-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-[calc(100vh-10rem)]">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-[var(--brand-midnight)] text-white">
               <div className="flex items-center gap-3">
                 <BookOpen className="w-5 h-5 text-[var(--brand-gold)]" />
-                <h2 className="text-xl sm:text-2xl font-bold">
-                  {editingBook ? 'Modifier le PDF' : 'Publier un nouveau PDF'}
-                </h2>
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold leading-tight">
+                    {editingBook ? 'Modifier le PDF' : 'Publier un nouveau PDF'}
+                  </h2>
+                  <p className="text-sm text-[var(--brand-gold)] opacity-90">
+                    Utilisez le formulaire pour publier ou mettre à jour un ebook Cloudinary.
+                  </p>
+                </div>
               </div>
-              <button
-                onClick={resetForm}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="inline-flex items-center justify-center px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                >
+                  Retour
+                </button>
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="inline-flex items-center justify-center p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
-            {/* Form Content */}
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
               <div className="p-4 sm:p-6 space-y-6">
 
@@ -740,6 +753,9 @@ const AdminDashboard = () => {
                             Cliquez pour sélectionner un PDF
                           </p>
                           <p className="text-xs text-gray-400 mt-1">ou glissez-déposez ici</p>
+                          {uploadHint && (
+                            <p className="text-xs text-gray-500 mt-2">{uploadHint}</p>
+                          )}
                         </div>
                       )}
                     </div>
