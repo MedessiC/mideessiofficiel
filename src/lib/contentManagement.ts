@@ -59,6 +59,7 @@ const STORAGE_KEYS = {
   applications: 'mideessi_recruitment_applications',
   projects: 'mideessi_dynamic_projects',
   team: 'mideessi_team_members',
+  deletedRecruitmentOffers: 'mideessi_deleted_recruitment_offer_ids',
 } as const;
 
 const notifyContentUpdate = () => {
@@ -94,6 +95,21 @@ const writeStoredItems = <T>(key: string, items: T[]) => {
   notifyContentUpdate();
 };
 
+const readDeletedRecruitmentOfferIds = (): string[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEYS.deletedRecruitmentOffers);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeDeletedRecruitmentOfferIds = (ids: string[]) => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(STORAGE_KEYS.deletedRecruitmentOffers, JSON.stringify(ids));
+};
+
 const mapRecruitmentOffer = (row: Record<string, unknown>): RecruitmentOffer => ({
   id: String(row.id || `recruitment-${Date.now()}`),
   slug: String(row.slug || slugify(String(row.title || 'offre')) || ''),
@@ -123,7 +139,8 @@ const mapRecruitmentApplication = (row: Record<string, unknown>): RecruitmentApp
 });
 
 export const getRecruitmentOffers = (): RecruitmentOffer[] => {
-  return readStoredItems<RecruitmentOffer>(STORAGE_KEYS.recruitment).filter((item) => item.isPublished);
+  const deletedIds = readDeletedRecruitmentOfferIds();
+  return readStoredItems<RecruitmentOffer>(STORAGE_KEYS.recruitment).filter((item) => item.isPublished && !deletedIds.includes(item.id));
 };
 
 export const syncRecruitmentOffers = async (): Promise<RecruitmentOffer[]> => {
@@ -131,7 +148,10 @@ export const syncRecruitmentOffers = async (): Promise<RecruitmentOffer[]> => {
     const { data, error } = await supabase.from('recruitment_offers').select('*').order('created_at', { ascending: false });
 
     if (!error && Array.isArray(data)) {
-      const offers = data.map((row) => mapRecruitmentOffer(row as Record<string, unknown>)).filter((item) => item.isPublished);
+      const deletedIds = readDeletedRecruitmentOfferIds();
+      const offers = data
+        .map((row) => mapRecruitmentOffer(row as Record<string, unknown>))
+        .filter((item) => item.isPublished && !deletedIds.includes(item.id));
       writeStoredItems(STORAGE_KEYS.recruitment, offers);
       return offers;
     }
@@ -188,10 +208,17 @@ export const createRecruitmentOffer = async (offer: Omit<RecruitmentOffer, 'id' 
 export const deleteRecruitmentOffer = async (offerId: string): Promise<boolean> => {
   const items = readStoredItems<RecruitmentOffer>(STORAGE_KEYS.recruitment);
   const remaining = items.filter((item) => item.id !== offerId);
+  const deletedIds = readDeletedRecruitmentOfferIds();
+  const nextDeletedIds = deletedIds.includes(offerId) ? deletedIds : [...deletedIds, offerId];
+
   writeStoredItems(STORAGE_KEYS.recruitment, remaining);
+  writeDeletedRecruitmentOfferIds(nextDeletedIds);
 
   try {
-    const { error } = await supabase.from('recruitment_offers').delete().eq('id', offerId);
+    const { error } = await supabase
+      .from('recruitment_offers')
+      .update({ is_published: false })
+      .eq('id', offerId);
     return !error;
   } catch (error) {
     console.error('Unable to delete recruitment offer:', error);
