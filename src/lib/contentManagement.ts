@@ -299,6 +299,29 @@ export const getDynamicProjects = (): DynamicProject[] => {
   return readStoredItems<DynamicProject>(STORAGE_KEYS.projects).filter((item) => item.isPublished);
 };
 
+const normalizeProjectPayload = (project: Omit<DynamicProject, 'id' | 'createdAt'>) => ({
+  id: `project-${Date.now()}`,
+  name: project.name?.trim() || 'Projet sans nom',
+  slug: (project.slug || '').trim() || slugify(project.name || 'projet') || `projet-${Date.now()}`,
+  category: project.category || 'autre',
+  tagline: project.tagline || '',
+  description: project.description || '',
+  longDescription: project.longDescription || '',
+  image: project.image || '',
+  logo: project.logo || '',
+  website: project.website || '#',
+  status: project.status || 'En cours',
+  launchDate: project.launchDate || '',
+  targetAudience: Array.isArray(project.targetAudience) ? project.targetAudience : [],
+  features: Array.isArray(project.features) ? project.features : [],
+  benefits: Array.isArray(project.benefits) ? project.benefits : [],
+  technologies: Array.isArray(project.technologies) ? project.technologies : [],
+  cta: project.cta || { text: 'Découvrir', url: project.website || '#' },
+  contact: project.contact || { email: 'contact@mideessi.com' },
+  isPublished: project.isPublished ?? true,
+  createdAt: new Date().toISOString(),
+});
+
 export const syncDynamicProjects = async (): Promise<DynamicProject[]> => {
   try {
     const { data, error } = await supabase.from('dynamic_projects').select('*').order('created_at', { ascending: false });
@@ -338,35 +361,32 @@ export const syncDynamicProjects = async (): Promise<DynamicProject[]> => {
 };
 
 export const createDynamicProject = async (project: Omit<DynamicProject, 'id' | 'createdAt'>): Promise<DynamicProject> => {
-  const newProject: DynamicProject = {
-    ...project,
-    id: `project-${Date.now()}`,
-    createdAt: new Date().toISOString(),
-  };
+  const normalized = normalizeProjectPayload(project);
+  const newProject: DynamicProject = normalized;
 
   try {
     const { data, error } = await supabase
       .from('dynamic_projects')
       .insert({
-        name: project.name,
-        slug: project.slug,
-        category: project.category,
-        tagline: project.tagline,
-        description: project.description,
-        long_description: project.longDescription,
-        image_url: project.image,
-        logo_url: project.logo,
-        website: project.website,
-        status: project.status,
-        launch_date: project.launchDate,
-        target_audience: project.targetAudience,
-        features: project.features,
-        benefits: project.benefits,
-        technologies: project.technologies,
-        cta_text: project.cta?.text || 'Découvrir',
-        cta_url: project.cta?.url || project.website || '#',
-        contact_email: project.contact?.email || 'contact@mideessi.com',
-        is_published: project.isPublished,
+        name: normalized.name,
+        slug: normalized.slug,
+        category: normalized.category,
+        tagline: normalized.tagline,
+        description: normalized.description,
+        long_description: normalized.longDescription,
+        image_url: normalized.image,
+        logo_url: normalized.logo,
+        website: normalized.website,
+        status: normalized.status,
+        launch_date: normalized.launchDate,
+        target_audience: normalized.targetAudience,
+        features: normalized.features,
+        benefits: normalized.benefits,
+        technologies: normalized.technologies,
+        cta_text: normalized.cta.text,
+        cta_url: normalized.cta.url,
+        contact_email: normalized.contact.email,
+        is_published: normalized.isPublished,
       })
       .select('*')
       .maybeSingle();
@@ -374,25 +394,25 @@ export const createDynamicProject = async (project: Omit<DynamicProject, 'id' | 
     if (!error && data) {
       const savedProject = {
         id: String(data.id || newProject.id),
-        name: String(data.name || project.name),
-        slug: String(data.slug || project.slug),
-        category: (data.category as Solution['category']) || project.category,
-        tagline: String(data.tagline || project.tagline),
-        description: String(data.description || project.description),
-        longDescription: String(data.long_description || project.longDescription),
-        image: String(data.image_url || project.image),
-        logo: String(data.logo_url || project.logo),
-        website: String(data.website || project.website),
-        status: (data.status as Solution['status']) || project.status,
-        launchDate: String(data.launch_date || project.launchDate),
-        targetAudience: Array.isArray(data.target_audience) ? data.target_audience.filter(Boolean).map((item) => String(item)) : project.targetAudience,
-        features: Array.isArray(data.features) ? data.features : project.features,
-        benefits: Array.isArray(data.benefits) ? data.benefits.filter(Boolean).map((item) => String(item)) : project.benefits,
-        technologies: Array.isArray(data.technologies) ? data.technologies.filter(Boolean).map((item) => String(item)) : project.technologies,
-        cta: { text: String(data.cta_text || project.cta?.text || 'Découvrir'), url: String(data.cta_url || project.cta?.url || project.website || '#') },
-        contact: { email: String(data.contact_email || project.contact?.email || 'contact@mideessi.com') },
-        isPublished: Boolean(data.is_published ?? project.isPublished),
-        createdAt: String(data.created_at || new Date().toISOString()),
+        name: String(data.name || normalized.name),
+        slug: String(data.slug || normalized.slug),
+        category: (data.category as Solution['category']) || normalized.category,
+        tagline: String(data.tagline || normalized.tagline),
+        description: String(data.description || normalized.description),
+        longDescription: String(data.long_description || normalized.longDescription),
+        image: String(data.image_url || normalized.image),
+        logo: String(data.logo_url || normalized.logo),
+        website: String(data.website || normalized.website),
+        status: (data.status as Solution['status']) || normalized.status,
+        launchDate: String(data.launch_date || normalized.launchDate),
+        targetAudience: Array.isArray(data.target_audience) ? data.target_audience.filter(Boolean).map((item) => String(item)) : normalized.targetAudience,
+        features: Array.isArray(data.features) ? data.features : normalized.features,
+        benefits: Array.isArray(data.benefits) ? data.benefits.filter(Boolean).map((item) => String(item)) : normalized.benefits,
+        technologies: Array.isArray(data.technologies) ? data.technologies.filter(Boolean).map((item) => String(item)) : normalized.technologies,
+        cta: { text: String(data.cta_text || normalized.cta.text || 'Découvrir'), url: String(data.cta_url || normalized.cta.url || normalized.website || '#') },
+        contact: { email: String(data.contact_email || normalized.contact.email || 'contact@mideessi.com') },
+        isPublished: Boolean(data.is_published ?? normalized.isPublished),
+        createdAt: String(data.created_at || normalized.createdAt),
       } as DynamicProject;
 
       const items = readStoredItems<DynamicProject>(STORAGE_KEYS.projects);

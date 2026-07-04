@@ -1,4 +1,4 @@
-import { ArrowRight, Compass, CheckCircle2, ShieldCheck, Layers3, Sparkles, Smartphone, X } from 'lucide-react';
+import { ArrowRight, Compass, CheckCircle2, ShieldCheck, Layers3, Sparkles, Smartphone, X, Globe2, Target, Users, TrendingUp, Award } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import SEO from '../components/SEO';
 import { categories, solutions } from '../data/solutions';
@@ -23,11 +23,16 @@ const Solutions = () => {
 
   useEffect(() => {
     const handler = () => {
-      setDynamicProjects(getDynamicProjects());
+      const freshProjects = getDynamicProjects();
+      setDynamicProjects(freshProjects);
+      if (selectedSolutionId && !freshProjects.some((project) => project.id === selectedSolutionId) && !solutions.some((solution) => solution.id === selectedSolutionId)) {
+        setSelectedSolutionId(freshProjects[0]?.id ?? solutions[0]?.id ?? null);
+      }
     };
+
     window.addEventListener('mideessi-content-updated', handler);
     return () => window.removeEventListener('mideessi-content-updated', handler);
-  }, []);
+  }, [selectedSolutionId]);
 
   const handleSelectSolution = (id: string) => {
     setSelectedSolutionId(id);

@@ -122,7 +122,13 @@ const ContentManager = () => {
 
   const submitProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createDynamicProject({
+
+    if (!projectForm.name.trim() || !projectForm.description.trim()) {
+      setMessage('Le nom et la description courte du projet sont obligatoires.');
+      return;
+    }
+
+    const createdProject = await createDynamicProject({
       name: projectForm.name,
       slug: projectForm.slug || projectForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       category: projectForm.category,
@@ -142,9 +148,11 @@ const ContentManager = () => {
       cta: { text: 'Découvrir', url: projectForm.website || '#' },
       contact: { email: 'contact@mideessi.com' },
     });
-    setProjects(await syncDynamicProjects());
+
+    const syncedProjects = await syncDynamicProjects();
+    setProjects(syncedProjects);
     setProjectForm(initialProjectForm);
-    setMessage('Projet ajouté et publié sur la page Solutions.');
+    setMessage(createdProject ? `Projet “${createdProject.name}” ajouté et visible sur la page Solutions.` : 'Le projet a été enregistré localement, mais la synchronisation a échoué.');
   };
 
   const submitTeam = async (e: React.FormEvent) => {
@@ -306,8 +314,8 @@ const ContentManager = () => {
             <input value={projectForm.tagline} onChange={(e) => setProjectForm({ ...projectForm, tagline: e.target.value })} placeholder="Slogan / tagline" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
             <textarea required value={projectForm.description} onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })} placeholder="Description courte" rows={3} className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
             <textarea value={projectForm.longDescription} onChange={(e) => setProjectForm({ ...projectForm, longDescription: e.target.value })} placeholder="Description détaillée" rows={4} className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
-            <CloudinaryUploader label="Image du projet" value={projectForm.image} onChange={(value) => setProjectForm({ ...projectForm, image: value })} folder="mideessi/projects" accept="image/*" />
-            <CloudinaryUploader label="Logo du projet" value={projectForm.logo} onChange={(value) => setProjectForm({ ...projectForm, logo: value })} folder="mideessi/projects/logos" accept="image/*" />
+            <CloudinaryUploader label="Image du projet" value={projectForm.image} onChange={(value) => setProjectForm({ ...projectForm, image: value })} folder="mideessi/projects" accept="image/*" showUrlInput={false} />
+            <CloudinaryUploader label="Logo du projet" value={projectForm.logo} onChange={(value) => setProjectForm({ ...projectForm, logo: value })} folder="mideessi/projects/logos" accept="image/*" showUrlInput={false} />
             <input value={projectForm.website} onChange={(e) => setProjectForm({ ...projectForm, website: e.target.value })} placeholder="Site web" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
             <textarea value={projectForm.targetAudience} onChange={(e) => setProjectForm({ ...projectForm, targetAudience: e.target.value })} placeholder="Public cible (une ligne par élément)" rows={3} className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
             <textarea value={projectForm.features} onChange={(e) => setProjectForm({ ...projectForm, features: e.target.value })} placeholder="Fonctionnalités (une par ligne)" rows={3} className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
