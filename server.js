@@ -465,6 +465,59 @@ app.get('/api/cloudinary-signature', (req, res) => {
   });
 });
 
+// Proxy PDF endpoint — sert un PDF distant (ex: Cloudinary) depuis notre domaine
+app.get('/api/proxy-pdf', async (req, res) => {
+  const url = typeof req.query.url === 'string' ? req.query.url.trim() : '';
+  if (!url) return res.status(400).json({ error: 'Paramètre url requis' });
+
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch (err) {
+    return res.status(400).json({ error: 'URL invalide' });
+  }
+
+  // Whitelist simple pour éviter SSRF — autorise Cloudinary et, si configuré, R2 public base
+  const allowedHostPatterns = ['cloudinary.com'];
+  if (process.env.R2_PUBLIC_BASE_URL) {
+    try {
+      const u = new URL(process.env.R2_PUBLIC_BASE_URL);
+      allowedHostPatterns.push(u.host);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  const isAllowed = allowedHostPatterns.some(p => parsed.hostname.endsWith(p) || parsed.host === p);
+  if (!isAllowed) {
+    return res.status(403).json({ error: 'Hôte non autorisé pour le proxy' });
+  }
+
+  try {
+    const upstream = await fetch(url, { redirect: 'follow' });
+    if (!upstream.ok) {
+      const text = await upstream.text().catch(() => '');
+      console.error('[proxy-pdf] upstream error', { url, status: upstream.status, bodySnippet: text.slice ? text.slice(0, 300) : text });
+      return res.status(502).json({ error: 'Erreur fetching upstream PDF' });
+    }
+
+    // Forward appropriate headers for PDF viewing
+    res.status(upstream.status);
+    res.set('Content-Type', 'application/pdf');
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.set('Content-Disposition', 'inline');
+
+    // Stream the body
+    const body = upstream.body;
+    if (!body) return res.status(500).json({ error: 'Upstream empty body' });
+
+    body.pipe(res);
+  } catch (err) {
+    console.error('[proxy-pdf] error', err);
+    res.status(500).json({ error: 'Erreur interne du proxy' });
+  }
+});
+
 const EMAIL_HOST = process.env.EMAIL_HOST;
 const EMAIL_PORT = process.env.EMAIL_PORT;
 const EMAIL_USER = process.env.EMAIL_USER;

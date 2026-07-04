@@ -1,179 +1,127 @@
-import { useState, useEffect } from 'react';
-import { X, Download, Maximize2, Minimize2, ExternalLink, BookOpen, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { X, Download, ExternalLink, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Minimize2 } from 'lucide-react';
 
 interface PdfReaderProps {
   pdfUrl: string;
   title?: string;
-  /** If true, renders as a full-page overlay modal */
   modal?: boolean;
-  /** Called when the close button is clicked (modal mode) */
   onClose?: () => void;
 }
 
-/**
- * PdfReader — renders a PDF using a native <iframe>.
- *
- * Two modes:
- *  - modal: overlay covering the full viewport
- *  - inline: embedded block inside a page section
- */
 export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = false, onClose }: PdfReaderProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [pageNum, setPageNum] = useState(1);
+  const [pageCount, setPageCount] = useState(0);
+  const [scale, setScale] = useState(1.0);
+  const [rotation, setRotation] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Prevent body scroll when modal is open
+  const isCloudinary = pdfUrl.includes('cloudinary.com');
+  const effectiveUrl = isCloudinary ? `/api/proxy-pdf?url=${encodeURIComponent(pdfUrl)}` : pdfUrl;
+
   useEffect(() => {
-    if (modal) {
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = ''; };
-    }
-  }, [modal]);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
 
-  const handleDownload = () => {
+    (async () => {
+      try {
+        const pdfjs = await import('pdfjs-dist');
+        // Use CDN worker for simplicity
+        // @ts-ignore
+        pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.worker.min.js';
+
+        const loadingTask = pdfjs.getDocument(effectiveUrl);
+        const doc = await loadingTask.promise;
+        if (cancelled) return;
+        setPdfDoc(doc);
+        setPageCount(doc.numPages);
+        setPageNum(1);
+        setScale(1.0);
+        setRotation(0);
+      } catch (err: any) {
+        console.error('PDF load error', err);
+        setError(err?.message || 'Erreur chargement PDF');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [effectiveUrl]);
+
+  useEffect(() => {
+    const renderPage = async () => {
+      if (!pdfDoc || !canvasRef.current) return;
+      try {
+        const page = await pdfDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale });
+        const canvas = canvasRef.current;
+        const context = canvas.getContext('2d');
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(viewport.width * ratio);
+        canvas.height = Math.floor(viewport.height * ratio);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+        context!.setTransform(ratio, 0, 0, ratio, 0, 0);
+        const renderContext = { canvasContext: context!, viewport };
+        await page.render(renderContext).promise;
+      } catch (err) {
+        console.error('Render page error', err);
+        setError('Erreur rendu PDF');
+      }
+    };
+    renderPage();
+  }, [pdfDoc, pageNum, scale, rotation]);
+
+  const prev = () => setPageNum(p => Math.max(1, p - 1));
+  const next = () => setPageNum(p => Math.min(pageCount || p + 1, p + 1));
+  const zoomIn = () => setScale(s => Math.min(3, +(s + 0.25).toFixed(2)));
+  const zoomOut = () => setScale(s => Math.max(0.5, +(s - 0.25).toFixed(2)));
+  const rotate = () => setRotation(r => (r + 90) % 360);
+  const download = () => {
     const a = document.createElement('a');
-    a.href = pdfUrl;
-    a.download = title.replace(/\s+/g, '_') + '.pdf';
+    a.href = effectiveUrl;
+    a.download = `${title.replace(/\s+/g, '_')}.pdf`;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     a.click();
   };
 
-  const iframeSrc = pdfUrl.includes('cloudinary.com')
-    ? pdfUrl   // Cloudinary PDFs load directly
-    : `${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`;
-
   const toolbar = (
-    <div className="flex items-center justify-between gap-3 px-4 py-3 bg-[var(--brand-midnight)] border-b border-white/10 flex-shrink-0">
-      {/* Left: book icon + title */}
-      <div className="flex items-center gap-2 min-w-0">
-        <BookOpen className="w-4 h-4 text-[var(--brand-gold)] flex-shrink-0" />
-        <span className="text-white font-semibold text-sm truncate">{title}</span>
+    <div className="flex items-center justify-between gap-2 px-3 py-2 bg-white border-b">
+      <div className="flex items-center gap-2">
+        <button onClick={prev} title="Page précédente" className="px-2 py-1 rounded bg-gray-100"><ChevronLeft /></button>
+        <button onClick={next} title="Page suivante" className="px-2 py-1 rounded bg-gray-100"><ChevronRight /></button>
+        <div className="text-sm px-2">{pageNum} / {pageCount || '–'}</div>
+        <div className="h-6 w-px bg-gray-200 mx-2" />
+        <button onClick={zoomOut} title="Zoom out" className="px-2 py-1 rounded bg-gray-100"><ZoomOut /></button>
+        <button onClick={zoomIn} title="Zoom in" className="px-2 py-1 rounded bg-gray-100"><ZoomIn /></button>
+        <div className="text-sm px-2">{Math.round(scale * 100)}%</div>
       </div>
-
-      {/* Right: action buttons */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-        {/* Open in new tab */}
-        <a
-          href={pdfUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-          title="Ouvrir dans un nouvel onglet"
-        >
-          <ExternalLink className="w-4 h-4" />
-        </a>
-
-        {/* Download */}
-        <button
-          onClick={handleDownload}
-          className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-          title="Télécharger"
-        >
-          <Download className="w-4 h-4" />
-        </button>
-
-        {/* Fullscreen toggle (inline mode only) */}
-        {!modal && (
-          <button
-            onClick={() => setIsFullscreen(f => !f)}
-            className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-            title={isFullscreen ? 'Réduire' : 'Plein écran'}
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
-        )}
-
-        {/* Close (modal mode or inline fullscreen) */}
-        {(modal || isFullscreen) && onClose && (
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg bg-white/10 hover:bg-red-500/80 text-white transition-colors ml-1"
-            title="Fermer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-        {!modal && isFullscreen && !onClose && (
-          <button
-            onClick={() => setIsFullscreen(false)}
-            className="p-2 rounded-lg bg-white/10 hover:bg-red-500/80 text-white transition-colors ml-1"
-            title="Fermer le plein écran"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+      <div className="flex items-center gap-2">
+        <button onClick={download} title="Télécharger" className="px-2 py-1 rounded bg-gray-100"><Download /></button>
+        <a href={effectiveUrl} target="_blank" rel="noreferrer" title="Ouvrir dans un nouvel onglet" className="px-2 py-1 rounded bg-gray-100"><ExternalLink /></a>
+        <button onClick={() => setIsFullscreen(f => !f)} title="Plein écran" className="px-2 py-1 rounded bg-gray-100">{isFullscreen ? <Minimize2 /> : <Maximize2 />}</button>
+        {onClose && <button onClick={onClose} title="Fermer" className="px-2 py-1 rounded bg-red-100"><X /></button>}
       </div>
     </div>
   );
 
-  const iframeSection = (
-    <div className="relative flex-1 bg-gray-900 overflow-hidden">
-      {/* Loading overlay */}
-      {loading && !loadError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 z-10 gap-4">
-          <div className="w-12 h-12 border-4 border-[var(--brand-gold)] border-t-transparent rounded-full animate-spin" />
-          <p className="text-white/60 text-sm">Chargement du PDF...</p>
-        </div>
-      )}
-      {loadError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 z-10 gap-4 px-6 text-center">
-          <p className="text-white text-sm font-semibold">Impossible de charger ce PDF.</p>
-          <p className="text-sm text-white/70">Vérifiez que le lien est un PDF public ou hébergé sur Cloudinary.</p>
-          <a
-            href={pdfUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--brand-gold)] text-[var(--brand-midnight)] font-semibold text-xs"
-          >
-            Ouvrir dans un nouvel onglet
-          </a>
-        </div>
-      )}
-      <iframe
-        src={iframeSrc}
-        title={title}
-        className="w-full h-full border-none"
-        onLoad={() => setLoading(false)}
-        onError={() => {
-          setLoading(false);
-          setLoadError(true);
-        }}
-        allow="fullscreen"
-      />
-    </div>
-  );
-
-  // ── Modal mode ──────────────────────────────────────────────────────────────
-  if (modal) {
-    return (
-      <div
-        className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex flex-col"
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Lecteur PDF — ${title}`}
-      >
-        {toolbar}
-        {iframeSection}
-      </div>
-    );
-  }
-
-  // ── Inline mode (possibly fullscreen) ──────────────────────────────────────
-  if (isFullscreen) {
-    return (
-      <div className="fixed inset-0 z-[100] bg-black flex flex-col">
-        {toolbar}
-        {iframeSection}
-      </div>
-    );
-  }
+  if (modal) document.body.style.overflow = 'hidden';
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-[var(--brand-midnight)]/20 shadow-2xl flex flex-col"
-         style={{ height: 'min(80vh, 900px)' }}>
+    <div className={`rounded-lg border bg-white ${isFullscreen ? 'fixed inset-0 z-[200] p-4' : ''}`} style={{ maxHeight: isFullscreen ? '100vh' : '80vh', display: 'flex', flexDirection: 'column' }}>
       {toolbar}
-      {iframeSection}
+      <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-gray-50">
+        {loading && <div className="text-sm text-gray-500">Chargement du PDF…</div>}
+        {error && <div className="text-sm text-red-600">{error}</div>}
+        <canvas ref={canvasRef} style={{ boxShadow: '0 6px 20px rgba(0,0,0,0.12)' }} />
+      </div>
     </div>
   );
 }
