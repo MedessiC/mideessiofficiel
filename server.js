@@ -494,26 +494,38 @@ app.get('/api/proxy-pdf', async (req, res) => {
   }
 
   try {
-    const upstream = await fetch(url, { redirect: 'follow' });
+    // Forward Range header when present (for partial content / streaming)
+    const fetchHeaders = {};
+    if (req.headers.range) fetchHeaders.Range = req.headers.range;
+
+    const upstream = await fetch(url, { redirect: 'follow', headers: fetchHeaders });
+    const status = upstream.status;
+
     if (!upstream.ok) {
       const text = await upstream.text().catch(() => '');
-      console.error('[proxy-pdf] upstream error', { url, status: upstream.status, bodySnippet: text.slice ? text.slice(0, 300) : text });
-      return res.status(502).json({ error: 'Erreur fetching upstream PDF' });
+      console.error('[proxy-pdf] upstream error', { url, status, bodySnippet: typeof text === 'string' ? text.slice(0, 300) : '' });
+      // Mirror upstream status when possible
+      return res.status(status === 0 ? 502 : status).json({ error: 'Erreur fetching upstream PDF', details: text.slice ? text.slice(0, 300) : String(text) });
     }
 
-    // Forward appropriate headers for PDF viewing
-    res.status(upstream.status);
-    res.set('Content-Type', 'application/pdf');
-    res.set('Cache-Control', 'public, max-age=31536000, immutable');
-    res.set('Content-Disposition', 'inline');
+    // Determine content-type and other headers
+    const contentType = upstream.headers.get('content-type') || 'application/pdf';
+    const contentLength = upstream.headers.get('content-length');
+    const cacheControl = upstream.headers.get('cache-control') || 'public, max-age=31536000, immutable';
+    const disposition = upstream.headers.get('content-disposition') || 'inline';
 
-    // Stream the body
-    const body = upstream.body;
-    if (!body) return res.status(500).json({ error: 'Upstream empty body' });
+    res.status(status);
+    res.set('Content-Type', contentType);
+    if (contentLength) res.set('Content-Length', contentLength);
+    res.set('Cache-Control', cacheControl);
+    res.set('Content-Disposition', disposition);
 
-    body.pipe(res);
+    // Read arrayBuffer and send as Buffer to avoid stream compatibility issues
+    const ab = await upstream.arrayBuffer();
+    const buf = Buffer.from(ab);
+    res.send(buf);
   } catch (err) {
-    console.error('[proxy-pdf] error', err);
+    console.error('[proxy-pdf] error', err && err.stack ? err.stack : String(err));
     res.status(500).json({ error: 'Erreur interne du proxy' });
   }
 });
