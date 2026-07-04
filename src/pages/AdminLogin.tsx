@@ -26,7 +26,7 @@ const AdminLogin = () => {
       if (authData.user) {
         const { data: adminData } = await supabase
           .from('admins')
-          .select('*')
+          .select('id')
           .eq('id', authData.user.id)
           .maybeSingle();
 

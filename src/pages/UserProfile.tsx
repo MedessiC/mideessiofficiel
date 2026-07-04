@@ -43,6 +43,11 @@ export default function UserProfile() {
     try {
       setLoading(true);
       const lookupUsername = username?.trim();
+      if (!lookupUsername) {
+        setUserData(null);
+        setError('Nom d’utilisateur introuvable');
+        return;
+      }
 
       const { data, error } = await supabase
         .from('users')

@@ -1,4 +1,5 @@
 import { Home, Package, MessageCircle, Receipt, User } from 'lucide-react';
+import { useClientAuth } from '../../contexts/ClientContext';
 
 interface BottomNavigationProps {
   activeSection: 'home' | 'livrables' | 'messages' | 'factures' | 'compte' | 'infos' | 'kpis' | 'calendar' | 'reports' | 'objectives';
@@ -7,6 +8,12 @@ interface BottomNavigationProps {
 }
 
 const BottomNavigation = ({ activeSection, unreadMessagesCount, onNavigate }: BottomNavigationProps) => {
+  const { user } = useClientAuth();
+
+  const isClientReady = Boolean(user && user.client_id && user.is_first_login === false);
+
+  if (!isClientReady) return null;
+
   const navItems = [
     { id: 'home', label: 'Accueil', icon: Home },
     { id: 'livrables', label: 'Livrables', icon: Package },

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, Eye, EyeOff, AlertCircle, LogIn } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Lock, Mail, Eye, EyeOff, AlertCircle, LogIn, Github, Facebook, Globe, ChevronLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useClientAuth } from '../contexts/ClientContext';
 import SEO from '../components/SEO';
@@ -9,7 +9,7 @@ type UserType = 'user' | 'client';
 
 const UnifiedLogin = () => {
   const navigate = useNavigate();
-  const { signIn, loading: authLoading, user, userRole } = useAuth();
+  const { signIn, signInWithProvider, loading: authLoading, user, userRole } = useAuth();
   const { signIn: signInClient, loading: clientLoading, user: clientUser, error: clientError } = useClientAuth();
   
   const [email, setEmail] = useState('');
@@ -34,7 +34,13 @@ const UnifiedLogin = () => {
 
   // Redirect if already logged in
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get('redirect');
     if (user && userRole && userType !== 'client') {
+      if (redirect) {
+        navigate(redirect, { replace: true });
+        return;
+      }
       if (userRole === 'admin') {
         navigate('/admin/dashboard', { replace: true });
       } else if (userRole === 'user') {
@@ -43,7 +49,11 @@ const UnifiedLogin = () => {
     }
     
     if (clientUser && userType === 'client') {
-      navigate('/clients/dashboard', { replace: true });
+      if (redirect) {
+        navigate(redirect, { replace: true });
+      } else {
+        navigate('/clients/dashboard', { replace: true });
+      }
     }
   }, [user, userRole, clientUser, userType, navigate]);
 
@@ -76,9 +86,6 @@ const UnifiedLogin = () => {
           setLoading(false);
           return;
         }
-
-        // Role detection happens in AuthContext after signIn
-        // User will be redirected by the useEffect above
       }
     } catch (err: any) {
       setError(err.message || 'Erreur de connexion');
@@ -87,12 +94,28 @@ const UnifiedLogin = () => {
     }
   };
 
+  const handleProviderSignIn = async (provider: 'google' | 'github' | 'facebook') => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const { error } = await signInWithProvider(provider);
+      if (error) {
+        setError(error);
+        setLoading(false);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la connexion sociale');
+      setLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-page)]">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold"></div>
-          <p className="text-slate-600 dark:text-slate-300 font-semibold">Chargement...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--brand-gold)]"></div>
+          <p className="text-[var(--text-secondary)] font-semibold">Chargement...</p>
         </div>
       </div>
     );
@@ -106,148 +129,162 @@ const UnifiedLogin = () => {
         keywords={['connexion', 'login', 'authentification', 'MIDEESSI']}
       />
 
-      <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900">
-        <div className="w-full max-w-md">
-          {/* Logo & Title */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-gradient-to-br from-gold to-yellow-500">
-              <Lock className="w-8 h-8 text-slate-900" />
-            </div>
-            <h1 className="text-3xl font-bold mb-2 text-slate-900 dark:text-white font-poppins">
-              Connexion
-            </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-300 font-poppins">
-              Accédez à votre compte
-            </p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-[var(--bg-page)] relative overflow-hidden">
+        {/* Background Decorative elements */}
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[var(--brand-gold)]/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="w-full max-w-[420px] relative z-10">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--brand-gold)] transition-colors mb-6">
+            <ChevronLeft className="w-4 h-4" /> Retour à l'accueil
+          </Link>
 
           {/* Login Card */}
-          <div className="rounded-2xl shadow-2xl p-8 border bg-white/95 dark:bg-slate-800/90 border-slate-200 dark:border-slate-700/50 backdrop-blur-sm">
-
-            {/* User Type Toggle */}
-            <div className="mb-8 grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-700/50 rounded-lg p-1">
-              {(['user', 'client'] as const).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => {
-                    setUserType(type);
-                    setError('');
-                  }}
-                  className={`py-2 px-3 rounded-md text-xs font-bold transition-all font-poppins ${
-                    userType === type
-                      ? 'bg-gold text-slate-900 shadow-lg'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {type === 'user' ? 'Utilisateur' : 'Client'}
-                </button>
-              ))}
+          <div className="bg-white rounded-[32px] shadow-soft border border-[var(--border)] overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[var(--brand-midnight)] to-blue-900 p-8 text-center text-white">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-white/10 backdrop-blur-md border border-white/20 shadow-lg">
+                <Lock className="w-7 h-7 text-[var(--brand-gold)]" />
+              </div>
+              <h1 className="text-2xl font-bold mb-1">Bon retour !</h1>
+              <p className="text-sm text-gray-300">Connectez-vous pour continuer</p>
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className="mb-6 p-4 rounded-lg border flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-600/30">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
-                <p className="text-sm text-red-600 dark:text-red-400 font-poppins">
-                  {error}
-                </p>
-              </div>
-            )}
-
-            {/* Form */}
-            <form onSubmit={handleLogin} className="space-y-5">
-              {/* Email Field */}
-              <div>
-                <label className="block text-sm font-bold mb-2 text-slate-700 dark:text-slate-200 font-poppins">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={loading}
-                    placeholder="votre@email.com"
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border focus:outline-none focus:ring-2 transition bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-gold/50 focus:border-gold disabled:opacity-50 font-poppins"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Password Field */}
-              <div>
-                <label className="block text-sm font-bold mb-2 text-slate-700 dark:text-slate-200 font-poppins">
-                  Mot de passe
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-12 py-3 rounded-lg border focus:outline-none focus:ring-2 transition bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-gold/50 focus:border-gold disabled:opacity-50 font-poppins"
-                    required
-                  />
+            <div className="p-8">
+              {/* User Type Toggle */}
+              <div className="mb-8 flex p-1 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
+                {(['user', 'client'] as const).map((type) => (
                   <button
+                    key={type}
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={loading}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50"
+                    onClick={() => {
+                      setUserType(type);
+                      setError('');
+                    }}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                      userType === type
+                        ? 'bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400 text-[var(--brand-midnight)] shadow-md'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
                   >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {type === 'user' ? 'Utilisateur' : 'Espace Client'}
                   </button>
-                </div>
+                ))}
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 px-4 rounded-lg font-bold flex items-center justify-center gap-2 transition bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-slate-900 disabled:opacity-50 font-poppins"
-              >
-                <LogIn size={20} />
-                {loading ? 'Connexion en cours...' : 'Se connecter'}
-              </button>
-            </form>
+              {/* Error Message */}
+              {error && (
+                <div className="mb-6 p-4 rounded-xl border border-red-200 bg-red-50 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-600" />
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
 
-            {/* Divider */}
-            <div className="mt-6 mb-6 flex items-center gap-3">
-              <div className="flex-1 h-px bg-slate-300 dark:bg-slate-600"></div>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-poppins">ou</span>
-              <div className="flex-1 h-px bg-slate-300 dark:bg-slate-600"></div>
-            </div>
+              {/* Form */}
+              <form onSubmit={handleLogin} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-bold mb-2 text-[var(--text-primary)] uppercase tracking-wider">
+                    Adresse e-mail
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={loading}
+                      placeholder="votre@email.com"
+                      className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-2 border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--brand-gold)] focus:ring-4 focus:ring-[var(--brand-gold)]/10 transition-all disabled:opacity-50"
+                      required
+                    />
+                  </div>
+                </div>
 
-            {/* Footer Links */}
-            <div className="text-center text-sm space-y-2 text-slate-600 dark:text-slate-300">
-              <p className="font-poppins">
-                Pas encore de compte?{' '}
+                <div>
+                  <label className="block text-xs font-bold mb-2 text-[var(--text-primary)] uppercase tracking-wider">
+                    Mot de passe
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={loading}
+                      placeholder="••••••••"
+                      className="w-full pl-11 pr-12 py-3.5 rounded-2xl border-2 border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--brand-gold)] focus:ring-4 focus:ring-[var(--brand-gold)]/10 transition-all disabled:opacity-50"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={loading}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]" />
+                    <span className="text-xs text-[var(--text-secondary)]">Se souvenir de moi</span>
+                  </label>
+                  <a href="#" className="text-xs font-semibold text-[var(--brand-gold)] hover:underline">Mot de passe oublié ?</a>
+                </div>
+
                 <button
-                  onClick={() => navigate('/signup')}
-                  className="font-bold text-gold hover:text-yellow-400 transition"
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 bg-gradient-to-r from-[var(--brand-midnight)] to-blue-800 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-70 disabled:pointer-events-none"
                 >
-                  S'inscrire
+                  {loading ? (
+                    <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Connexion...</>
+                  ) : (
+                    <><LogIn size={18} /> Se connecter</>
+                  )}
                 </button>
-              </p>
-              <p className="font-poppins">
-                <button
-                  onClick={() => navigate('/')}
-                  className="font-bold text-gold hover:text-yellow-400 transition"
-                >
-                  Retour à l'accueil
-                </button>
-              </p>
+              </form>
+
+              {userType === 'user' && (
+                <>
+                  <div className="mt-8 mb-6 flex items-center gap-4">
+                    <div className="flex-1 h-px bg-[var(--border)]"></div>
+                    <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Ou avec</span>
+                    <div className="flex-1 h-px bg-[var(--border)]"></div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleProviderSignIn('google')}
+                      disabled={loading}
+                      className="flex items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:border-gray-300 hover:bg-gray-50 transition-all disabled:opacity-50"
+                    >
+                      <Globe className="w-4 h-4 text-red-500" /> Google
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleProviderSignIn('github')}
+                      disabled={loading}
+                      className="flex items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[#24292e] py-2.5 text-sm font-semibold text-white hover:bg-black transition-all disabled:opacity-50"
+                    >
+                      <Github className="w-4 h-4" /> GitHub
+                    </button>
+                  </div>
+                </>
+              )}
+
             </div>
           </div>
-
-          {/* Type Indicator Badge */}
-          <div className="mt-6 text-center">
-            <div className="inline-block px-4 py-2 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 font-poppins">
-              {userType === 'user' ? 'Mode Utilisateur' : 'Mode Client'}
-            </div>
-          </div>
+          
+          <p className="mt-8 text-center text-sm text-[var(--text-secondary)]">
+            Nouveau sur MIDEESSI ?{' '}
+            <Link to="/signup" className="font-bold text-[var(--brand-midnight)] hover:text-[var(--brand-gold)] transition-colors">
+              Créer un compte
+            </Link>
+          </p>
         </div>
       </div>
     </>

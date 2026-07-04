@@ -1,87 +1,136 @@
-import { BookOpen, Home, Tag, MoreVertical, GraduationCap } from 'lucide-react';
+import { Home, Tag, GraduationCap, Library, Grid3X3 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useNavigation } from '../contexts/NavigationContext';
 
 interface BottomNavItem {
   label: string;
   href: string;
-  icon: React.ReactNode;
+  icon: React.FC<{ className?: string }>;
 }
+
+const navItems: BottomNavItem[] = [
+  { label: 'Accueil',  href: '/',         icon: Home },
+  { label: 'Offres',   href: '/offres',   icon: Tag },
+  { label: 'Ateliers', href: '/ateliers', icon: GraduationCap },
+  { label: 'Biblio',   href: '/library',  icon: Library },
+];
 
 const BottomNavigation = () => {
   const location = useLocation();
   const { setShowDrawer } = useNavigation();
 
-  // OPTION 2: 4 main navigation items (Solutions in navbar, rest accessible via SideDrawer)
-  const navItems: BottomNavItem[] = [
-    {
-      label: 'Accueil',
-      href: '/',
-      icon: <Home className="w-6 h-6" />,
-    },
-    {
-      label: 'Ateliers',
-      href: '/ateliers',
-      icon: <GraduationCap className="w-6 h-6" />,
-    },
-    {
-      label: 'Nos Offres',
-      href: '/offres',
-      icon: <Tag className="w-6 h-6" />,
-    },
-    {
-      label: 'Apprendre',
-      href: '/learn',
-      icon: <BookOpen className="w-6 h-6" />,
-    },
-  ];
-
-  const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + '/');
+  const isActive = (href: string) =>
+    href === '/'
+      ? location.pathname === '/'
+      : location.pathname === href || location.pathname.startsWith(href + '/');
 
   return (
     <>
-      <div className="fixed bottom-3 left-1/2 z-40 mx-auto w-[calc(100%-1rem)] max-w-md -translate-x-1/2 md:hidden safe-area-bottom">
-        <div className="rounded-[28px] border border-white/70 bg-white/95 px-2 py-2 shadow-[0_18px_45px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl dark:border-slate-700/80 dark:bg-slate-900/95">
-          <div className="flex items-center justify-around gap-1">
-            {navItems.map((item) => {
-              const active = isActive(item.href);
+      {/* ── Bottom Navigation Bar (mobile only) ── */}
+      <nav
+        aria-label="Navigation principale"
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        {/* Frosted-glass pill */}
+        <div className="mx-3 mb-3">
+          <div className="
+            relative flex items-stretch
+            rounded-[26px]
+            bg-white/90 dark:bg-[#0d0d2e]/90
+            backdrop-blur-2xl
+            border border-white/60 dark:border-white/10
+            shadow-[0_8px_32px_-8px_rgba(25,25,112,0.25),0_2px_8px_-2px_rgba(0,0,0,0.12)]
+            px-2 py-1.5
+            overflow-hidden
+          ">
+            {/* Subtle gold top-edge glow */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-[20%] top-0 h-[1.5px] rounded-full bg-gradient-to-r from-transparent via-gold/60 to-transparent"
+            />
+
+            {/* Nav items */}
+            {navItems.map(({ label, href, icon: Icon }) => {
+              const active = isActive(href);
               return (
                 <a
-                  key={item.href}
-                  href={item.href}
-                  className={`group relative flex h-14 flex-1 flex-col items-center justify-center gap-1 rounded-[20px] px-2 py-2 transition-all duration-300 ${
-                    active
-                      ? 'bg-gold/15 text-gold shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-midnight dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gold'
-                  }`}
+                  key={href}
+                  href={href}
+                  className="relative flex flex-1 flex-col items-center justify-center gap-[3px] py-2 px-1 select-none"
+                  aria-current={active ? 'page' : undefined}
                 >
-                  <div className="relative flex items-center justify-center">
-                    {item.icon}
+                  {/* Active background pill */}
+                  {active && (
+                    <span className="absolute inset-x-1 inset-y-0.5 rounded-[18px] bg-gradient-to-b from-gold/18 to-gold/8 dark:from-gold/22 dark:to-gold/10" />
+                  )}
+
+                  {/* Icon wrapper */}
+                  <span
+                    className={`
+                      relative z-10 flex items-center justify-center
+                      w-8 h-8 rounded-2xl
+                      transition-all duration-300
+                      ${active
+                        ? 'bg-gradient-to-br from-gold/30 to-yellow-300/20 dark:from-gold/25 dark:to-yellow-400/10 shadow-[0_0_12px_rgba(255,215,0,0.35)] scale-110'
+                        : 'bg-transparent scale-100'
+                      }
+                    `}
+                  >
+                    <Icon
+                      className={`w-[18px] h-[18px] transition-all duration-300 ${
+                        active
+                          ? 'text-gold drop-shadow-[0_0_6px_rgba(255,215,0,0.55)]'
+                          : 'text-gray-400 dark:text-gray-500'
+                      }`}
+                    />
+                    {/* Active dot */}
                     {active && (
-                      <span className="absolute -top-1.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-gold" />
+                      <span className="absolute -bottom-[3px] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold shadow-[0_0_4px_rgba(255,215,0,0.8)]" />
                     )}
-                  </div>
-                  <span className={`text-[11px] font-semibold leading-none ${active ? 'text-gold' : ''}`}>
-                    {item.label}
+                  </span>
+
+                  {/* Label */}
+                  <span
+                    className={`relative z-10 text-[10px] font-semibold tracking-wide transition-all duration-300 leading-none ${
+                      active ? 'text-gold' : 'text-gray-400 dark:text-gray-500'
+                    }`}
+                  >
+                    {label}
                   </span>
                 </a>
               );
             })}
 
+            {/* Separator */}
+            <span className="my-3 w-px flex-shrink-0 bg-gray-200/60 dark:bg-white/10" />
+
+            {/* "Plus" button */}
             <button
               onClick={() => setShowDrawer(true)}
-              className="group relative flex h-14 flex-1 flex-col items-center justify-center gap-1 rounded-[20px] px-2 py-2 text-gray-600 transition-all duration-300 hover:bg-gray-100 hover:text-midnight dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gold"
-              aria-label="Plus de pages"
-              title="Autres pages"
+              aria-label="Ouvrir le menu"
+              className="relative flex flex-1 flex-col items-center justify-center gap-[3px] py-2 px-1 select-none group"
             >
-              <MoreVertical className="h-5 w-5" />
-              <span className="text-[11px] font-semibold leading-none">Plus</span>
+              <span className="
+                relative z-10 flex items-center justify-center
+                w-8 h-8 rounded-2xl
+                bg-midnight/8 dark:bg-white/5
+                group-hover:bg-midnight/12 dark:group-hover:bg-white/10
+                transition-all duration-300
+                group-active:scale-90
+              ">
+                <Grid3X3 className="w-[18px] h-[18px] text-gray-400 dark:text-gray-500 group-hover:text-midnight dark:group-hover:text-gold transition-colors duration-200" />
+              </span>
+              <span className="relative z-10 text-[10px] font-semibold tracking-wide leading-none text-gray-400 dark:text-gray-500 group-hover:text-midnight dark:group-hover:text-gold transition-colors duration-200">
+                Plus
+              </span>
             </button>
           </div>
         </div>
-      </div>
+      </nav>
 
-      <div className="h-24 md:h-0 md:hidden" />
+      {/* Spacer to prevent content from hiding behind nav */}
+      <div className="h-[5.5rem] md:h-0 md:hidden" aria-hidden />
     </>
   );
 };

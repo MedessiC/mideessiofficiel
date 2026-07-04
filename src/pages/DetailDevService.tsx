@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
-import { ArrowRight, MessageCircle, Globe, ShoppingCart, Smartphone, Code, PackageOpen, CheckCircle } from 'lucide-react';
+import { ArrowRight, MessageCircle, Globe, ShoppingCart, Smartphone, Code, PackageOpen, CheckCircle, FileText } from 'lucide-react';
 import SEO from '../components/SEO';
+import QuoteRequestModal from '../components/QuoteRequestModal';
 import { devServices } from '../data/devServices';
 
 const DetailDevService = () => {
@@ -13,11 +14,9 @@ const DetailDevService = () => {
     return <Navigate to="/offres" />;
   }
 
-  const handleWhatsAppDevis = () => {
-    const message = `Bonjour MIDEESSI, je suis intéressé par: ${service.nom}. J'aimerais en savoir plus et avoir un devis détaillé.`;
-    const whatsappUrl = `https://wa.me/2290164409691?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+
+  // WhatsApp support moved elsewhere; primary action opens dossier submission modal.
 
   const getIcon = (iconName: string) => {
     const iconMap: { [key: string]: React.ReactNode } = {
@@ -106,12 +105,15 @@ const DetailDevService = () => {
                   </span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">FCFA</span>
                 </div>
-                <button
-                  onClick={handleWhatsAppDevis}
-                  className="w-full bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight py-3 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl mb-3"
-                >
-                  Demander un devis
-                </button>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setShowQuoteModal(true)}
+                    className="w-full bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight py-3 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  >
+                    <FileText className="inline-block w-4 h-4" />
+                    Soumettre un dossier
+                  </button>
+                </div>
                 <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
                   Prix adapté selon vos besoins spécifiques
                 </p>
@@ -218,15 +220,18 @@ const DetailDevService = () => {
               Nous vous aiderons à transformer votre vision en réalité. Contactez-nous pour un devis personnalisé.
             </p>
             <button
-              onClick={handleWhatsAppDevis}
+              onClick={() => setShowQuoteModal(true)}
               className="inline-flex items-center gap-2 bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              <MessageCircle className="w-6 h-6" />
-              Discuter sur WhatsApp
+              <FileText className="w-6 h-6" />
+              Soumettre un dossier
             </button>
           </div>
         </div>
       </section>
+
+      {/* redirect to dedicated page instead of modal */}
+      {/* keep modal import for backward compatibility elsewhere */}
 
       {/* Process Modal */}
       {showProcessModal && (

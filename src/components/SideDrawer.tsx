@@ -46,78 +46,84 @@ const SideDrawer = ({ isOpen, onClose }: SideDrawerProps) => {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop with premium blur */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-all duration-300"
           onClick={onClose}
         />
       )}
 
-      {/* Drawer */}
+      {/* Floating Modern Drawer */}
       <div
-        className={`fixed top-0 left-0 h-full w-72 max-w-[85vw] bg-white dark:bg-gray-900 z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto md:hidden ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-4 bottom-4 left-4 w-72 max-w-[calc(100vw-32px)] bg-white/95 dark:bg-gray-900/95 backdrop-blur-md z-50 rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] transform transition-all duration-300 ease-in-out overflow-hidden md:hidden flex flex-col border border-white/20 dark:border-gray-800/60 ${
+          isOpen ? 'translate-x-0 opacity-100 scale-100' : '-translate-x-[calc(100%+24px)] opacity-0 scale-95'
         }`}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-midnight to-blue-900 text-white p-6 flex items-center justify-between border-b-2 border-gold/30">
-          <h2 className="text-xl font-bold text-gold">MIDEESSI</h2>
+        <div className="bg-gradient-to-r from-[var(--brand-midnight)] to-blue-950 text-white p-5 flex items-center justify-between border-b border-gray-100/10 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-black tracking-wider text-gold">MIDEESSI</h2>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            className="p-2 bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 rounded-xl transition-all"
+            aria-label="Fermer le menu"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 text-gray-300" />
           </button>
         </div>
 
-        {/* Menu Sections */}
-        <div className="p-4 space-y-6">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-none">
           {menuSections.map((section, idx) => (
-            <div key={idx}>
-              <div className="flex items-center gap-2 mb-3 pl-2">
-                <span className="text-gold">{section.icon}</span>
-                <h3 className="text-xs font-bold text-gold uppercase tracking-widest">
+            <div key={idx} className="space-y-2">
+              <div className="flex items-center gap-2 mb-2 pl-2">
+                <span className="text-gold/80">{section.icon}</span>
+                <h3 className="text-[10px] font-black text-gold/80 uppercase tracking-widest">
                   {section.title}
                 </h3>
               </div>
               <div className="space-y-1">
-                {section.items.map((item) => (
-                  <a
-                    key={item.id}
-                    href={item.href}
-                    onClick={onClose}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                      isActive(item.href)
-                        ? 'bg-gradient-to-r from-gold/20 to-yellow-100 dark:from-gold/30 dark:to-blue-900/30 text-gold border-l-4 border-gold'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-4 border-transparent'
-                    }`}
-                  >
-                    <span className={isActive(item.href) ? 'text-gold' : 'text-midnight dark:text-gray-400'}>
-                      {item.icon}
-                    </span>
-                    <span className="font-medium">{item.label}</span>
-                    {isActive(item.href) && (
-                      <div className="ml-auto w-2 h-2 rounded-full bg-gold"></div>
-                    )}
-                  </a>
-                ))}
+                {section.items.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <a
+                      key={item.id}
+                      href={item.href}
+                      onClick={onClose}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 ${
+                        active
+                          ? 'bg-gold/10 text-gold border-l-4 border-gold shadow-sm font-bold'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 border-l-4 border-transparent'
+                      }`}
+                    >
+                      <span className={active ? 'text-gold' : 'text-gray-400 dark:text-gray-500'}>
+                        {item.icon}
+                      </span>
+                      <span className="text-sm font-semibold">{item.label}</span>
+                      {active && (
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-gold shadow-[0_0_8px_#FFD700]"></div>
+                      )}
+                    </a>
+                  );
+                })}
               </div>
               {idx < menuSections.length - 1 && (
-                <div className="my-4 h-px bg-gray-200 dark:bg-gray-700"></div>
+                <div className="pt-2 h-px border-b border-gray-100 dark:border-gray-800/80 mx-2"></div>
               )}
             </div>
           ))}
         </div>
 
-        {/* Footer CTA */}
-        <div className="p-4 border-t-2 border-gray-200 dark:border-gray-700">
+        {/* Premium Action Footer */}
+        <div className="p-4 border-t border-gray-100 dark:border-gray-800/80 bg-white/50 dark:bg-gray-900/50 flex-shrink-0">
           <a
             href="/contact"
             onClick={onClose}
-            className="w-full bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight py-3 rounded-lg font-bold text-center transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+            className="w-full bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider text-center transition-all duration-300 shadow-md hover:shadow-lg active:scale-98 flex items-center justify-center gap-2"
           >
-            <MessageCircle className="w-5 h-5" />
+            <MessageCircle className="w-4 h-4" />
             Démarrer un projet
           </a>
         </div>

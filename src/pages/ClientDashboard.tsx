@@ -140,6 +140,9 @@ export default function ClientDashboard() {
                 </div>
               </div>
             </div>
+              <div className="mt-3">
+                <Link to="/clients/dossiers" className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-white font-semibold">Mes dossiers</Link>
+              </div>
           </div>
         </section>
 

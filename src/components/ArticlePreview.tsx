@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Clock, User, ExternalLink } from 'lucide-react';
 import { BlogPost } from '../lib/supabase';
+import { toCloudinaryUrl } from '../utils/cloudinaryImage';
 
 interface ArticlePreviewProps {
   post: BlogPost;

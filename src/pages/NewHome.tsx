@@ -23,6 +23,51 @@ interface HeroSlide {
   order: number;
 }
 
+const fallbackHeroSlides: HeroSlide[] = [
+  {
+    id: 'fallback-1',
+    page: 'home',
+    badge: '100% Béninois',
+    title: 'Nous sommes indépendants',
+    description: 'MIDEESSI c’est le mouvement qui dit non à la dépendance technologique. On crée nos solutions, avec nos talents, notre vision.',
+    subtitle: 'Pas d’importation. Pas de dépendance. Juste de l’innovation qui vient du terrain.',
+    image: '/hero1.webp',
+    primary_cta_text: 'MIDEESSI Learn',
+    primary_cta_link: '/learn',
+    secondary_cta_text: 'Nos projets',
+    secondary_cta_link: '/projects',
+    order: 0,
+  },
+  {
+    id: 'fallback-2',
+    page: 'home',
+    badge: 'Innovation de terrain',
+    title: 'Du problème à la solution',
+    description: 'Chaque trimestre on se jette dans un secteur. On écoute. On observe. On crée. Les solutions MIDEESSI viennent de la vraie vie.',
+    subtitle: 'Agriculture, santé, commerce, éducation… On crée où c’est nécessaire.',
+    image: '/hero2.webp',
+    primary_cta_text: 'Découvrir nos solutions',
+    primary_cta_link: '/solutions',
+    secondary_cta_text: 'En savoir plus',
+    secondary_cta_link: '/about',
+    order: 1,
+  },
+  {
+    id: 'fallback-3',
+    page: 'home',
+    badge: 'Souveraineté technologique',
+    title: 'Consommons béninois',
+    description: 'Les talents béninois existent. Les idées béninoises font sens. Les solutions béninoises changeront l’Afrique.',
+    subtitle: 'C’est notre mission : bâtir l’indépendance technologique du Bénin, ensemble.',
+    image: '/hero3.webp',
+    primary_cta_text: 'Nos offres',
+    primary_cta_link: '/offres',
+    secondary_cta_text: '',
+    secondary_cta_link: '',
+    order: 2,
+  },
+];
+
 const FeaturedPostSkeleton = () => (
   <div className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 animate-pulse">
     <div className="h-48 bg-gray-200 dark:bg-gray-700" />
@@ -56,7 +101,7 @@ const NewHome = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(fallbackHeroSlides);
   const [featuredPosts, setFeaturedPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [weeklyPDF, setWeeklyPDF] = useState(null);
@@ -94,55 +139,13 @@ const NewHome = () => {
         .eq('is_active', true)
         .order('order', { ascending: true });
 
-      if (error) {
+      if (error || !data || data.length === 0) {
         console.error('Erreur lors du chargement des slides:', error);
-        // Fallback aux données par défaut
-        setHeroSlides([
-          {
-            id: '1',
-            page: 'home',
-            badge: '100% Béninois',
-            title: 'Nous sommes indépendants',
-            description: 'MIDEESSI c\'est le mouvement qui dit non à la dépendance technologique. On crée nos solutions, avec nos talents, notre vision.',
-            subtitle: 'Pas d\'importation. Pas de dépendance. Juste de l\'innovation qui vient du terrain.',
-            image: '/hero1.webp',
-            primary_cta_text: 'MIDEESSI Learn',
-            primary_cta_link: '/learn',
-            secondary_cta_text: 'Nos projets',
-            secondary_cta_link: '/projects',
-            order: 0,
-          },
-          {
-            id: '2',
-            page: 'home',
-            badge: 'Innovation de terrain',
-            title: 'Du problème à la solution',
-            description: 'Chaque trimestre on se jette dans un secteur. On écoute. On observe. On crée. Les solutions MIDEESSI? Elles viennent de la vraie vie.',
-            subtitle: 'Agriculture, santé, commerce, éducation... On crée où c\'est nécessaire.',
-            image: '/hero2.webp',
-            primary_cta_text: 'Découvrir nos solutions',
-            primary_cta_link: '/solutions',
-            secondary_cta_text: 'En savoir plus',
-            secondary_cta_link: '/about',
-            order: 1,
-          },
-          {
-            id: '3',
-            page: 'home',
-            badge: 'Souveraineté technologique',
-            title: 'Consommons béninois',
-            description: 'Les talents béninois existent. Les idées béninoises font sens. Les solutions béninoises changeront l\'Afrique.',
-            subtitle: 'C\'est notre mission. Bâtir l\'indépendance technologique du Bénin, ensemble.',
-            image: '/hero3.webp',
-            primary_cta_text: 'Nos offres',
-            primary_cta_link: '/offres',
-            secondary_cta_text: '',
-            secondary_cta_link: '',
-            order: 2,
-          },
-        ]);
-      } else if (data && data.length > 0) {
+        setHeroSlides(fallbackHeroSlides);
+        setCurrentSlide(0);
+      } else {
         setHeroSlides(data);
+        setCurrentSlide(0);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des slides:', error);
@@ -196,13 +199,13 @@ const NewHome = () => {
 
   const nextSlide = () => {
     setIsPaused(true);
-    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    setCurrentSlide((prev) => (prev + 1) % Math.max(heroSlides.length, 1));
     setTimeout(() => setIsPaused(false), 15000);
   };
 
   const prevSlide = () => {
     setIsPaused(true);
-    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+    setCurrentSlide((prev) => (prev - 1 + Math.max(heroSlides.length, 1)) % Math.max(heroSlides.length, 1));
     setTimeout(() => setIsPaused(false), 15000);
   };
 
@@ -247,6 +250,8 @@ const NewHome = () => {
     },
   ];
 
+  const activeSlide = heroSlides[currentSlide] || heroSlides[0] || fallbackHeroSlides[0];
+
   const values = [
     'Patriotisme béninois',
     'Apprentissage continu',
@@ -260,7 +265,7 @@ const NewHome = () => {
     <div className="min-h-screen bg-white dark:bg-gray-900 relative overflow-hidden transition-colors duration-300">
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 z-50 p-4 bg-[#ffd700] text-[#191970] rounded-full shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-[#ffd700]/50 ${
+        className={`fixed bottom-28 right-8 z-50 p-4 bg-[#ffd700] text-[#191970] rounded-full shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-[#ffd700]/50 ${
           showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16 pointer-events-none'
         }`}
         aria-label="Retour en haut de la page"
@@ -344,21 +349,21 @@ const NewHome = () => {
               ))}
               
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                {heroSlides[currentSlide]?.primary_cta_link && heroSlides[currentSlide]?.primary_cta_text && (
+                {activeSlide?.primary_cta_link && activeSlide?.primary_cta_text && (
                   <a
-                    href={heroSlides[currentSlide].primary_cta_link}
+                    href={activeSlide.primary_cta_link}
                     className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-[#ffd700] text-[#191970] font-bold rounded-lg hover:bg-[#ffed4e] transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-[#ffd700]/50 text-sm sm:text-base"
                   >
-                    {heroSlides[currentSlide].primary_cta_text}
+                    {activeSlide.primary_cta_text}
                     <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
                   </a>
                 )}
-                {heroSlides[currentSlide]?.secondary_cta_link && heroSlides[currentSlide]?.secondary_cta_text && (
+                {activeSlide?.secondary_cta_link && activeSlide?.secondary_cta_text && (
                   <a
-                    href={heroSlides[currentSlide].secondary_cta_link}
+                    href={activeSlide.secondary_cta_link}
                     className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-2 border-[#ffd700] text-[#ffd700] font-bold rounded-lg hover:bg-[#ffd700]/10 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#ffd700]/50 text-sm sm:text-base"
                   >
-                    {heroSlides[currentSlide].secondary_cta_text}
+                    {activeSlide.secondary_cta_text}
                   </a>
                 )}
               </div>
@@ -607,7 +612,7 @@ const NewHome = () => {
               Chaque trimestre on débarque sur le terrain. On observe. On écoute. On crée. Point.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {services.map((service, index) => (
               <div
                 key={index}

@@ -2,49 +2,49 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mideessi.com/</loc>
-    <lastmod>2026-06-26T21:21:00.254Z</lastmod>
+    <lastmod>2026-07-04T13:48:38.562Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.00</priority>
   </url>
   <url>
     <loc>https://mideessi.com/about</loc>
-    <lastmod>2026-06-26T21:21:00.254Z</lastmod>
+    <lastmod>2026-07-04T13:48:38.562Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://mideessi.com/learn</loc>
-    <lastmod>2026-06-26T21:21:00.254Z</lastmod>
+    <lastmod>2026-07-04T13:48:38.562Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
     <loc>https://mideessi.com/projects</loc>
-    <lastmod>2026-06-26T21:21:00.254Z</lastmod>
+    <lastmod>2026-07-04T13:48:38.562Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
     <loc>https://mideessi.com/blog</loc>
-    <lastmod>2026-06-26T21:21:00.254Z</lastmod>
+    <lastmod>2026-07-04T13:48:38.562Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
     <loc>https://mideessi.com/contact</loc>
-    <lastmod>2026-06-26T21:21:00.254Z</lastmod>
+    <lastmod>2026-07-04T13:48:38.562Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://mideessi.com/blog/l-ordinateur-et-la-quantique</loc>
-    <lastmod>2026-05-16T22:40:58.688Z</lastmod>
+    <lastmod>2026-07-04T12:28:35.278Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://mideessi.com/blog/la-bombe-atomique-comment-une-minuscule-matiere-devient-une-puissance-monstrueuse</loc>
-    <lastmod>2026-04-30T06:28:23.709Z</lastmod>
+    <lastmod>2026-06-30T13:26:18.874Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -86,7 +86,7 @@
   </url>
   <url>
     <loc>https://mideessi.com/blog/deviens-developpeur-avec-ton-smartphone-python-tome-1</loc>
-    <lastmod>2026-02-26T01:06:58.921Z</lastmod>
+    <lastmod>2026-06-30T08:45:00.006Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>

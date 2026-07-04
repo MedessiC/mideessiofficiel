@@ -1,9 +1,20 @@
 import { BookOpen, Lightbulb, Users, Flag, MapPin, Calendar, Rocket } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import TeamMemberCard from '../components/TeamMemberCard';
 import { teamMembers } from '../data/teamMembers';
 import PopupDisplay from '../components/PopupDisplay';
+import { getDynamicTeamMembers } from '../lib/contentManagement';
 
 const About = () => {
+  const [dynamicMembers, setDynamicMembers] = useState(getDynamicTeamMembers());
+  const allMembers = [...teamMembers, ...dynamicMembers];
+
+  useEffect(() => {
+    const handler = () => setDynamicMembers(getDynamicTeamMembers());
+    window.addEventListener('mideessi-content-updated', handler);
+    return () => window.removeEventListener('mideessi-content-updated', handler);
+  }, []);
+
   const values = [
     {
       icon: <Flag className="w-8 h-8 text-gold" />,
@@ -298,7 +309,7 @@ const About = () => {
 
           {/* Team Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 md:gap-16 lg:gap-20 max-w-5xl mx-auto">
-            {teamMembers.map((member) => (
+            {allMembers.map((member) => (
               <TeamMemberCard key={member.id} member={member} />
             ))}
           </div>

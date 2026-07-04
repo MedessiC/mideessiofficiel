@@ -48,7 +48,7 @@ export const devServices: DevService[] = [
       'Conception des wireframes et mockups',
       'Développement du site avec technologies modernes',
       'Tests & optimisation performance',
-      'Livraison et formation'
+      'Mise en place et formation'
     ],
     bonus: [
       'Photos produits/équipe optimisées',
@@ -84,7 +84,7 @@ export const devServices: DevService[] = [
       'Architecture de la boutique',
       'Intégration des paiements (Orange, MTN, Carte)',
       'Migration produits existants',
-      'Formation équipe + livraison'
+      'Formation équipe'
     ],
     bonus: [
       'Email de relance panier abandonné',
@@ -120,7 +120,7 @@ export const devServices: DevService[] = [
       'Design prototypes interactifs',
       'Développement iOS + Android',
       'Tests bêta utilisateurs',
-      'Soumission stores + livraison'
+      'Soumission stores'
     ],
     bonus: [
       'App Store optimization (ASO)',

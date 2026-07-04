@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import CloudinaryUploader from './CloudinaryUploader';
 
 interface HeroSection {
   id: string;
@@ -218,36 +219,16 @@ const HeroManager = () => {
               </div>
             </div>
 
-            {/* Image */}
+            {/* Media */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                URL Image de fond
-              </label>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  name="image_url"
-                  value={formData.image_url}
-                  onChange={handleImageUpload}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  placeholder="https://example.com/image.jpg"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Collé l'URL complète de l'image (Imgur, CDN, etc.)
-                </p>
-                {formData.image_url && (
-                  <div className="rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
-                    <img
-                      src={formData.image_url}
-                      alt="Aperçu"
-                      className="w-full h-32 object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 400 200"%3E%3Crect fill="%23f3f4f6" width="400" height="200"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%239ca3af" font-family="sans-serif" font-size="14"%3EURL invalide%3C/text%3E%3C/svg%3E';
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
+              <CloudinaryUploader
+                label="Média de fond (image, vidéo ou PDF)"
+                value={formData.image_url}
+                onChange={(value) => setFormData({ ...formData, image_url: value })}
+                folder="hero"
+                placeholder="https://res.cloudinary.com/..."
+                accept="image/*,video/*,application/pdf"
+              />
             </div>
           </div>
 

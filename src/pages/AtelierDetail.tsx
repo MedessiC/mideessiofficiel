@@ -1,45 +1,58 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  MapPin,
-  Users,
-  Award,
-  CheckCircle,
-  Mail,
-  MessageCircle,
-  Globe,
-  Sparkles,
-  Share2,
-  Heart,
-  AlertCircle,
+  ArrowLeft, Calendar, Clock, MapPin, Users, Award, CheckCircle,
+  Mail, MessageCircle, Globe, Sparkles, Share2, Heart, AlertCircle,
+  LogIn, UserCheck, X, Loader2, PartyPopper, ChevronRight,
 } from 'lucide-react';
 import SEO from '../components/SEO';
 import { Atelier, supabase } from '../lib/supabase';
 import { getDaysRemaining, isAtelierPassed, getCountdownStatus } from '../data/ateliers';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useAuth } from '../contexts/AuthContext';
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString + 'T00:00:00');
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+};
+const formatPrice = (price: number) => price.toLocaleString('fr-FR');
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+const Skeleton = () => (
+  <div className="min-h-screen pt-32 flex items-center justify-center bg-white dark:bg-gray-900">
+    <LoadingSpinner />
+  </div>
+);
+
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 const AtelierDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
   const [atelier, setAtelier] = useState<Atelier | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'program' | 'requirements' | 'instructor'>('program');
-  const [bookingStep, setBookingStep] = useState(0);
-  const [bookingData, setBookingData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    company: '',
-  });
-  const [isBooked, setIsBooked] = useState(false);
 
+  // Registration state
+  const [registering, setRegistering] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+  const [regError, setRegError] = useState<string | null>(null);
+
+  // Share / Save
+  const [saved, setSaved] = useState(false);
+  const [shareToast, setShareToast] = useState(false);
+
+  useEffect(() => { fetchAtelierDetail(); }, [slug]);
+
+  // Check if user already registered
   useEffect(() => {
-    fetchAtelierDetail();
-  }, [slug, navigate]);
+    if (user && atelier) checkExistingRegistration();
+  }, [user, atelier]);
 
   const fetchAtelierDetail = async () => {
     try {
@@ -53,7 +66,7 @@ const AtelierDetail = () => {
       if (error) throw error;
 
       if (data) {
-        const transformedAtelier: Atelier = {
+        const transformed: Atelier = {
           id: data.id,
           title: data.title,
           slug: data.slug,
@@ -70,22 +83,22 @@ const AtelierDetail = () => {
           language: data.language,
           level: data.level,
           instructor: {
-            name: 'Expert MIDEESSI',
-            title: 'Instructeur',
-            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
-            bio: 'Expert passionné dans son domaine'
+            name: data.instructor_name || 'Expert MIDEESSI',
+            title: data.instructor_title || 'Instructeur',
+            image: data.instructor_image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+            bio: data.instructor_bio || 'Expert passionné dans son domaine',
           },
           objectives: data.objectives || [],
-          program: [],
+          program: data.program || [],
           prerequisites: data.prerequisites || [],
           materials: data.materials || [],
           price: data.price,
           tags: data.tags || [],
-          is_online: data.is_online,
+          is_online: data.is_online ?? (data.format !== 'presentiel'),
           meet_link: data.meet_link,
-          status: data.status
+          status: data.status,
         };
-        setAtelier(transformedAtelier);
+        setAtelier(transformed);
       } else {
         navigate('/ateliers');
       }
@@ -97,399 +110,436 @@ const AtelierDetail = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen pt-32 flex items-center justify-center bg-white dark:bg-gray-900">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+  const checkExistingRegistration = async () => {
+    if (!user || !atelier) return;
+    try {
+      const { data } = await supabase
+        .from('atelier_registrations')
+        .select('id')
+        .eq('atelier_id', atelier.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) setAlreadyRegistered(true);
+    } catch (_) {
+      // table may not exist yet — silently ignore
+    }
+  };
 
-  if (!atelier) {
-    return (
-      <div className="min-h-screen pt-16 flex items-center justify-center">
-        <p className="text-lg text-gray-600 dark:text-gray-400">Chargement...</p>
-      </div>
-    );
-  }
+  const handleRegister = async () => {
+    if (!user || !atelier) return;
+    setRegistering(true);
+    setRegError(null);
+    try {
+      // Upsert to avoid duplicate
+      const { error } = await supabase
+        .from('atelier_registrations')
+        .upsert({
+          atelier_id: atelier.id,
+          user_id: user.id,
+          user_email: user.email,
+          user_name: user.user_metadata?.username || user.email?.split('@')[0] || 'Participant',
+          registered_at: new Date().toISOString(),
+          status: 'confirmed',
+        }, { onConflict: 'atelier_id,user_id' });
+
+      if (error) throw error;
+
+      // Increment registered count
+      await supabase
+        .from('ateliers')
+        .update({ registered: atelier.registered + 1 })
+        .eq('id', atelier.id);
+
+      setRegistered(true);
+      setAlreadyRegistered(true);
+    } catch (err: any) {
+      console.error(err);
+      setRegError(
+        err?.code === '42P01'
+          ? 'La table des inscriptions n\'existe pas encore en base. Veuillez contacter l\'administrateur.'
+          : 'Une erreur est survenue. Veuillez réessayer.'
+      );
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      await navigator.share({ title: atelier?.title, url }).catch(() => {});
+    } else {
+      await navigator.clipboard.writeText(url);
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 2500);
+    }
+  };
+
+  if (loading) return <Skeleton />;
+  if (!atelier) return null;
 
   const availableSpots = atelier.capacity - atelier.registered;
   const isFull = availableSpots <= 0;
-  const isAlmostFull = availableSpots <= 5;
+  const isAlmostFull = availableSpots <= 5 && availableSpots > 0;
   const daysRemaining = getDaysRemaining(atelier.date);
   const isPassed = isAtelierPassed(atelier.date);
   const countdownStatus = getCountdownStatus(atelier.date);
 
-  const handleBooking = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (bookingStep === 0) {
-      if (bookingData.firstName && bookingData.lastName && bookingData.email) {
-        setBookingStep(1);
-      }
-    } else if (bookingStep === 1) {
-      if (bookingData.phone && bookingData.company) {
-        setIsBooked(true);
-        setBookingStep(0);
-        // Reset form
-        setBookingData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phone: '',
-          company: '',
-        });
-      }
+  const levelColor = {
+    Débutant: 'bg-green-500/90',
+    Intermédiaire: 'bg-blue-500/90',
+    Avancé: 'bg-purple-500/90',
+  }[atelier.level] || 'bg-gray-500/90';
+
+  // ─── Booking Panel ─────────────────────────────────────────────────────────
+  const BookingPanel = () => {
+    // Success
+    if (registered || alreadyRegistered) {
+      return (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6">
+          <div className="text-center py-4">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <PartyPopper className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="text-xl font-black text-[var(--brand-midnight)] dark:text-white mb-2">
+              {registered ? 'Inscription confirmée !' : 'Déjà inscrit'}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+              {registered
+                ? `Bienvenue ! Un email de confirmation sera envoyé à ${user?.email}.`
+                : 'Vous êtes déjà inscrit à cet atelier.'}
+            </p>
+            {atelier.is_online && atelier.meet_link && (
+              <a
+                href={atelier.meet_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-gold to-yellow-400 text-midnight px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg transition-all"
+              >
+                <Globe className="w-4 h-4" /> Rejoindre le lien
+              </a>
+            )}
+            <div className="mt-4 p-3 bg-[var(--bg-surface)] rounded-xl text-left">
+              <p className="text-[11px] font-semibold text-[var(--brand-midnight)] dark:text-white mb-1">
+                Date : {formatDate(atelier.date)}
+              </p>
+              <p className="text-[11px] text-gray-500">Heure : {atelier.time} · {atelier.duration} min</p>
+              <p className="text-[11px] text-gray-500">Lieu : {atelier.is_online ? 'En ligne' : atelier.location}</p>
+            </div>
+          </div>
+        </div>
+      );
     }
-  };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
+    // Not logged in
+    if (!user) {
+      return (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-[var(--brand-midnight)] px-6 py-4">
+            <p className="text-2xl font-black text-gold">{formatPrice(atelier.price)} FCFA</p>
+            <p className="text-xs text-gray-300">par personne</p>
+          </div>
+          <div className="p-6">
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4 mb-5 text-center">
+              <LogIn className="w-6 h-6 text-amber-600 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">
+                Connexion requise
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                Connectez-vous pour vous inscrire à cet atelier.
+              </p>
+            </div>
+            <Link
+              to={`/login?redirect=/ateliers/${atelier.slug}`}
+              className="w-full bg-[var(--brand-midnight)] hover:bg-gray-800 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors mb-3"
+            >
+              <LogIn className="w-4 h-4" /> Se connecter
+            </Link>
+            <Link
+              to={`/signup?redirect=/ateliers/${atelier.slug}`}
+              className="w-full bg-gold/10 hover:bg-gold/20 text-[var(--brand-midnight)] dark:text-white border border-gold/30 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+            >
+              Créer un compte gratuit <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      );
+    }
 
-  const formatPrice = (price: number) => price.toLocaleString();
+    // Logged in — normal booking
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
+        {/* Price Header */}
+        <div className="bg-[var(--brand-midnight)] px-6 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-2xl font-black text-gold">{formatPrice(atelier.price)} FCFA</p>
+            <p className="text-xs text-gray-300">par personne</p>
+          </div>
+          <div className="text-right">
+            <div className="flex items-center gap-1.5 justify-end mb-1">
+              <UserCheck className="w-4 h-4 text-gold" />
+              <span className="text-white text-sm font-semibold">
+                {availableSpots > 0 ? `${availableSpots} place${availableSpots > 1 ? 's' : ''}` : 'Complet'}
+              </span>
+            </div>
+            <div className="w-28 h-1.5 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full ${isFull ? 'bg-red-500' : isAlmostFull ? 'bg-orange-400' : 'bg-gold'}`}
+                style={{ width: `${Math.min((atelier.registered / atelier.capacity) * 100, 100)}%` }}
+              />
+            </div>
+            <p className="text-[10px] text-gray-400 mt-0.5">{atelier.registered}/{atelier.capacity} inscrits</p>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* User info preview */}
+          <div className="flex items-center gap-3 p-3 bg-[var(--bg-surface)] rounded-xl mb-4 border border-[var(--border)]">
+            <div className="w-9 h-9 rounded-full bg-[var(--brand-midnight)] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              {(user.email?.[0] || '?').toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-[var(--brand-midnight)] dark:text-white truncate">
+                {user.user_metadata?.username || user.email}
+              </p>
+              <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+            </div>
+            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+          </div>
+
+          {regError && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 mb-4 text-xs">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              {regError}
+            </div>
+          )}
+
+          {isAlmostFull && (
+            <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-700 rounded-xl p-3 mb-4 text-xs font-semibold">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              Plus que {availableSpots} place{availableSpots > 1 ? 's' : ''} disponible !
+            </div>
+          )}
+
+          <button
+            onClick={handleRegister}
+            disabled={isFull || isPassed || registering}
+            className={`w-full py-3.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
+              isPassed
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
+                : isFull
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
+                : 'bg-gradient-to-r from-gold to-yellow-400 text-midnight shadow-md hover:shadow-lg'
+            }`}
+          >
+            {registering ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Inscription en cours…</>
+            ) : isPassed ? (
+              'Atelier terminé'
+            ) : isFull ? (
+              'Complet — Liste d\'attente'
+            ) : (
+              <>Confirmer mon inscription</>
+            )}
+          </button>
+
+          <p className="text-center text-[10px] text-gray-500 mt-2">
+            Annulation possible jusqu'à 48h avant l'atelier
+          </p>
+
+          {/* Share / Save */}
+          <div className="flex gap-3 mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+            <button
+              onClick={handleShare}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-semibold transition-colors"
+            >
+              <Share2 className="w-4 h-4" /> Partager
+            </button>
+            <button
+              onClick={() => setSaved(!saved)}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-semibold transition-all ${
+                saved
+                  ? 'border-red-200 bg-red-50 text-red-500 dark:bg-red-900/20 dark:border-red-700'
+                  : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              <Heart className={`w-4 h-4 ${saved ? 'fill-current' : ''}`} />
+              {saved ? 'Sauvegardé' : 'Sauvegarder'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
+    <div className="min-h-screen pt-16 bg-white dark:bg-gray-900 font-poppins">
       <SEO
         title={`${atelier.title} | MIDEESSI - Ateliers`}
         description={atelier.description}
         keywords={[atelier.title, 'atelier', 'formation', 'MIDEESSI', ...atelier.tags]}
       />
 
-      {/* Hero Section */}
-      <section className="relative py-12 md:py-20 lg:py-24 overflow-hidden">
+      {/* Share Toast */}
+      {shareToast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[var(--brand-midnight)] text-white px-4 py-2 rounded-full text-sm font-semibold shadow-xl flex items-center gap-2 animate-fade-in">
+          <CheckCircle className="w-4 h-4 text-gold" /> Lien copié !
+        </div>
+      )}
+
+      {/* ── HERO ── */}
+      <section className="relative py-14 md:py-24 overflow-hidden bg-[var(--brand-midnight)]">
         <div className="absolute inset-0 z-0">
-          <img src={atelier.image} alt={atelier.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
-          <div className="absolute inset-0 bg-black/70 dark:bg-black/80"></div>
+          <img src={atelier.image} alt={atelier.title} className="w-full h-full object-cover opacity-30" loading="lazy" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-midnight)] via-[var(--brand-midnight)]/70 to-[var(--brand-midnight)]/50" />
         </div>
 
+        {/* Decorative glow */}
+        <div className="absolute top-20 right-16 w-80 h-80 bg-gold/5 rounded-full blur-[80px] pointer-events-none" />
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <a
-            href="/ateliers"
-            className="inline-flex items-center gap-2 text-white hover:text-gold transition-colors mb-6 md:mb-8 text-sm md:text-base"
+          <Link
+            to="/ateliers"
+            className="inline-flex items-center gap-2 text-gray-300 hover:text-gold transition-colors mb-8 text-sm font-semibold"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Retour aux ateliers
-          </a>
+            <ArrowLeft className="w-4 h-4" /> Retour aux ateliers
+          </Link>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-            <div className="lg:col-span-2 min-w-0">
-              <div className="flex flex-col md:flex-row md:items-start md:gap-4 mb-4 md:mb-6 gap-3">
-                <div className="flex-1">
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight break-words">
-                    {atelier.title}
-                  </h1>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span
-                    className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap flex-shrink-0 text-center ${
-                      atelier.level === 'Débutant'
-                        ? 'bg-green-500/90'
-                        : atelier.level === 'Intermédiaire'
-                        ? 'bg-blue-500/90'
-                        : 'bg-purple-500/90'
-                    } text-white`}
-                  >
-                    {atelier.level}
-                  </span>
-                  {isPassed ? (
-                    <span className="px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap flex-shrink-0 bg-gray-500/90 text-white text-center flex items-center justify-center gap-1">
-                      <CheckCircle className="w-3 h-3" />
-                      Passé
-                    </span>
-                  ) : countdownStatus === 'today' ? (
-                    <span className="px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap flex-shrink-0 bg-red-500/90 text-white text-center animate-pulse flex items-center justify-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      Aujourd'hui!
-                    </span>
-                  ) : countdownStatus === 'tomorrow' ? (
-                    <span className="px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap flex-shrink-0 bg-orange-500/90 text-white text-center">
-                      Demain
-                    </span>
-                  ) : countdownStatus === 'soon' ? (
-                    <span className="px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap flex-shrink-0 bg-yellow-500/90 text-white text-center">
-                      {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}
-                    </span>
-                  ) : null}
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {/* Left — Info */}
+            <div className="lg:col-span-2">
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${levelColor}`}>
+                  {atelier.level}
+                </span>
+                {isPassed ? (
+                  <span className="px-3 py-1 bg-gray-500/90 text-white rounded-full text-xs font-bold">Terminé</span>
+                ) : countdownStatus === 'today' ? (
+                  <span className="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-bold animate-pulse">Aujourd'hui !</span>
+                ) : countdownStatus === 'tomorrow' ? (
+                  <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-bold">Demain</span>
+                ) : countdownStatus === 'soon' ? (
+                  <span className="px-3 py-1 bg-gold text-midnight rounded-full text-xs font-bold">Dans {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}</span>
+                ) : null}
+                <span className="px-3 py-1 bg-white/10 backdrop-blur border border-white/20 text-white rounded-full text-xs font-semibold capitalize">
+                  {atelier.category}
+                </span>
               </div>
-              <p className="text-lg md:text-xl text-gray-200 mb-4 md:mb-6 font-semibold">{atelier.description}</p>
 
-              {/* Quick Info */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4 border border-white/20">
-                  <Calendar className="w-5 h-5 text-gold mb-2" />
-                  <p className="text-xs text-gray-300 mb-1">Date</p>
-                  <p className="text-sm font-bold text-white">{formatDate(atelier.date)}</p>
-                </div>
-                <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4 border border-white/20">
-                  <Clock className="w-5 h-5 text-gold mb-2" />
-                  <p className="text-xs text-gray-300 mb-1">Durée</p>
-                  <p className="text-sm font-bold text-white">{atelier.duration} min</p>
-                </div>
-                <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4 border border-white/20">
-                  <Users className="w-5 h-5 text-gold mb-2" />
-                  <p className="text-xs text-gray-300 mb-1">Places</p>
-                  <p className={`text-sm font-bold ${isFull ? 'text-red-400' : 'text-white'}`}>
-                    {availableSpots > 0 ? `${availableSpots}/${atelier.capacity}` : 'Complet'}
-                  </p>
-                </div>
-                <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4 border border-white/20">
-                  <Sparkles className="w-5 h-5 text-gold mb-2" />
-                  <p className="text-xs text-gray-300 mb-1">Catégorie</p>
-                  <p className="text-sm font-bold text-white capitalize">{atelier.category}</p>
-                </div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white leading-tight mb-4">
+                {atelier.title}
+              </h1>
+              <p className="text-base md:text-lg text-gray-200 mb-6 leading-relaxed max-w-2xl">
+                {atelier.description}
+              </p>
+
+              {/* Quick info grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { icon: Calendar, label: 'Date', value: new Date(atelier.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) },
+                  { icon: Clock, label: 'Durée', value: `${atelier.duration} min` },
+                  { icon: Users, label: 'Places', value: isFull ? 'Complet' : `${availableSpots}/${atelier.capacity}` },
+                  { icon: atelier.is_online ? Globe : MapPin, label: 'Format', value: atelier.is_online ? 'En ligne' : 'Présentiel' },
+                ].map(({ icon: Icon, label, value }) => (
+                  <div key={label} className="bg-white/10 backdrop-blur border border-white/15 rounded-xl p-3 text-center">
+                    <Icon className="w-5 h-5 text-gold mx-auto mb-1" />
+                    <p className="text-[10px] text-gray-300">{label}</p>
+                    <p className={`text-sm font-bold text-white mt-0.5 ${isFull && label === 'Places' ? 'text-red-400' : ''}`}>{value}</p>
+                  </div>
+                ))}
               </div>
-            </div>
 
-            {/* Booking Card */}
-            <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-2xl p-6 md:p-8 shadow-2xl h-fit">
-              {isBooked ? (
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="w-8 h-8 text-green-500" />
-                  </div>
-                  <h3 className="text-xl font-bold text-midnight dark:text-white mb-2">
-                    Réservation confirmée!
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Un email de confirmation a été envoyé à {bookingData.email}
-                  </p>
-                  <button
-                    onClick={() => setIsBooked(false)}
-                    className="w-full bg-gold text-midnight font-bold py-2 px-4 rounded-lg hover:bg-gold/90 transition-colors"
-                  >
-                    Nouvelle réservation
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <div className="mb-6">
-                    <p className="text-3xl md:text-4xl font-bold text-gold mb-2">
-                      {formatPrice(atelier.price)} FCFA
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">par personne</p>
-                  </div>
-
-                  {/* Booking Form */}
-                  <form onSubmit={handleBooking} className="space-y-4">
-                    {bookingStep === 0 ? (
-                      <>
-                        <div>
-                          <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                            Prénom
-                          </label>
-                          <input
-                            type="text"
-                            value={bookingData.firstName}
-                            onChange={(e) =>
-                              setBookingData({ ...bookingData, firstName: e.target.value })
-                            }
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-midnight dark:text-white focus:outline-none focus:border-gold"
-                            placeholder="Votre prénom"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                            Nom
-                          </label>
-                          <input
-                            type="text"
-                            value={bookingData.lastName}
-                            onChange={(e) =>
-                              setBookingData({ ...bookingData, lastName: e.target.value })
-                            }
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-midnight dark:text-white focus:outline-none focus:border-gold"
-                            placeholder="Votre nom"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                            Email
-                          </label>
-                          <input
-                            type="email"
-                            value={bookingData.email}
-                            onChange={(e) =>
-                              setBookingData({ ...bookingData, email: e.target.value })
-                            }
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-midnight dark:text-white focus:outline-none focus:border-gold"
-                            placeholder="votre@email.com"
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div>
-                          <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                            Téléphone
-                          </label>
-                          <input
-                            type="tel"
-                            value={bookingData.phone}
-                            onChange={(e) =>
-                              setBookingData({ ...bookingData, phone: e.target.value })
-                            }
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-midnight dark:text-white focus:outline-none focus:border-gold"
-                            placeholder="+229 XXXXXXXX"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-midnight dark:text-white mb-2">
-                            Entreprise/Organisation
-                          </label>
-                          <input
-                            type="text"
-                            value={bookingData.company}
-                            onChange={(e) =>
-                              setBookingData({ ...bookingData, company: e.target.value })
-                            }
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-midnight dark:text-white focus:outline-none focus:border-gold"
-                            placeholder="Votre entreprise"
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={isFull || isPassed}
-                      className={`w-full font-bold py-3 px-4 rounded-lg transition-all text-center ${
-                        isPassed
-                          ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                          : isFull
-                          ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                          : 'bg-gold hover:bg-gold/90 text-midnight'
-                      }`}
-                    >
-                      {isPassed ? 'Atelier terminé' : isFull ? 'Atelier complet' : bookingStep === 0 ? 'Continuer' : 'Confirmer réservation'}
-                    </button>
-
-                    {bookingStep === 1 && (
-                      <button
-                        type="button"
-                        onClick={() => setBookingStep(0)}
-                        className="w-full bg-gray-200 dark:bg-gray-700 text-midnight dark:text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        Retour
-                      </button>
-                    )}
-                  </form>
-
-                  {isAlmostFull && !isFull && !isPassed && (
-                    <p className="text-center text-sm text-red-500 font-semibold mt-4 flex items-center justify-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      Plus que {availableSpots} place{availableSpots > 1 ? 's' : ''} disponible!
-                    </p>
-                  )}
-
-                  {isPassed && (
-                    <div className="bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-4 mt-4 text-center">
-                      <p className="text-sm text-gray-700 dark:text-gray-300 flex items-center justify-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        Cet atelier s'est déroulé le {formatDate(atelier.date)}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Share and Like */}
-                  <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <button className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                      <Share2 className="w-4 h-4" />
-                      <span className="text-sm font-semibold">Partager</span>
-                    </button>
-                    <button className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                      <Heart className="w-4 h-4" />
-                      <span className="text-sm font-semibold">Sauvegarder</span>
-                    </button>
-                  </div>
+              {/* Tags */}
+              {atelier.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {atelier.tags.map((tag, i) => (
+                    <span key={i} className="text-[10px] bg-white/10 border border-white/15 text-gray-300 px-2.5 py-1 rounded-full font-medium">
+                      #{tag}
+                    </span>
+                  ))}
                 </div>
               )}
+            </div>
+
+            {/* Right — Booking card (desktop) */}
+            <div className="hidden lg:block">
+              <BookingPanel />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Main Content */}
-      <section className="py-12 md:py-20 bg-gray-50 dark:bg-gray-800">
+      {/* ── BOOKING CARD (mobile) ── */}
+      <div className="lg:hidden px-4 sm:px-6 -mt-4 mb-8 relative z-20">
+        <BookingPanel />
+      </div>
+
+      {/* ── TABS CONTENT ── */}
+      <section className="py-10 md:py-16 bg-[var(--bg-page)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Tabs */}
-          <div className="flex gap-2 md:gap-4 mb-8 md:mb-12 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+          <div className="flex gap-1 mb-8 bg-white dark:bg-gray-800 p-1 rounded-2xl shadow-sm border border-[var(--border)] w-fit">
             {(['program', 'requirements', 'instructor'] as const).map((tabName) => (
               <button
                 key={tabName}
                 onClick={() => setActiveTab(tabName)}
-                className={`py-3 md:py-4 px-3 md:px-6 font-semibold transition-all border-b-2 whitespace-nowrap text-sm md:text-base ${
+                className={`px-4 sm:px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
                   activeTab === tabName
-                    ? 'border-gold text-gold'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-midnight dark:hover:text-white'
+                    ? 'bg-[var(--brand-midnight)] text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-[var(--brand-midnight)] dark:hover:text-white'
                 }`}
               >
-                {tabName === 'program' && <span>Programme</span>}
-                {tabName === 'requirements' && <span>Prérequis</span>}
-                {tabName === 'instructor' && <span>Instructeur</span>}
+                {tabName === 'program' && 'Programme'}
+                {tabName === 'requirements' && 'Prérequis'}
+                {tabName === 'instructor' && 'Instructeur'}
               </button>
             ))}
           </div>
 
           {/* Program Tab */}
           {activeTab === 'program' && (
-            <div className="space-y-4 md:space-y-6">
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8">
-                <h3 className="text-2xl font-bold text-midnight dark:text-white mb-6">Objectifs de l'atelier</h3>
-                <ul className="space-y-3 md:space-y-4">
-                  {atelier.objectives.map((objective, idx) => (
-                    <li key={idx} className="flex items-start gap-3 md:gap-4">
-                      <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-gold flex-shrink-0 mt-0.5 md:mt-1" />
-                      <span className="text-sm md:text-lg text-gray-700 dark:text-gray-300">{objective}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8">
-                <h3 className="text-2xl font-bold text-midnight dark:text-white mb-6">Programme détaillé</h3>
-                <div className="space-y-4">
-                  {atelier.program.map((session, idx) => (
-                    <div
-                      key={idx}
-                      className="border-l-4 border-gold pl-4 md:pl-6 py-3 md:py-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors rounded-r-lg"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock className="w-4 h-4 md:w-5 md:h-5 text-gold" />
-                        <p className="text-sm md:text-base font-bold text-midnight dark:text-white">
-                          {session.time}
-                        </p>
-                      </div>
-                      <h4 className="text-base md:text-lg font-semibold text-midnight dark:text-white mb-1 md:mb-2">
-                        {session.title}
-                      </h4>
-                      {session.description && (
-                        <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
-                          {session.description}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+            <div className="space-y-5">
+              {atelier.objectives.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-[var(--border)] shadow-sm">
+                  <h3 className="text-xl font-black text-[var(--brand-midnight)] dark:text-white mb-4">
+                    Objectifs de l'atelier
+                  </h3>
+                  <ul className="space-y-3">
+                    {atelier.objectives.map((obj, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <CheckCircle className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{obj}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
+              )}
+
+              {atelier.program.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-[var(--border)] shadow-sm">
+                  <h3 className="text-xl font-black text-[var(--brand-midnight)] dark:text-white mb-4">Programme détaillé</h3>
+                  <div className="space-y-3">
+                    {atelier.program.map((session, idx) => (
+                      <div key={idx} className="border-l-4 border-gold pl-4 py-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock className="w-4 h-4 text-gold" />
+                          <span className="text-sm font-bold text-[var(--brand-midnight)] dark:text-white">{session.time}</span>
+                        </div>
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{session.title}</p>
+                        {session.description && <p className="text-xs text-gray-500 mt-1">{session.description}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {atelier.materials.length > 0 && (
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8">
-                  <h3 className="text-2xl font-bold text-midnight dark:text-white mb-6">Matériel fourni</h3>
-                  <ul className="space-y-3 md:space-y-4">
-                    {atelier.materials.map((material, idx) => (
-                      <li key={idx} className="flex items-start gap-3 md:gap-4">
-                        <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-gold flex-shrink-0 mt-0.5 md:mt-1" />
-                        <span className="text-sm md:text-lg text-gray-700 dark:text-gray-300">
-                          {material}
-                        </span>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-[var(--border)] shadow-sm">
+                  <h3 className="text-xl font-black text-[var(--brand-midnight)] dark:text-white mb-4">Matériel fourni</h3>
+                  <ul className="space-y-2">
+                    {atelier.materials.map((m, idx) => (
+                      <li key={idx} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-4 h-4 text-gold flex-shrink-0" /> {m}
                       </li>
                     ))}
                   </ul>
@@ -500,40 +550,32 @@ const AtelierDetail = () => {
 
           {/* Requirements Tab */}
           {activeTab === 'requirements' && (
-            <div className="space-y-4 md:space-y-6">
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8">
-                <h3 className="text-2xl font-bold text-midnight dark:text-white mb-6">Prérequis</h3>
-                <ul className="space-y-3 md:space-y-4">
-                  {atelier.prerequisites.map((prerequisite, idx) => (
-                    <li key={idx} className="flex items-start gap-3 md:gap-4">
-                      <Award className="w-5 h-5 md:w-6 md:h-6 text-gold flex-shrink-0 mt-0.5 md:mt-1" />
-                      <span className="text-sm md:text-lg text-gray-700 dark:text-gray-300">
-                        {prerequisite}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+            <div className="space-y-5">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-[var(--border)] shadow-sm">
+                <h3 className="text-xl font-black text-[var(--brand-midnight)] dark:text-white mb-4">Prérequis</h3>
+                {atelier.prerequisites.length > 0 ? (
+                  <ul className="space-y-3">
+                    {atelier.prerequisites.map((pre, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <Award className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{pre}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500">Aucun prérequis — ouvert à tous !</p>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div className="bg-gold/10 dark:bg-gold/5 rounded-2xl p-6 md:p-8 border border-gold/20">
-                  <p className="text-lg font-bold text-midnight dark:text-white mb-2">Langue de l'atelier</p>
-                  <p className="text-lg text-gold font-semibold">{atelier.language}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-[var(--border)] shadow-sm">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Langue</p>
+                  <p className="text-lg font-bold text-gold">{atelier.language}</p>
                 </div>
-                <div className="bg-gold/10 dark:bg-gold/5 rounded-2xl p-6 md:p-8 border border-gold/20">
-                  <p className="text-lg font-bold text-midnight dark:text-white mb-2">Format</p>
-                  <p className="text-lg text-gold font-semibold flex items-center gap-2">
-                    {atelier.is_online ? (
-                      <>
-                        <Globe className="w-5 h-5" />
-                        En ligne
-                      </>
-                    ) : (
-                      <>
-                        <MapPin className="w-5 h-5" />
-                        Présentiel
-                      </>
-                    )}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-[var(--border)] shadow-sm">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Format</p>
+                  <p className="text-lg font-bold text-gold flex items-center gap-2">
+                    {atelier.is_online ? <><Globe className="w-5 h-5" /> En ligne</> : <><MapPin className="w-5 h-5" /> Présentiel</>}
                   </p>
                 </div>
               </div>
@@ -542,75 +584,55 @@ const AtelierDetail = () => {
 
           {/* Instructor Tab */}
           {activeTab === 'instructor' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8 shadow-lg">
-                <div className="text-center mb-6 md:mb-8">
-                  <img
-                    src={atelier.instructor.image}
-                    alt={atelier.instructor.name}
-                    className="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-4 md:mb-6 object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <h3 className="text-2xl md:text-3xl font-bold text-midnight dark:text-white mb-2">
-                    {atelier.instructor.name}
-                  </h3>
-                  <p className="text-lg text-gold font-semibold mb-4">{atelier.instructor.title}</p>
-                </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-[var(--border)] shadow-sm text-center">
+                <img
+                  src={atelier.instructor.image}
+                  alt={atelier.instructor.name}
+                  className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-4 border-gold/20"
+                  loading="lazy"
+                />
+                <h3 className="text-xl font-black text-[var(--brand-midnight)] dark:text-white mb-1">{atelier.instructor.name}</h3>
+                <p className="text-gold font-semibold text-sm mb-5">{atelier.instructor.title}</p>
                 <div className="flex gap-3 justify-center">
                   <a
-                    href={`mailto:contact@mideessi.com`}
-                    className="flex items-center gap-2 px-4 py-2 bg-gold hover:bg-gold/90 text-midnight font-bold rounded-lg transition-colors"
+                    href="mailto:contact@mideessi.com"
+                    className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-midnight)] text-white font-bold rounded-xl text-sm hover:bg-gray-800 transition-colors"
                   >
-                    <Mail className="w-4 h-4" />
-                    Email
+                    <Mail className="w-4 h-4" /> Email
                   </a>
                   <a
-                    href="https://wa.me/22900000000"
-                    className="flex items-center gap-2 px-4 py-2 border-2 border-gold text-gold font-bold rounded-lg hover:bg-gold/10 transition-colors"
+                    href="https://wa.me/2290164409691"
+                    className="flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/30 text-[var(--brand-midnight)] dark:text-white font-bold rounded-xl text-sm hover:bg-gold/20 transition-colors"
                   >
-                    <MessageCircle className="w-4 h-4" />
-                    WhatsApp
+                    <MessageCircle className="w-4 h-4 text-gold" /> WhatsApp
                   </a>
                 </div>
               </div>
-
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8">
-                <h4 className="text-xl md:text-2xl font-bold text-midnight dark:text-white mb-4">
-                  À propos de l'instructeur
-                </h4>
-                <p className="text-base md:text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
-                  {atelier.instructor.bio}
-                </p>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-[var(--border)] shadow-sm">
+                <h4 className="text-lg font-bold text-[var(--brand-midnight)] dark:text-white mb-3">À propos</h4>
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{atelier.instructor.bio}</p>
               </div>
             </div>
           )}
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-midnight to-blue-900 dark:from-gray-900 dark:to-black text-white">
+      {/* ── BOTTOM CTA ── */}
+      <section className="py-12 bg-[var(--brand-midnight)] text-white mb-16 md:mb-0">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight">
-            Vous avez des questions?
-          </h2>
-          <p className="text-base md:text-lg text-gray-300 mb-6 md:mb-10 max-w-2xl mx-auto leading-relaxed">
-            Notre équipe est disponible pour vous aider et répondre à toutes vos questions sur cet atelier.
+          <Sparkles className="w-8 h-8 text-gold mx-auto mb-3" />
+          <h2 className="text-2xl md:text-3xl font-black mb-2">Des questions ?</h2>
+          <p className="text-gray-300 text-sm mb-6 max-w-lg mx-auto">
+            Notre équipe est là pour vous aider. Contactez-nous avant de vous inscrire.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/contact"
-              className="px-6 md:px-8 py-3 md:py-4 bg-gold text-midnight font-bold rounded-lg hover:bg-gold/90 transition-colors inline-flex items-center justify-center"
-            >
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/contact" className="inline-flex items-center justify-center gap-2 bg-gold text-midnight px-6 py-3 rounded-xl font-bold text-sm hover:bg-yellow-400 transition-colors">
               Nous contacter
-            </a>
-            <a
-              href="/ateliers"
-              className="px-6 md:px-8 py-3 md:py-4 border-2 border-gold text-gold font-bold rounded-lg hover:bg-gold/10 transition-colors inline-flex items-center justify-center"
-            >
+            </Link>
+            <Link to="/ateliers" className="inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-white/10 transition-colors">
               Voir les autres ateliers
-            </a>
+            </Link>
           </div>
         </div>
       </section>

@@ -65,7 +65,7 @@ export default function ClientCompte() {
             <p className="text-xs text-[var(--text-secondary)]">Entreprise</p>
             <p className="mt-1 text-sm text-[var(--brand-midnight)]">{entreprise || 'Non défini'}</p>
           </div>
-          <button type="button" onClick={() => setProfileOpen(true)} className="w-full rounded-[16px] bg-[var(--brand-midnight)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#23238d]">
+          <button type="button" onClick={() => setProfileOpen(true)} className="w-full rounded-[16px] bg-[var(--brand-midnight)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-midnight-dark)]">
             Modifier le profil
           </button>
         </Card>
@@ -88,7 +88,7 @@ export default function ClientCompte() {
             <p className="text-sm uppercase tracking-[0.25em] text-[var(--text-hint)]">Déconnexion</p>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">Sécurisez votre session après chaque utilisation.</p>
           </div>
-          <button type="button" onClick={handleLogout} className="rounded-[16px] border border-[#ef4444] px-5 py-3 text-sm font-semibold text-[#dc2626] transition hover:bg-[#fee2e2]">
+          <button type="button" onClick={handleLogout} className="rounded-[16px] border border-[color:var(--danger-red)] px-5 py-3 text-sm font-semibold text-[color:var(--danger-red-strong)] transition hover:bg-[color:var(--danger-bg)]">
             Se déconnecter
           </button>
         </div>
@@ -100,7 +100,7 @@ export default function ClientCompte() {
           <input value={telephone} onChange={(event) => setTelephone(event.target.value)} className="w-full rounded-[18px] border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm outline-none focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/15" />
           <label className="block text-sm font-semibold text-[var(--brand-midnight)]">Entreprise</label>
           <input value={entreprise} onChange={(event) => setEntreprise(event.target.value)} className="w-full rounded-[18px] border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm outline-none focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/15" />
-          <button type="button" onClick={handleProfileSave} className="w-full rounded-[18px] bg-[var(--brand-midnight)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#23238d]">Enregistrer</button>
+          <button type="button" onClick={handleProfileSave} className="w-full rounded-[18px] bg-[var(--brand-midnight)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-midnight-dark)]">Enregistrer</button>
         </div>
       </BottomSheet>
 
@@ -112,10 +112,10 @@ export default function ClientCompte() {
           <input type="password" placeholder="••••••••" className="w-full rounded-[18px] border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm outline-none focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/15" />
           <label className="block text-sm font-semibold text-[var(--brand-midnight)]">Confirmation</label>
           <input type="password" placeholder="••••••••" className="w-full rounded-[18px] border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm outline-none focus:border-[var(--brand-gold)] focus:ring-2 focus:ring-[var(--brand-gold)]/15" />
-          <div className="rounded-[20px] bg-[#f8fafc] p-4 text-sm text-[var(--text-secondary)]">
+          <div className="rounded-[20px] bg-[color:var(--surface-light)] p-4 text-sm text-[var(--text-secondary)]">
             8+ caractères • 1 majuscule • 1 chiffre
           </div>
-          <button type="button" className="w-full rounded-[18px] bg-[var(--brand-midnight)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#23238d]">Enregistrer le mot de passe</button>
+          <button type="button" className="w-full rounded-[18px] bg-[var(--brand-midnight)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-midnight-dark)]">Enregistrer le mot de passe</button>
         </div>
       </BottomSheet>
     </div>

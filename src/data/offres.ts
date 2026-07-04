@@ -65,7 +65,7 @@ export const offres: Offre[] = [
     subtitle: 'Le meilleur rapport qualité/prix',
     image: '/offre-eya.webp',
     features: [
-      { name: '4 publications strategiques/semaine', included: true },
+      { name: '4 publications stratégiques/semaine', included: true },
       { name: 'Visuels soignés + contenu vidéo court', included: true },
       { name: 'Légendes + stories engageantes', included: true },
       { name: 'Gestion active des commentaires et messages', included: true },
@@ -73,7 +73,7 @@ export const offres: Offre[] = [
       { name: 'Rapport mensuel de performance', included: true },
       { name: 'Suivi du ROI publicitaire', included: true },
       { name: 'Contenu quotidien', included: false },
-      { name: 'Reels premium et videos longues', included: false },
+      { name: 'Reels premium et vidéos longues', included: false },
       { name: 'Site web vitrine', included: false },
     ],
     whaYouGet: [
@@ -112,14 +112,14 @@ export const offres: Offre[] = [
     whaYouGet: [
       'Domination de votre lien digitale sur Facebook et Instagram',
       'Présence constante et professionnelle que vos concurrents ne peuvent pas ignorer',
-      'Videos et contenu viral régulièrement produits',
+      'Vidéos et contenu viral régulièrement produits',
       'Un site web professionnel qui vend ou informe selon vos besoins',
       'Vos employés formés pour comprendre les stratégies digitales',
       'ROI clairement mesuré et amélioré chaque mois'
     ],
     forWho: 'Entreprises ambitieuses qui veulent dominer leur marché : commercial fort, multi-canaux, lancement nouveau produit, croissance agressive.',
     note: 'Budget pub à la charge du client — Contrat minimum 3 mois',
-  }
+  },
 ];
 
 export const getOffreBySlug = (slug: string): Offre | undefined => {

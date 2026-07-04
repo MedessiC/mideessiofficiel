@@ -25,6 +25,7 @@ import ModernBlog from './pages/ModernBlog';
 import NewBlogPost from './pages/NewBlogPost';
 import Contact from './pages/Contact';
 import Careers from './pages/Careers';
+import Legal from './pages/Legal';
 import Offres from './pages/Offres';
 import DetailOffre from './pages/DetailOffre';
 import DetailDevService from './pages/DetailDevService';
@@ -39,7 +40,7 @@ import ShareRedirect from './pages/ShareRedirect';
 import TeamMemberProfile from './pages/TeamMemberProfile';
 import Signup from './pages/Signup';
 import MyLibrary from './pages/MyLibrary';
-import UserProfile from './pages/UserProfile';
+import ProfileOverview from './pages/ProfileOverview';
 import UserProfileEdit from './pages/UserProfileEdit';
 import ClientOnboarding from './pages/ClientOnboarding';
 import ClientDashboard from './pages/ClientDashboard';
@@ -52,8 +53,12 @@ import ClientKpis from './pages/ClientKpis';
 import ClientCalendar from './pages/ClientCalendar';
 import ClientReportsPage from './pages/ClientReports';
 import ClientObjectives from './pages/ClientObjectives';
+import ClientQuoteRequests from './pages/ClientQuoteRequests';
+import ClientDossiers from './pages/ClientDossiers';
+import SubmitDossier from './pages/SubmitDossier';
 import { ClientShell } from './components/layout/ClientShell';
 import { Navigate } from 'react-router-dom';
+import AdminQuoteRequests from './pages/AdminQuoteRequests';
 function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -63,7 +68,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
       <PageLoader />
-      {!isAdminRoute && !isAuthRoute && !isClientRoute && <Navbar />}
+      {!isAdminRoute && !isAuthRoute && <Navbar />}
       <main className="animate-fade-in">
         <Routes>
           <Route path="/" element={<NewHome />} />
@@ -84,17 +89,17 @@ function AppContent() {
           <Route path="/library/:id" element={<BookDetail />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/careers" element={<Careers />} />
+          <Route path="/legal" element={<Legal />} />
           <Route path="/login" element={<UnifiedLogin />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/clients" element={<UnifiedLogin />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/profile/:username" element={<UserProfile />} />
+          <Route path="/profile/:username" element={<ProfileOverview />} />
           <Route path="/profile/edit" element={<ProtectedRoute><UserProfileEdit /></ProtectedRoute>} />
           <Route path="/my-library" element={<ProtectedRoute><MyLibrary /></ProtectedRoute>} />
           
           {/* Client Routes */}
           <Route path="/clients/*" element={<ClientShell />}>
-            <Route index element={<Navigate to="/clients/dashboard" replace />} />
             <Route path="onboarding" element={<ClientProtectedRoute><ClientOnboarding /></ClientProtectedRoute>} />
             <Route path="dashboard" element={<ClientProtectedRoute><ClientDashboard /></ClientProtectedRoute>} />
             <Route path="livrables" element={<ClientProtectedRoute><ClientLivrables /></ClientProtectedRoute>} />
@@ -104,6 +109,9 @@ function AppContent() {
             <Route path="kpis" element={<ClientProtectedRoute><ClientKpis /></ClientProtectedRoute>} />
             <Route path="calendar" element={<ClientProtectedRoute><ClientCalendar /></ClientProtectedRoute>} />
             <Route path="reports" element={<ClientProtectedRoute><ClientReportsPage /></ClientProtectedRoute>} />
+            <Route path="quotes" element={<ClientProtectedRoute><ClientQuoteRequests /></ClientProtectedRoute>} />
+            <Route path="dossiers" element={<ClientProtectedRoute><ClientDossiers /></ClientProtectedRoute>} />
+            <Route path="submit-dossier" element={<SubmitDossier />} />
             <Route path="objectives" element={<ClientProtectedRoute><ClientObjectives /></ClientProtectedRoute>} />
             <Route path="compte" element={<ClientProtectedRoute><ClientCompte /></ClientProtectedRoute>} />
           </Route>
@@ -111,14 +119,15 @@ function AppContent() {
           <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/clients" element={<ProtectedRoute requiredRole="admin"><AdminClientManagement /></ProtectedRoute>} />
           <Route path="/admin/pdfeditor" element={<ProtectedRoute requiredRole="admin"><AdminPdfs /></ProtectedRoute>} />
+          <Route path="/admin/quotes" element={<ProtectedRoute requiredRole="admin"><AdminQuoteRequests /></ProtectedRoute>} />
           <Route path="/share/:slug" element={<ShareRedirect />} />
           <Route path="/admin/post/:id" element={<ProtectedRoute requiredRole="admin"><AdminPostEditor /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      {!isAdminRoute && !isAuthRoute && !isClientRoute && <BottomNavigation />}
-      {!isAdminRoute && !isAuthRoute && !isClientRoute && <Footer />}
-      {!isAdminRoute && !isAuthRoute && !isClientRoute && <CookieConsent />}
+      {!isAdminRoute && !isAuthRoute && <BottomNavigation />}
+      {!isAdminRoute && !isAuthRoute && <Footer />}
+      {!isAdminRoute && !isAuthRoute && <CookieConsent />}
     </div>
   );
 }

@@ -20,6 +20,21 @@ interface ClientContextType {
   completeOnboarding: () => Promise<void>;
 }
 
+const CLIENT_SESSION_KEY = 'client_session';
+
+const safeReadClientSession = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(CLIENT_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && parsed.client_id ? parsed : null;
+  } catch {
+    window.localStorage.removeItem(CLIENT_SESSION_KEY);
+    return null;
+  }
+};
+
 const ClientContext = createContext<ClientContextType | undefined>(undefined);
 
 export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -31,10 +46,13 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const storedUser = localStorage.getItem('client_session');
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          
+        const parsedUser = safeReadClientSession();
+        if (parsedUser) {
+          if (!parsedUser?.client_id) {
+            localStorage.removeItem(CLIENT_SESSION_KEY);
+            return;
+          }
+
           // Verify user still exists in database
           const { data, error: fetchError } = await supabase
             .from('clients')
@@ -48,12 +66,12 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               is_first_login: false
             });
           } else {
-            localStorage.removeItem('client_session');
+            localStorage.removeItem(CLIENT_SESSION_KEY);
           }
         }
       } catch (err) {
         console.error('Session check error:', err);
-        localStorage.removeItem('client_session');
+        localStorage.removeItem(CLIENT_SESSION_KEY);
       } finally {
         setLoading(false);
       }
@@ -104,8 +122,14 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         is_first_login: true // User just logged in
       };
 
-      // Store in localStorage
-      localStorage.setItem('client_session', JSON.stringify(clientUser));
+      // Store only minimal client identity in localStorage
+      localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify({
+        client_id: clientUser.client_id,
+        email: clientUser.email,
+        nom_marque: clientUser.nom_marque,
+        pack: clientUser.pack,
+        is_first_login: clientUser.is_first_login,
+      }));
       setUser(clientUser);
     } catch (err: any) {
       if (!error) {
@@ -118,7 +142,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const signOut = () => {
-    localStorage.removeItem('client_session');
+    localStorage.removeItem(CLIENT_SESSION_KEY);
     setUser(null);
     setError(null);
   };
@@ -129,7 +153,13 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       // Update user state to mark first login as complete
       const updatedUser = { ...user, is_first_login: false };
-      localStorage.setItem('client_session', JSON.stringify(updatedUser));
+      localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify({
+        client_id: updatedUser.client_id,
+        email: updatedUser.email,
+        nom_marque: updatedUser.nom_marque,
+        pack: updatedUser.pack,
+        is_first_login: updatedUser.is_first_login,
+      }));
       setUser(updatedUser);
     } catch (err) {
       console.error('Error completing onboarding:', err);

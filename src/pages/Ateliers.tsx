@@ -1,4 +1,4 @@
-import { Search, Filter, Calendar, MapPin, Rocket, Code, Globe } from 'lucide-react';
+import { Search, Filter, Calendar, MapPin, Rocket, Code, Globe, User, BookOpen, Heart, Bookmark } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import SEO from '../components/SEO';
 import AtelierCard from '../components/AtelierCard';
@@ -6,18 +6,68 @@ import { atelierCategories, getDaysRemaining } from '../data/ateliers';
 import { getIcon } from '../utils/iconMapper';
 import { supabase, Atelier } from '../lib/supabase';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useAuth } from '../contexts/AuthContext';
 
 const Ateliers = () => {
+  const { user } = useAuth();
   const [ateliers, setAteliers] = useState<Atelier[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterOption, setFilterOption] = useState<'all' | 'this-week' | 'this-month' | 'online' | 'in-person'>('all');
+  const [filterOption, setFilterOption] = useState<'all' | 'this-week' | 'online' | 'in-person' | 'my-registrations' | 'favorites'>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'price-low' | 'price-high' | 'available'>('recent');
+  const [myRegistrations, setMyRegistrations] = useState<string[]>([]);
+  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
 
   useEffect(() => {
     fetchAteliers();
+    loadBookmarks();
   }, []);
+
+  useEffect(() => {
+    if (user && ateliers.length > 0) {
+      fetchMyRegistrations();
+    }
+  }, [user, ateliers]);
+
+  const loadBookmarks = () => {
+    try {
+      const saved = localStorage.getItem('bookmarked_ateliers');
+      if (saved) {
+        setBookmarkedIds(JSON.parse(saved));
+      }
+    } catch (err) {
+      console.error('Error loading bookmarks:', err);
+    }
+  };
+
+  const toggleBookmark = (id: string) => {
+    let updated;
+    if (bookmarkedIds.includes(id)) {
+      updated = bookmarkedIds.filter(bid => bid !== id);
+    } else {
+      updated = [...bookmarkedIds, id];
+    }
+    setBookmarkedIds(updated);
+    localStorage.setItem('bookmarked_ateliers', JSON.stringify(updated));
+  };
+
+  const fetchMyRegistrations = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('atelier_registrations')
+        .select('atelier_id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      if (data) {
+        setMyRegistrations(data.map((r: any) => r.atelier_id));
+      }
+    } catch (err) {
+      console.error('Error fetching registrations:', err);
+    }
+  };
 
   const fetchAteliers = async () => {
     try {
@@ -25,15 +75,13 @@ const Ateliers = () => {
       const { data, error } = await supabase
         .from('ateliers')
         .select('*')
-        .eq('status', 'upcoming')
+        .in('visibility', ['published', 'announced'])
         .order('date', { ascending: true });
 
       if (error) throw error;
       
-      // Transform database records to match Atelier interface
       if (data) {
         const transformedAteliers = data.map((atelier: any) => {
-          // Fetch instructor details if instructor_id exists
           return {
             id: atelier.id,
             title: atelier.title,
@@ -51,10 +99,10 @@ const Ateliers = () => {
             language: atelier.language,
             level: atelier.level,
             instructor: {
-              name: 'Expert MIDEESSI',
-              title: 'Instructeur',
-              image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
-              bio: 'Expert passionné dans son domaine'
+              name: atelier.instructor_name || 'Expert MIDEESSI',
+              title: atelier.instructor_title || 'Instructeur',
+              image: atelier.instructor_image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+              bio: atelier.instructor_bio || 'Expert passionné dans son domaine'
             },
             objectives: atelier.objectives || [],
             program: [],
@@ -62,7 +110,7 @@ const Ateliers = () => {
             materials: atelier.materials || [],
             price: atelier.price,
             tags: atelier.tags || [],
-            is_online: atelier.is_online,
+            is_online: atelier.is_online ?? (atelier.format !== 'presentiel'),
             meet_link: atelier.meet_link,
             status: atelier.status
           };
@@ -101,12 +149,14 @@ const Ateliers = () => {
     let matchesFilter = true;
     if (filterOption === 'this-week') {
       matchesFilter = getDaysRemaining(atelier.date) <= 7;
-    } else if (filterOption === 'this-month') {
-      matchesFilter = getDaysRemaining(atelier.date) <= 30;
     } else if (filterOption === 'online') {
       matchesFilter = atelier.is_online;
     } else if (filterOption === 'in-person') {
       matchesFilter = !atelier.is_online;
+    } else if (filterOption === 'my-registrations') {
+      matchesFilter = myRegistrations.includes(atelier.id);
+    } else if (filterOption === 'favorites') {
+      matchesFilter = bookmarkedIds.includes(atelier.id);
     }
     
     return matchesCategory && matchesSearch && matchesFilter;
@@ -141,7 +191,7 @@ const Ateliers = () => {
   }
 
   return (
-    <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
+    <div className="min-h-screen pt-16 bg-[var(--bg-page)] dark:bg-gray-950 font-poppins selection:bg-gold selection:text-midnight">
       <SEO
         title="Nos Ateliers | MIDEESSI - Formations & Workshops"
         description="Rejoignez nos ateliers interactifs pour développer vos compétences en technologie, business, design et marketing."
@@ -149,30 +199,36 @@ const Ateliers = () => {
       />
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white py-16 md:py-24 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 right-5 md:top-20 md:right-10 w-40 h-40 md:w-72 md:h-72 bg-gold rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-10 -left-5 md:bottom-20 md:left-10 w-48 h-48 md:w-96 md:h-96 bg-blue-500 rounded-full blur-3xl"></div>
+      <section className="relative bg-[var(--brand-midnight)] text-white py-16 md:py-24 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-10 right-5 md:top-20 md:right-10 w-40 h-40 md:w-72 md:h-72 bg-gold/10 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-10 -left-5 md:bottom-20 md:left-10 w-48 h-48 md:w-96 md:h-96 bg-white/5 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 text-center tracking-tight leading-tight">
-            Nos <span className="text-gold">Ateliers</span>
-          </h1>
-          <p className="text-base md:text-lg lg:text-2xl text-center text-gray-200 max-w-3xl mx-auto font-light leading-relaxed">
-            Des formations pratiques animées par des experts pour maîtriser les dernières tendances en technologie, business et design.
-          </p>
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <span className="inline-flex items-center gap-1.5 bg-gold/10 border border-gold/30 text-gold px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3">
+              Développement Continu
+            </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 md:mb-6 tracking-tight leading-tight">
+              Nos <span className="text-gold">Ateliers</span>
+            </h1>
+            <p className="text-sm sm:text-base md:text-lg text-gray-300 font-medium leading-relaxed">
+              Des formations pratiques animées par des experts pour maîtriser les dernières compétences en technologie, business et design.
+            </p>
+          </div>
 
-      {/* Search Bar */}
-          <div className="mt-8 md:mt-12 max-w-4xl mx-auto">
+          {/* Search Bar & Primary Filters */}
+          <div className="mt-8 max-w-4xl mx-auto">
             <div className="relative mb-6">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Rechercher par titre, tags, instructeur..."
+                placeholder="Rechercher par titre, tags, thématique..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 md:py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:border-gold transition-colors"
+                className="w-full pl-12 pr-4 py-3 md:py-4 bg-white/5 backdrop-blur border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
               />
             </div>
 
@@ -180,201 +236,250 @@ const Ateliers = () => {
             <div className="flex flex-wrap gap-2 justify-center">
               <button
                 onClick={() => setFilterOption('all')}
-                className={`px-3 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                   filterOption === 'all'
-                    ? 'bg-gold text-midnight'
-                    : 'bg-white/10 text-white hover:bg-white/20'
+                    ? 'bg-gold text-midnight shadow-lg'
+                    : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
                 }`}
               >
-                <Filter className="w-3.5 h-3.5" /> Tous
+                Tous
               </button>
               <button
                 onClick={() => setFilterOption('this-week')}
-                className={`px-3 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                   filterOption === 'this-week'
-                    ? 'bg-gold text-midnight'
-                    : 'bg-white/10 text-white hover:bg-white/20'
+                    ? 'bg-gold text-midnight shadow-lg'
+                    : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
                 }`}
               >
                 <Calendar className="w-3.5 h-3.5" /> Cette semaine
               </button>
               <button
                 onClick={() => setFilterOption('online')}
-                className={`px-3 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                   filterOption === 'online'
-                    ? 'bg-gold text-midnight'
-                    : 'bg-white/10 text-white hover:bg-white/20'
+                    ? 'bg-gold text-midnight shadow-lg'
+                    : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
                 }`}
               >
                 <Globe className="w-3.5 h-3.5" /> En ligne
               </button>
               <button
                 onClick={() => setFilterOption('in-person')}
-                className={`px-3 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                   filterOption === 'in-person'
-                    ? 'bg-gold text-midnight'
-                    : 'bg-white/10 text-white hover:bg-white/20'
+                    ? 'bg-gold text-midnight shadow-lg'
+                    : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
                 }`}
               >
                 <MapPin className="w-3.5 h-3.5" /> Présentiel
               </button>
+
+              {/* Connected User Features */}
+              {user && (
+                <>
+                  <button
+                    onClick={() => setFilterOption('my-registrations')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      filterOption === 'my-registrations'
+                        ? 'bg-gold text-midnight shadow-lg'
+                        : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5" /> Inscriptions ({myRegistrations.length})
+                  </button>
+                  <button
+                    onClick={() => setFilterOption('favorites')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      filterOption === 'favorites'
+                        ? 'bg-gold text-midnight shadow-lg'
+                        : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <Bookmark className="w-3.5 h-3.5" /> Favoris ({bookmarkedIds.length})
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-8 md:py-12 bg-gradient-to-r from-gold/10 via-transparent to-blue-500/10 dark:from-gold/5 dark:to-blue-500/5 border-b border-gold/20">
+      <section className="py-8 bg-white dark:bg-gray-900 border-b border-[var(--border)] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-            <div className="text-center">
-              <p className="text-2xl md:text-3xl font-bold text-gold">{upcomingAteliers.length}</p>
-              <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1">Ateliers à venir</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center md:border-r border-gray-100 dark:border-gray-800 last:border-0">
+              <p className="text-2xl md:text-3xl font-black text-[var(--brand-midnight)] dark:text-white">{upcomingAteliers.length}</p>
+              <p className="text-xs text-gray-500 font-medium mt-1">Sessions planifiées</p>
             </div>
-            <div className="text-center">
-              <p className="text-2xl md:text-3xl font-bold text-gold">{atelierCategories.length}</p>
-              <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1">Catégories</p>
+            <div className="text-center md:border-r border-gray-100 dark:border-gray-800 last:border-0">
+              <p className="text-2xl md:text-3xl font-black text-gold">{atelierCategories.length}</p>
+              <p className="text-xs text-gray-500 font-medium mt-1">Thématiques</p>
             </div>
-            <div className="text-center">
-              <p className="text-2xl md:text-3xl font-bold text-gold">
-                {Math.max(...ateliers.map((a) => a.capacity)).toLocaleString()}+
+            <div className="text-center md:border-r border-gray-100 dark:border-gray-800 last:border-0">
+              <p className="text-2xl md:text-3xl font-black text-[var(--brand-midnight)] dark:text-white">
+                {Math.max(...ateliers.map((a) => a.capacity), 0).toLocaleString()}+
               </p>
-              <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1">Participants</p>
+              <p className="text-xs text-gray-500 font-medium mt-1">Places disponibles</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl md:text-3xl font-bold text-gold">5✨</p>
-              <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1">Note moyenne</p>
+              <p className="text-2xl md:text-3xl font-black text-gold">5 / 5</p>
+              <p className="text-xs text-gray-500 font-medium mt-1">Satisfaction globale</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="py-16 md:py-24 bg-white dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Category Filter */}
-          <div className="mb-12 md:mb-16">
-            <div className="flex items-center gap-2 mb-6 md:mb-8">
-              <Code className="w-5 h-5 md:w-6 md:h-6 text-gold" />
-              <h3 className="text-base md:text-lg font-bold text-midnight dark:text-white">Domaines d'expertise</h3>
-            </div>
-
-            <div className="flex flex-wrap gap-2 md:gap-3">
-              <button
-                onClick={() => setActiveCategory(null)}
-                className={`px-3 md:px-4 py-2 md:py-2.5 rounded-full font-semibold transition-all text-sm md:text-base whitespace-nowrap ${
-                  activeCategory === null
-                    ? 'bg-gold text-midnight shadow-md'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gold/30'
-                }`}
-              >
-                Tous les domaines
-              </button>
-
-              {atelierCategories.map((category) => {
-                const Icon = getIcon(category.iconName);
-                return (
-                  <button
-                    key={category.id}
-                    onClick={() => setActiveCategory(category.id)}
-                    className={`px-3 md:px-4 py-2 md:py-2.5 rounded-full font-semibold transition-all flex items-center gap-1.5 md:gap-2 text-sm md:text-base whitespace-nowrap ${
-                      activeCategory === category.id
-                        ? 'bg-gold text-midnight shadow-md'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gold/30'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 md:w-5 md:h-5" />
-                    <span>{category.name}</span>
-                  </button>
-                );
-              })}
-            </div>
+      <section className="py-12 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Category selector cards */}
+        <div className="mb-10 md:mb-14">
+          <div className="flex items-center gap-2 mb-5">
+            <Code className="w-5 h-5 text-gold" />
+            <h3 className="text-lg font-black text-midnight dark:text-white">Parcourir par thématique</h3>
           </div>
 
-          {/* Sort Options */}
-          <div className="mb-8 md:mb-12 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                {filteredAteliers.length} atelier{filteredAteliers.length > 1 ? 's' : ''} trouvé{filteredAteliers.length > 1 ? 's' : ''}
-              </p>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <button
+              onClick={() => setActiveCategory(null)}
+              className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
+                activeCategory === null
+                  ? 'bg-[var(--brand-midnight)] border-[var(--brand-midnight)] text-white shadow-lg'
+                  : 'bg-white dark:bg-gray-800 border-[var(--border)] text-gray-700 dark:text-gray-300 hover:border-gold'
+              }`}
+            >
+              <BookOpen className="w-5 h-5" />
+              <span className="text-xs font-bold">Tous</span>
+            </button>
+
+            {atelierCategories.map((category) => {
+              const Icon = getIcon(category.iconName);
+              const isActive = activeCategory === category.id;
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveCategory(category.id)}
+                  className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
+                    isActive
+                      ? 'bg-[var(--brand-midnight)] border-[var(--brand-midnight)] text-white shadow-lg'
+                      : 'bg-white dark:bg-gray-800 border-[var(--border)] text-gray-700 dark:text-gray-300 hover:border-gold'
+                  }`}
+                >
+                  <Icon className="w-5 h-5 text-gold" />
+                  <span className="text-xs font-bold truncate w-full">{category.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Filters and Sorting bar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-[var(--border)]">
+          <div>
+            <h2 className="text-xl font-black text-midnight dark:text-white">
+              {filteredAteliers.length} session{filteredAteliers.length > 1 ? 's' : ''} disponible{filteredAteliers.length > 1 ? 's' : ''}
+            </h2>
+            <p className="text-xs text-gray-500">
+              {filterOption === 'my-registrations' ? 'Affichage de vos ateliers enregistrés' : 'Trouvez la formation idéale'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-xs font-bold text-gray-500 whitespace-nowrap">Trier par :</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-midnight dark:text-white focus:outline-none focus:border-gold"
+              className="w-full sm:w-auto px-3 py-2 rounded-xl border border-[var(--border)] bg-white dark:bg-gray-800 text-xs font-bold text-midnight dark:text-white focus:outline-none focus:border-gold"
             >
-              <option value="recent">Les plus proches</option>
-              <option value="price-low">Prix: Bas au Haut</option>
-              <option value="price-high">Prix: Haut au Bas</option>
-              <option value="available">Plus de places</option>
+              <option value="recent">Date la plus proche</option>
+              <option value="price-low">Prix : croissant</option>
+              <option value="price-high">Prix : décroissant</option>
+              <option value="available">Places disponibles</option>
             </select>
           </div>
-
-          {/* Highlighted Recent Ateliers */}
-          {highlightedAteliers.length > 0 && getDaysRemaining(highlightedAteliers[0].date) <= 7 && (
-            <div className="mb-12 md:mb-16">
-              <div className="flex items-center gap-2 mb-6">
-                <Rocket className="w-6 h-6 text-gold" />
-                <h2 className="text-2xl md:text-3xl font-bold text-midnight dark:text-white">
-                  À ne pas manquer cette semaine
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-6 lg:gap-8 mb-12">
-                {highlightedAteliers.map((atelier) => (
-                  <div key={atelier.id} className="relative">
-                    <div className="absolute -top-2 sm:-top-3 md:-top-4 -right-2 sm:-right-3 md:-right-4 z-10 bg-gold text-midnight font-bold px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-lg shadow-lg text-xs sm:text-sm">
-                      À bientôt!
-                    </div>
-                    <AtelierCard atelier={atelier} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* All Ateliers Grid */}
-          {filteredAteliers.length > 0 ? (
-            <div>
-              {highlightedAteliers.length > 0 && <h2 className="text-2xl font-bold text-midnight dark:text-white mb-8">Tous les ateliers</h2>}
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-6 lg:gap-8">
-                {otherAteliers.map((atelier) => (
-                  <AtelierCard key={atelier.id} atelier={atelier} />
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <Calendar className="w-16 h-16 text-gold/50 mx-auto mb-4" />
-              <p className="text-lg md:text-2xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                Aucun atelier trouvé
-              </p>
-              <p className="text-sm md:text-base text-gray-500 dark:text-gray-500">
-                Modifiez vos filtres ou vos critères de recherche
-              </p>
-            </div>
-          )}
         </div>
+
+        {/* Highlighted section (this week) */}
+        {highlightedAteliers.length > 0 && getDaysRemaining(highlightedAteliers[0].date) <= 7 && filterOption === 'all' && (
+          <div className="mb-12 md:mb-16">
+            <div className="flex items-center gap-2 mb-6">
+              <Rocket className="w-5 h-5 text-gold" />
+              <h2 className="text-xl md:text-2xl font-black text-midnight dark:text-white">
+                Dernière chance pour s'inscrire
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {highlightedAteliers.map((atelier) => (
+                <div key={atelier.id} className="relative">
+                  <div className="absolute top-4 right-4 z-10 bg-gold text-midnight font-bold px-3 py-1 rounded-xl shadow-lg text-xs">
+                    Imminent
+                  </div>
+                  <AtelierCard
+                    atelier={atelier}
+                    isBookmarked={bookmarkedIds.includes(atelier.id)}
+                    onBookmarkToggle={() => toggleBookmark(atelier.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Main Grid */}
+        {filteredAteliers.length > 0 ? (
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredAteliers.map((atelier) => (
+                <AtelierCard
+                  key={atelier.id}
+                  atelier={atelier}
+                  isBookmarked={bookmarkedIds.includes(atelier.id)}
+                  onBookmarkToggle={() => toggleBookmark(atelier.id)}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-3xl border border-dashed border-[var(--border)]">
+            <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-midnight dark:text-white mb-2">Aucune session trouvée</h3>
+            <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6">
+              Ajustez vos filtres de recherche ou réinitialisez la catégorie pour découvrir d'autres formations.
+            </p>
+            <button
+              onClick={() => { setActiveCategory(null); setFilterOption('all'); setSearchTerm(''); }}
+              className="px-5 py-2.5 bg-[var(--brand-midnight)] hover:bg-gray-800 text-white text-xs font-bold rounded-xl transition-all"
+            >
+              Réinitialiser les filtres
+            </button>
+          </div>
+        )}
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-midnight to-blue-900 dark:from-gray-900 dark:to-black text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight">
-            Vous n'avez pas trouvé l'atelier idéal?
+      {/* Suggest a Workshop CTA */}
+      <section className="py-16 md:py-24 bg-[var(--brand-midnight)] text-white text-center relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none opacity-5">
+          <div className="absolute top-10 left-10 w-96 h-96 bg-white rounded-full blur-[100px]" />
+        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <h2 className="text-3xl md:text-4xl font-black mb-4 leading-tight">
+            Besoin d'un atelier sur-mesure ?
           </h2>
-          <p className="text-base md:text-lg text-gray-300 mb-6 md:mb-10 max-w-2xl mx-auto leading-relaxed">
-            Contactez-nous pour nous proposer un atelier ou pour une formation personnalisée pour votre équipe.
+          <p className="text-sm md:text-base text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+            Nous organisons des sessions privées adaptées aux objectifs spécifiques de votre entreprise ou de votre équipe.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="/contact"
-              className="px-6 md:px-8 py-3 md:py-4 bg-gold text-midnight font-bold rounded-lg hover:bg-gold/90 transition-colors inline-flex items-center justify-center"
+              className="px-6 py-3.5 bg-gold text-midnight font-bold rounded-xl hover:shadow-lg active:scale-95 transition-all text-sm"
             >
-              Nous contacter
+              Demander une formation personnalisée
             </a>
             <a
               href="/about"
-              className="px-6 md:px-8 py-3 md:py-4 border-2 border-gold text-gold font-bold rounded-lg hover:bg-gold/10 transition-colors inline-flex items-center justify-center"
+              className="px-6 py-3.5 border border-white/30 text-white font-bold rounded-xl hover:bg-white/10 active:scale-95 transition-all text-sm"
             >
               En savoir plus
             </a>

@@ -1,20 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, CreditCard as Edit, Trash2, Eye, LogOut, TrendingUp, FileText, Bell, PenTool, Tag, Film, Users } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Eye, LogOut, TrendingUp, FileText, Bell, PenTool, Tag, Film, Users, Sparkles } from 'lucide-react';
 import { supabase, BlogPost } from '../lib/supabase';
 import HeroManager from '../components/admin/HeroManager';
 import PopupManager from '../components/admin/PopupManager';
 import PromoCodeManager from '../components/admin/PromoCodeManager';
 import HeroSlidesManager from '../components/admin/HeroSlidesManager';
 import AdminClientManagement from './AdminClientManagement';
+import AdminQuoteRequests from './AdminQuoteRequests';
+import AtelierManager from '../components/admin/AtelierManager';
+import ContentManager from '../components/admin/ContentManager';
 
-type TabType = 'blog' | 'hero' | 'slides' | 'popups' | 'promo' | 'clients';
+type TabType = 'blog' | 'hero' | 'slides' | 'popups' | 'promo' | 'clients' | 'quotes' | 'ateliers' | 'content';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('blog');
   const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [postsLoading, setPostsLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, published: 0, draft: 0, views: 0 });
 
   useEffect(() => {
@@ -37,10 +41,15 @@ const AdminDashboard = () => {
     if (!adminData) {
       await supabase.auth.signOut();
       navigate('/admin/login');
+      return;
     }
+
+    setAuthLoading(false);
   };
 
   const fetchPosts = async () => {
+    setPostsLoading(true);
+
     const { data } = await supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
 
     if (data) {
@@ -52,7 +61,8 @@ const AdminDashboard = () => {
         views: data.reduce((sum, post) => sum + (post.views || 0), 0),
       });
     }
-    setLoading(false);
+
+    setPostsLoading(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -76,7 +86,7 @@ const AdminDashboard = () => {
     }
   };
 
-  if (loading) {
+  if (authLoading || postsLoading) {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center">
@@ -117,7 +127,10 @@ const AdminDashboard = () => {
               { id: 'slides', label: 'Slides', icon: <Film className="w-4 h-4" /> },
               { id: 'popups', label: 'Popups', icon: <Bell className="w-4 h-4" /> },
               { id: 'promo', label: 'Promo', icon: <Tag className="w-4 h-4" /> },
+              { id: 'ateliers', label: 'Ateliers', icon: <Users className="w-4 h-4" /> },
+              { id: 'content', label: 'Contenus', icon: <Sparkles className="w-4 h-4" /> },
               { id: 'clients', label: 'Clients', icon: <Users className="w-4 h-4" /> },
+              { id: 'quotes', label: 'Devis', icon: <FileText className="w-4 h-4" /> },
             ].map((item) => (
               <button
                 key={item.id}
@@ -259,7 +272,13 @@ const AdminDashboard = () => {
 
         {activeTab === 'popups' && <PopupManager />}
 
+        {activeTab === 'quotes' && <AdminQuoteRequests />}
+
         {activeTab === 'promo' && <PromoCodeManager />}
+
+        {activeTab === 'ateliers' && <AtelierManager />}
+
+        {activeTab === 'content' && <ContentManager />}
 
         {activeTab === 'clients' && <AdminClientManagement />}
       </div>

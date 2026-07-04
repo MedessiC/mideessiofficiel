@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Trash2, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import CloudinaryUploader from './CloudinaryUploader';
 
 interface Popup {
   id: string;
@@ -308,31 +309,16 @@ const PopupManager = () => {
               </div>
             </div>
 
-            {/* Image URL */}
+            {/* Media upload */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Image (URL) - Optionnel
-              </label>
-              <input
-                type="url"
-                name="image_url"
+              <CloudinaryUploader
+                label="Média de la pop-up (image, vidéo ou PDF)"
                 value={formData.image_url}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                placeholder="https://example.com/image.jpg"
+                onChange={(value) => setFormData({ ...formData, image_url: value })}
+                folder="popups"
+                placeholder="https://res.cloudinary.com/..."
+                accept="image/*,video/*,application/pdf"
               />
-              {formData.image_url && (
-                <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                  <img 
-                    src={formData.image_url} 
-                    alt="Preview" 
-                    className="h-24 object-contain rounded"
-                    onError={(e) => {
-                      e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"%3E%3Cpath stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/%3E%3C/svg%3E';
-                    }}
-                  />
-                </div>
-              )}
             </div>
 
             {/* CTA Section */}

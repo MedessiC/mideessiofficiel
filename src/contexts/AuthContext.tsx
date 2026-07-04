@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
+import { normalizeEmail, sanitizeUsername, validatePassword } from '../utils/authProfile';
+import { getProviderAvatarUrl } from '../utils/providerProfile';
 
 export type UserRole = 'user' | 'admin' | 'client';
 
@@ -11,6 +13,7 @@ interface AuthContextType {
   userRole: UserRole | null;
   signUp: (email: string, password: string, username: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signInWithProvider: (provider: 'google' | 'github' | 'facebook') => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   detectRole: (userId: string) => Promise<UserRole>;
 }
@@ -56,28 +59,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!authUser) return;
 
     try {
+      const avatarUrl = getProviderAvatarUrl(authUser.user_metadata as Record<string, unknown> | undefined);
+      const metadataUsername = (authUser.user_metadata?.username as string | undefined)?.trim();
+      const emailPrefix = authUser.email?.split('@')[0]?.toLowerCase();
+      const baseUsername = sanitizeUsername(metadataUsername || emailPrefix || `user${authUser.id.slice(0, 8)}`);
+
       const { data: existingProfile } = await supabase
         .from('users')
-        .select('id')
+        .select('id, avatar_url')
         .eq('id', authUser.id)
         .maybeSingle();
 
-      if (existingProfile) return;
+      if (existingProfile) {
+        if (avatarUrl && (!existingProfile.avatar_url || existingProfile.avatar_url !== avatarUrl)) {
+          await supabase
+            .from('users')
+            .update({ avatar_url: avatarUrl })
+            .eq('id', authUser.id);
+        }
+        return;
+      }
 
-      const metadataUsername = (authUser.user_metadata?.username as string | undefined)?.trim();
-      const emailPrefix = authUser.email?.split('@')[0]?.toLowerCase();
-      const baseUsername = (metadataUsername || emailPrefix || `user${authUser.id.slice(0, 8)}`)
-        .replace(/[^a-zA-Z0-9._-]/g, '')
-        .toLowerCase()
-        .slice(0, 24) || `user${authUser.id.slice(0, 8)}`;
-
-      const { error } = await supabase.from('users').insert({
-        id: authUser.id,
-        email: authUser.email || '',
-        username: baseUsername,
+      const { error } = await supabase.rpc('ensure_user_profile', {
+        p_user_id: authUser.id,
+        p_email: authUser.email || '',
+        p_username: baseUsername,
       });
 
-      if (error && !error.message.toLowerCase().includes('permission')) {
+      if (!error) {
+        await supabase
+          .from('users')
+          .update({ avatar_url: avatarUrl || null })
+          .eq('id', authUser.id);
+      } else if (!error.message.toLowerCase().includes('permission') && !error.message.toLowerCase().includes('policy')) {
         console.error('Error creating user profile:', error);
       }
     } catch (error) {
@@ -93,9 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          await ensureUserProfile(session.user);
           const role = await detectRole(session.user.id);
           setUserRole(role);
+          void ensureUserProfile(session.user);
         } else {
           setUserRole(null);
         }
@@ -119,9 +133,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          await ensureUserProfile(session.user);
           const role = await detectRole(session.user.id);
           setUserRole(role);
+          void ensureUserProfile(session.user);
         } else {
           setUserRole(null);
         }
@@ -143,25 +157,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ): Promise<{ error: string | null }> => {
     try {
       // Valider les entrées
-      if (!email || !password || !username) {
+      const normalizedEmail = normalizeEmail(email);
+      const safeUsername = sanitizeUsername(username);
+      const passwordValidation = validatePassword(password);
+
+      if (!normalizedEmail || !password || !safeUsername) {
         return { error: 'Tous les champs sont requis' };
       }
 
-      if (password.length < 6) {
-        return { error: 'Le mot de passe doit contenir au moins 6 caractères' };
+      if (!passwordValidation.valid) {
+        return { error: passwordValidation.message };
       }
 
-      if (username.length < 3) {
+      if (safeUsername.length < 3) {
         return { error: 'Le nom d\'utilisateur doit contenir au moins 3 caractères' };
       }
 
-      // S'inscrire avec Supabase Auth
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: normalizedEmail,
         password,
         options: {
           data: {
-            username,
+            username: safeUsername,
           },
         },
       });
@@ -180,17 +197,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithProvider = async (
+    provider: 'google' | 'github' | 'facebook'
+  ): Promise<{ error: string | null }> => {
+    try {
+      const redirectTo = import.meta.env.VITE_SUPABASE_OAUTH_REDIRECT_URL || window.location.origin;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo,
+        },
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Une erreur est survenue' };
+    }
+  };
+
   const signIn = async (
     email: string,
     password: string
   ): Promise<{ error: string | null }> => {
     try {
-      if (!email || !password) {
+      const normalizedEmail = normalizeEmail(email);
+
+      if (!normalizedEmail || !password) {
         return { error: 'Email et mot de passe requis' };
       }
 
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password,
       });
 
@@ -220,6 +261,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userRole,
         signUp,
         signIn,
+        signInWithProvider,
         signOut,
         detectRole,
       }}

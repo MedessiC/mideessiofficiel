@@ -4,6 +4,7 @@ import ProjectCard from '../components/ProjectCard';
 import BlogCard from '../components/BlogCard';
 import { blogPosts } from '../data/blogPosts';
 import { supabase } from '../lib/supabase';
+import { toCloudinaryUrl } from '../utils/cloudinaryImage';
 
 interface HeroSection {
   id: string;
@@ -102,7 +103,7 @@ const Home = () => {
       <section 
         className="relative bg-gradient-to-br from-midnight via-blue-900 to-indigo-900 dark:from-black dark:via-gray-900 dark:to-gray-800 text-white py-24 md:py-40 overflow-hidden"
         style={hero?.image_url ? {
-          backgroundImage: `linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('${hero.image_url}')`,
+          backgroundImage: `linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('${toCloudinaryUrl(hero.image_url, { width: 1600, height: 900, quality: 80, crop: 'fill' })}')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         } : {}}

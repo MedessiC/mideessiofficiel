@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import SEO from '../components/SEO';
+import { validateProfileData } from '../utils/authProfile';
 
 interface ProfileForm {
   username: string;
@@ -70,14 +71,26 @@ export default function UserProfileEdit() {
     setSuccess('');
 
     try {
+      const profileValidation = validateProfileData({
+        username: formData.username,
+        avatar_url: formData.avatar_url,
+        bio: formData.bio,
+      });
+
+      if (!profileValidation.valid) {
+        setError(profileValidation.message || 'Profil invalide');
+        setSaving(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('users')
         .upsert({
           id: user.id,
           email: user.email || '',
-          username: formData.username,
-          avatar_url: formData.avatar_url || null,
-          bio: formData.bio || null,
+          username: formData.username.trim(),
+          avatar_url: formData.avatar_url?.trim() || null,
+          bio: formData.bio?.trim() || null,
         }, { onConflict: 'id' });
 
       if (error) throw error;
@@ -101,90 +114,87 @@ export default function UserProfileEdit() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900 pt-20 pb-12">
-      <SEO
-        title="Modifier mon profil | MIDEESSI"
-        description="Mettez à jour votre profil utilisateur MIDEESSI."
-      />
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.08),_transparent_30%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] pt-20 pb-12 dark:bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.1),_transparent_30%),linear-gradient(180deg,_#020617_0%,_#0f172a_100%)]">
+      <SEO title="Modifier mon profil | MIDEESSI" description="Personnalisez votre profil utilisateur MIDEESSI." />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3 mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-gold hover:text-yellow-400 font-semibold transition font-poppins"
-          >
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-8 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">Profil</p>
+            <h1 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">Personnaliser votre profil</h1>
+          </div>
+          <button onClick={() => navigate(-1)} className="text-sm font-semibold text-slate-600 transition hover:text-gold dark:text-slate-300">
             ← Retour
           </button>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white font-poppins">Modifier mon profil</h1>
         </div>
 
-        <div className="rounded-3xl bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8">
-          <p className="text-slate-600 dark:text-slate-400 mb-6 font-poppins">Personnalisez votre username, avatar et bio.</p>
+        <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.25)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 sm:p-8">
+          <p className="mb-6 text-sm leading-6 text-slate-600 dark:text-slate-400">Rendez votre profil plus vivant avec une photo, une bio et des informations qui reflètent votre identité.</p>
 
           {error && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-700 p-4 text-sm text-red-700 dark:text-red-200">
+            <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-700/30 dark:bg-red-900/20 dark:text-red-200">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="mb-4 rounded-xl border border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-700 p-4 text-sm text-green-700 dark:text-green-200">
+            <div className="mb-4 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 dark:border-green-700/30 dark:bg-green-900/20 dark:text-green-200">
               {success}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 font-poppins">Nom d'utilisateur</label>
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/70">
+              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Nom d’utilisateur</label>
               <input
                 type="text"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="w-full rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gold"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                 required
                 minLength={3}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 font-poppins">Avatar URL</label>
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/70">
+              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">URL d’avatar</label>
               <input
                 type="url"
                 value={formData.avatar_url}
                 onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-                className="w-full rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gold"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                 placeholder="https://..."
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 font-poppins">Bio</label>
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/70">
+              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Bio</label>
               <textarea
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                rows={4}
-                className="w-full rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gold"
-                placeholder="Parlez-nous de vous..."
+                rows={5}
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                placeholder="Parlez-nous de vous, de votre activité ou de votre style..."
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="text-sm text-slate-500 dark:text-slate-400 font-poppins">
-                Email lié : <span className="font-semibold text-slate-800 dark:text-white">{user.email}</span>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                Email associé : <span className="font-semibold text-slate-800 dark:text-white">{user?.email}</span>
               </div>
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gold to-yellow-400 px-5 py-3 text-sm font-bold text-slate-900 hover:from-yellow-400 hover:to-yellow-500 transition disabled:opacity-75"
+                className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gold to-yellow-400 px-5 py-3 text-sm font-semibold text-slate-900 transition hover:opacity-90 disabled:opacity-70"
               >
-                {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                {saving ? 'Enregistrement...' : 'Enregistrer le profil'}
               </button>
             </div>
           </form>
-        </div>
 
-        <div className="mt-6 text-sm text-slate-500 dark:text-slate-400 font-poppins">
-          <Link to={`/profile/${formData.username}`} className="text-gold hover:text-yellow-400 font-semibold">Voir mon profil</Link>
+          <div className="mt-6 text-sm text-slate-500 dark:text-slate-400">
+            <Link to={`/profile/${formData.username}`} className="font-semibold text-gold hover:text-yellow-400">Voir le profil final</Link>
+          </div>
         </div>
       </div>
     </div>

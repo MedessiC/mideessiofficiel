@@ -1,8 +1,17 @@
-import { ArrowRight, Heart, BookOpen, Brain, Sparkles } from 'lucide-react';
+import { ArrowRight, Heart, BookOpen, Brain, Sparkles, Briefcase, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import SEO from '../components/SEO';
+import { getRecruitmentOffers } from '../lib/contentManagement';
 
 const Careers = () => {
+  const [offers, setOffers] = useState(getRecruitmentOffers());
+
+  useEffect(() => {
+    const handler = () => setOffers(getRecruitmentOffers());
+    window.addEventListener('mideessi-content-updated', handler);
+    return () => window.removeEventListener('mideessi-content-updated', handler);
+  }, []);
 
   return (
     <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
@@ -87,45 +96,49 @@ const Careers = () => {
         </div>
       </section>
 
-      {/* No Recruitment Section */}
-      <section className="py-12 md:py-20 lg:py-24 bg-gray-50 dark:bg-gray-800 flex items-center justify-center min-h-[600px]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="text-center">
-            {/* Image */}
-            <div className="mb-8 md:mb-12 flex justify-center">
-              <img 
-                src="/404-image.webp" 
-                alt="Aucune offre disponible" 
-                className="w-full max-w-xs sm:max-w-sm md:max-w-md h-auto object-contain rounded-2xl"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-
-            {/* Message */}
-            <div className="space-y-4 md:space-y-6">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-midnight dark:text-white">
-                Pas de recrutement pour l'instant
-              </h2>
-              
-              <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                Nous ne recrutons pas actuellement, mais nous reviendrons bientôt avec des opportunités passionnantes !
-              </p>
-
-              <div className="pt-6 md:pt-8">
-                <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-6 md:mb-8">
-                  Revenez nous voir plus tard pour découvrir nos offres 😊
-                </p>
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-2 bg-gold hover:bg-yellow-500 text-midnight font-bold px-6 md:px-8 py-2.5 md:py-3 rounded-lg md:rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm md:text-base"
-                >
-                  <span>Retour à l'accueil</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
+      <section className="py-12 md:py-20 lg:py-24 bg-gray-50 dark:bg-gray-800">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-midnight dark:text-white">Offres ouvertes</h2>
+            <p className="mt-3 text-gray-600 dark:text-gray-300">Des postes passionnants pour rejoindre l’aventure MIDEESSI.</p>
           </div>
+
+          {offers.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-gray-300 bg-white p-10 text-center shadow-sm dark:border-gray-700 dark:bg-gray-900">
+              <p className="text-lg text-gray-600 dark:text-gray-300">Aucune offre de recrutement pour le moment.</p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2">
+              {offers.map((offer) => (
+                <div key={offer.id} className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                  <div className="flex items-center gap-2 text-gold">
+                    <Briefcase className="h-5 w-5" />
+                    <span className="text-sm font-semibold uppercase tracking-[0.2em]">{offer.type}</span>
+                  </div>
+                  <h3 className="mt-4 text-xl font-bold text-midnight dark:text-white">{offer.title}</h3>
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{offer.role}</p>
+                  <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <MapPin className="h-4 w-4" />
+                    {offer.location}
+                  </div>
+                  <p className="mt-4 text-sm leading-relaxed text-gray-600 dark:text-gray-300">{offer.description}</p>
+                  <div className="mt-5">
+                    <h4 className="text-sm font-semibold text-midnight dark:text-white">Exigences</h4>
+                    <ul className="mt-2 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                      {offer.requirements.map((requirement) => (
+                        <li key={requirement} className="flex gap-2"><span className="text-gold">•</span>{requirement}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  {offer.applyLink && (
+                    <a href={offer.applyLink} target="_blank" rel="noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full bg-midnight px-4 py-2 text-sm font-semibold text-white">
+                      Postuler <ArrowRight className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

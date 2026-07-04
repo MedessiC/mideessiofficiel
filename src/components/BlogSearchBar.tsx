@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, Filter, ChevronDown } from 'lucide-react';
+import { toCloudinaryUrl } from '../utils/cloudinaryImage';
 
 interface BlogPost {
   id: string;
@@ -187,7 +188,7 @@ export const BlogSearchBar: React.FC<BlogSearchBarProps> = ({
                     <div className="flex gap-3 items-start">
                       {post.image_url && (
                         <img
-                          src={post.image_url}
+                          src={toCloudinaryUrl(post.image_url, { width: 120, height: 120, quality: 80, crop: 'fill' })}
                           alt={post.title}
                           className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
                           loading="lazy"

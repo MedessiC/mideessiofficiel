@@ -6,19 +6,72 @@ import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
+import { getSecurityHeaders } from './server/securityHeaders.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
+const allowedOrigins = new Set([
+  'https://mideessi.com',
+  'https://www.mideessi.com',
+  'http://localhost:5173',
+  'http://localhost:3000',
+]);
+
+function sanitizeText(value) {
+  if (typeof value !== 'string') return '';
+  return value.replace(/[<>]/g, '').trim().slice(0, 200);
+}
+
+function normalizeEmail(value) {
+  if (typeof value !== 'string') return '';
+  return value.trim().toLowerCase();
+}
+
+function validateEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (Array.isArray(forwarded)) return forwarded[0];
+  if (typeof forwarded === 'string') return forwarded.split(',')[0].trim();
+  return req.ip || 'unknown';
+}
+
+function createRateLimiter(maxRequests, windowMs) {
+  const requests = new Map();
+
+  return (req, res, next) => {
+    const key = getClientIp(req);
+    const now = Date.now();
+    const windowStart = now - windowMs;
+    const recent = requests.get(key) || [];
+    const filtered = recent.filter(timestamp => timestamp > windowStart);
+
+    filtered.push(now);
+    requests.set(key, filtered);
+
+    if (filtered.length > maxRequests) {
+      return res.status(429).json({ error: 'Trop de requêtes, veuillez réessayer plus tard.' });
+    }
+
+    next();
+  };
+}
+
+const generalLimiter = createRateLimiter(100, 15 * 60 * 1000);
+const sensitiveLimiter = createRateLimiter(20, 15 * 60 * 1000);
+
 // Configuration Supabase avec fallback pour les variables d'environnement
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = process.env.SITE_URL || 'https://mideessi.com';
-const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
-const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
-const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || process.env.VITE_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || process.env.VITE_CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || process.env.VITE_CLOUDINARY_API_SECRET;
 
 // Vérifier que les variables sont chargées
 console.log('🔍 Vérification des variables d\'environnement:');
@@ -36,7 +89,7 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 
 if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
   console.warn('\n⚠️  Cloudinary non configuré — certaines routes d\'upload seront désactivées en local.');
-  console.warn('Pour la production, définissez CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET.\n');
+  console.warn('Ajoutez CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET, ou leurs versions VITE_CLOUDINARY_* dans votre .env.\n');
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -242,17 +295,39 @@ function generateOGHtml(post, siteUrl) {
 }
 
 // Trust proxy (important pour Netlify/Render)
+app.disable('x-powered-by');
 app.set('trust proxy', true);
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
-// Middleware CORS pour Netlify
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://mideessi.com');
+  const origin = req.headers.origin;
+
+  if (origin && allowedOrigins.has(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    res.header('Access-Control-Allow-Origin', 'https://mideessi.com');
+  }
+
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Vary', 'Origin');
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+
   next();
 });
+
+app.use((req, res, next) => {
+  const headers = getSecurityHeaders();
+  res.set(headers);
+  next();
+});
+
+app.use('/api', generalLimiter);
 
 // ============================================================
 // STATIC FILES - Simple serving
@@ -296,6 +371,10 @@ app.get('/health', (req, res) => {
 
 // Debug endpoint to verify database setup
 app.get('/api/debug/db-status', async (req, res) => {
+  if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEBUG_ENDPOINT !== 'true') {
+    return res.status(404).json({ error: 'Endpoint indisponible' });
+  }
+
   try {
     console.log('🔍 Checking database status...');
     
@@ -360,10 +439,17 @@ app.get('/api/debug/db-status', async (req, res) => {
 // Signature Cloudinary sécurisée pour l'upload client-side
 app.get('/api/cloudinary-signature', (req, res) => {
   if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-    return res.status(500).json({ error: 'Cloudinary non configuré' });
+    return res.status(500).json({
+      error: 'Cloudinary non configuré',
+      details: 'Ajoutez CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY et CLOUDINARY_API_SECRET (ou leurs variantes VITE_CLOUDINARY_*) dans votre environnement.'
+    });
   }
 
-  const folder = req.query.folder ? String(req.query.folder) : 'mideessi';
+  const folder = typeof req.query.folder === 'string' ? sanitizeText(req.query.folder) : 'mideessi';
+  if (!/^[a-zA-Z0-9/_-]{1,100}$/.test(folder)) {
+    return res.status(400).json({ error: 'Nom de dossier invalide' });
+  }
+
   const timestamp = Math.floor(Date.now() / 1000);
   const signatureBase = `folder=${folder}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
   const signature = crypto.createHash('sha1').update(signatureBase).digest('hex');
@@ -395,27 +481,38 @@ const emailTransporter = EMAIL_HOST && EMAIL_PORT && EMAIL_USER && EMAIL_PASSWOR
     })
   : null;
 
+app.use('/api/send-client-invite', sensitiveLimiter);
+
 app.post('/api/send-client-invite', async (req, res) => {
   if (!emailTransporter) {
     return res.status(500).json({ error: 'Serveur email non configuré' });
   }
 
-  const { clientName, email, clientId, tempPassword, contractNumber, contractUrl } = req.body;
+  const { clientName, email, clientId, tempPassword, contractNumber, contractUrl } = req.body || {};
 
-  if (!email || !clientId || !tempPassword || !contractNumber) {
+  const safeEmail = normalizeEmail(email);
+  const safeClientName = sanitizeText(clientName);
+  const safeClientId = sanitizeText(clientId);
+  const safeTempPassword = sanitizeText(tempPassword);
+  const safeContractNumber = sanitizeText(contractNumber);
+  const safeContractUrl = typeof contractUrl === 'string' && /^https?:\/\//.test(contractUrl.trim())
+    ? contractUrl.trim()
+    : '';
+
+  if (!safeEmail || !validateEmail(safeEmail) || !safeClientId || !safeTempPassword || !safeContractNumber) {
     return res.status(400).json({ error: 'Payload invalide pour email d\'invitation' });
   }
 
   const loginUrl = `${SITE_URL}/clients`;
   const emailHtml = `
-    <p>Bonjour ${clientName || 'client'},</p>
+    <p>Bonjour ${safeClientName || 'client'},</p>
     <p>Votre espace client MIDEESSI a été créé.</p>
     <ul>
-      <li><strong>ID client :</strong> ${clientId}</li>
-      <li><strong>Mot de passe temporaire :</strong> ${tempPassword}</li>
-      <li><strong>Numéro de contrat :</strong> ${contractNumber}</li>
+      <li><strong>ID client :</strong> ${safeClientId}</li>
+      <li><strong>Mot de passe temporaire :</strong> ${safeTempPassword}</li>
+      <li><strong>Numéro de contrat :</strong> ${safeContractNumber}</li>
     </ul>
-    ${contractUrl ? `<p>Votre contrat est disponible ici : <a href="${contractUrl}">${contractUrl}</a></p>` : ''}
+    ${safeContractUrl ? `<p>Votre contrat est disponible ici : <a href="${safeContractUrl}">${safeContractUrl}</a></p>` : ''}
     <p>Connectez-vous ici : <a href="${loginUrl}">${loginUrl}</a></p>
     <p>Pour des raisons de sécurité, changez votre mot de passe après votre première connexion.</p>
     <p>À bientôt,</p>
@@ -426,8 +523,8 @@ app.post('/api/send-client-invite', async (req, res) => {
     await emailTransporter.sendMail({
       from: EMAIL_FROM,
       to: email,
-      subject: `Bienvenue chez MIDEESSI — accès client ${clientId}`,
-      text: `Bonjour ${clientName || 'client'},\n\nVotre espace client MIDEESSI a été créé.\nID client : ${clientId}\nMot de passe temporaire : ${tempPassword}\nNuméro de contrat : ${contractNumber}\n${contractUrl ? `Contrat : ${contractUrl}\n` : ''}\nConnectez-vous ici : ${loginUrl}\n\nMerci,\nL'équipe MIDEESSI`,
+      subject: `Bienvenue chez MIDEESSI — accès client ${safeClientId}`,
+      text: `Bonjour ${safeClientName || 'client'},\n\nVotre espace client MIDEESSI a été créé.\nID client : ${safeClientId}\nMot de passe temporaire : ${safeTempPassword}\nNuméro de contrat : ${safeContractNumber}\n${safeContractUrl ? `Contrat : ${safeContractUrl}\n` : ''}\nConnectez-vous ici : ${loginUrl}\n\nMerci,\nL'équipe MIDEESSI`,
       html: emailHtml,
     });
 
@@ -437,6 +534,64 @@ app.post('/api/send-client-invite', async (req, res) => {
     return res.status(500).json({ error: 'Échec de l\'envoi de l\'email' });
   }
 });
+
+app.use('/api/send-quote-confirmation', sensitiveLimiter);
+
+app.post('/api/send-quote-confirmation', async (req, res) => {
+  if (!emailTransporter) {
+    return res.status(500).json({ error: 'Serveur email non configuré' });
+  }
+
+  const { email, clientName, offerName, status, quoteUrl, comment } = req.body || {};
+  const safeEmail = normalizeEmail(email);
+  const safeClientName = sanitizeText(clientName);
+  const safeOfferName = sanitizeText(offerName);
+  const safeStatus = sanitizeText(status);
+  const safeComment = sanitizeText(comment);
+  const safeQuoteUrl = typeof quoteUrl === 'string' && /^https?:\/\//.test(quoteUrl.trim())
+    ? quoteUrl.trim()
+    : '';
+
+  if (!safeEmail || !validateEmail(safeEmail) || !safeOfferName || !safeStatus) {
+    return res.status(400).json({ error: 'Payload invalide pour notification de devis' });
+  }
+
+  const statusLabelMap = {
+    quote_ready: 'Votre devis est prêt',
+    confirmed: 'Votre dossier est confirmé',
+  };
+
+  const emailSubject = safeStatus === 'confirmed'
+    ? `Devis confirmé – ${safeOfferName}`
+    : `Devis disponible – ${safeOfferName}`;
+
+  const emailHtml = `
+    <p>Bonjour ${safeClientName || 'client'},</p>
+    <p>${statusLabelMap[safeStatus] || 'Votre demande de devis a été mise à jour'} pour <strong>${safeOfferName}</strong>.</p>
+    ${safeQuoteUrl ? `<p>Vous pouvez télécharger votre devis ici : <a href="${safeQuoteUrl}">${safeQuoteUrl}</a></p>` : ''}
+    ${safeComment ? `<p>Message : ${safeComment}</p>` : ''}
+    <p>Nous restons à votre disposition si vous souhaitez échanger sur cette proposition.</p>
+    <p>Cordialement,</p>
+    <p>L'équipe MIDEESSI</p>
+  `;
+
+  try {
+    await emailTransporter.sendMail({
+      from: EMAIL_FROM,
+      to: email,
+      subject: emailSubject,
+      text: `Bonjour ${safeClientName || 'client'},\n\n${statusLabelMap[safeStatus] || 'Votre demande de devis a été mise à jour'} pour ${safeOfferName}.\n${safeQuoteUrl ? `Téléchargez le devis ici : ${safeQuoteUrl}\n` : ''}${safeComment ? `Message : ${safeComment}\n` : ''}\nCordialement,\nL'équipe MIDEESSI`,
+      html: emailHtml,
+    });
+
+    return res.status(200).json({ status: 'sent' });
+  } catch (error) {
+    console.error('Quote confirmation email error:', error);
+    return res.status(500).json({ error: 'Échec de l\'envoi de l\'email de devis' });
+  }
+});
+
+app.use('/api/next-client-id', sensitiveLimiter);
 
 // Endpoint to get next client id for a given pole (presence_digitale | dev_tech)
 app.post('/api/next-client-id', async (req, res) => {
@@ -461,21 +616,32 @@ app.post('/api/next-client-id', async (req, res) => {
   }
 });
 
+app.use('/api/create-client', sensitiveLimiter);
+
 // Create client server-side: generate id, hash password, insert and send invite (best-effort)
 app.post('/api/create-client', async (req, res) => {
   try {
     const { pole, nom_marque, nom_responsable, email, pack, numero_contrat, date_debut, duree_mois } = req.body || {};
+    const safePole = typeof pole === 'string' ? pole.trim() : '';
+    const safeNomMarque = sanitizeText(nom_marque);
+    const safeNomResponsable = sanitizeText(nom_responsable);
+    const normalizedEmail = normalizeEmail(email);
+    const safePack = sanitizeText(pack) || 'kpevi';
+    const safeDureeMois = Number.isInteger(Number(duree_mois)) ? Number(duree_mois) : 12;
     
     // Validate required fields
-    if (!pole || !email || !nom_marque) {
+    if (!safePole || !normalizedEmail || !safeNomMarque) {
       return res.status(400).json({ error: 'Payload invalide: pole, email, nom_marque requis' });
     }
-    if (!['presence_digitale','dev_tech'].includes(pole)) {
+    if (!['presence_digitale','dev_tech'].includes(safePole)) {
       return res.status(400).json({ error: 'Pole invalide' });
+    }
+    if (!validateEmail(normalizedEmail)) {
+      return res.status(400).json({ error: 'Email invalide' });
     }
 
     // Get client id atomically using admin client for reliability
-    const { data: idData, error: idError } = await supabaseAdmin.rpc('next_client_id', { pole_input: pole });
+    const { data: idData, error: idError } = await supabaseAdmin.rpc('next_client_id', { pole_input: safePole });
     if (idError) {
       console.error('next_client_id error:', idError);
       return res.status(500).json({ error: 'Échec génération ID', details: idError.message });
@@ -494,7 +660,7 @@ app.post('/api/create-client', async (req, res) => {
     try {
       if (supabaseAdmin.auth && supabaseAdmin.auth.admin && typeof supabaseAdmin.auth.admin.createUser === 'function') {
         console.log(`Creating auth user for ${email}...`);
-        const createRes = await supabaseAdmin.auth.admin.createUser({ email, password: tempPassword, user_metadata: { client_id } });
+        const createRes = await supabaseAdmin.auth.admin.createUser({ email: normalizedEmail, password: tempPassword, user_metadata: { client_id } });
         if (createRes && createRes.user) {
           authUserId = createRes.user.id;
           console.log(`✅ Auth user created: ${authUserId}`);
@@ -507,15 +673,15 @@ app.post('/api/create-client', async (req, res) => {
     // Prepare client data with proper defaults
     const clientData = {
       client_id,
-      nom_marque,
-      nom_responsable,
-      email,
+      nom_marque: safeNomMarque,
+      nom_responsable: safeNomResponsable,
+      email: normalizedEmail,
       password_hash: hash,
       password_temp: tempPassword,
-      pack: pack || 'kpevi',
-      numero_contrat: numero_contrat || `CONTRAT-${client_id}`,
-      date_debut: date_debut || new Date().toISOString().slice(0, 10),
-      duree_mois: duree_mois || 12,
+      pack: safePack,
+      numero_contrat: sanitizeText(numero_contrat) || `CONTRAT-${client_id}`,
+      date_debut: sanitizeText(date_debut) || new Date().toISOString().slice(0, 10),
+      duree_mois: safeDureeMois,
       statut: 'actif',
     };
 
@@ -548,7 +714,7 @@ app.post('/api/create-client', async (req, res) => {
     fetch(`${SITE_URL}/api/send-client-invite`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientName: nom_responsable, email, clientId: client_id, tempPassword, contractNumber: numero_contrat, contractUrl: '' })
+      body: JSON.stringify({ clientName: safeNomResponsable, email: normalizedEmail, clientId: client_id, tempPassword, contractNumber: sanitizeText(numero_contrat) || `CONTRAT-${client_id}`, contractUrl: '' })
     }).catch(e => console.warn('Invite send failed', e));
 
     return res.json({ client_id, tempPassword });

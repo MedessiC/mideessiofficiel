@@ -12,6 +12,7 @@ const navItems = [
   { name: 'Messages', path: '/clients/messages', icon: MessageCircle, section: 'messages' },
   { name: 'Performance', path: '/clients/kpis', icon: BarChart3, section: 'kpis' },
   { name: 'Calendrier', path: '/clients/calendar', icon: Calendar, section: 'calendar' },
+  { name: 'Devis', path: '/clients/quotes', icon: FileText, section: 'quotes' },
   { name: 'Infos', path: '/clients/infos', icon: FileText, section: 'infos' },
   { name: 'Objectifs', path: '/clients/objectives', icon: Target, section: 'objectives' },
   { name: 'Livrables', path: '/clients/livrables', icon: Package, section: 'livrables' },
@@ -88,13 +89,19 @@ export function ClientShell() {
     return match?.name || 'Espace client';
   }, [location.pathname]);
 
-  const activeSection = useMemo<'home' | 'livrables' | 'messages' | 'factures' | 'compte' | 'infos' | 'kpis' | 'calendar' | 'reports' | 'objectives'>(() => {
+  const isClientReady = Boolean(user && user.client_id && user.is_first_login === false);
+
+  const visibleNavItems = isClientReady
+    ? navItems
+    : navItems.filter((item) => ['home', 'infos', 'compte'].includes(item.section));
+
+  const activeSection = useMemo<'home' | 'livrables' | 'messages' | 'factures' | 'compte' | 'infos' | 'kpis' | 'calendar' | 'reports' | 'objectives' | 'quotes'>(() => {
     const section = navItems.find((item) => location.pathname.startsWith(item.path))?.section;
-    const allowedSections = ['home', 'livrables', 'messages', 'factures', 'compte', 'infos', 'kpis', 'calendar', 'reports', 'objectives'] as const;
+    const allowedSections = ['home', 'livrables', 'messages', 'factures', 'compte', 'infos', 'kpis', 'calendar', 'reports', 'objectives', 'quotes'] as const;
     return allowedSections.includes(section as any) ? (section as typeof allowedSections[number]) : 'home';
   }, [location.pathname]);
 
-  const handleNavigate = (section: 'home' | 'livrables' | 'messages' | 'factures' | 'compte' | 'infos' | 'kpis' | 'calendar' | 'reports' | 'objectives') => {
+  const handleNavigate = (section: 'home' | 'livrables' | 'messages' | 'factures' | 'compte' | 'infos' | 'kpis' | 'calendar' | 'reports' | 'objectives' | 'quotes') => {
     const item = navItems.find((navItem) => navItem.section === section);
     if (item) navigate(item.path);
   };
@@ -104,7 +111,8 @@ export function ClientShell() {
   return (
     <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)]">
       <div className="lg:flex lg:min-h-screen">
-        <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-[var(--border)] lg:bg-[var(--bg-card)]">
+        {isClientReady && (
+          <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-[var(--border)] lg:bg-[var(--bg-card)]">
           <div className="flex flex-col gap-6 px-6 py-8">
             <div>
               <div className="inline-flex items-center gap-2">
@@ -115,7 +123,7 @@ export function ClientShell() {
             </div>
 
             <div className="space-y-3">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <NavLink
@@ -142,8 +150,9 @@ export function ClientShell() {
                 );
               })}
             </div>
-          </div>
-        </aside>
+            </div>
+          </aside>
+        )}
 
         <div className="flex-1 lg:overflow-hidden">
           <div className="border-b border-[var(--border)] bg-[var(--bg-card)]">
@@ -165,10 +174,11 @@ export function ClientShell() {
         </div>
       </div>
 
-      <BottomNavigation activeSection={activeSection} unreadMessagesCount={unreadCount} onNavigate={handleNavigate} />
-      <FloatingMessageButton />
+      {isClientReady && <BottomNavigation activeSection={activeSection} unreadMessagesCount={unreadCount} onNavigate={handleNavigate} />}
+      {isClientReady && <FloatingMessageButton />}
 
-      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+      {isClientReady && (
+        <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
         <div
           className={`absolute inset-0 bg-slate-950/40 transition-opacity ${sidebarOpen ? 'opacity-100' : 'opacity-0'}`}
           onClick={closeSidebar}
@@ -183,9 +193,9 @@ export function ClientShell() {
               <X className="h-5 w-5" />
             </button>
           </div>
-          <nav className="px-4 py-4">
+            <nav className="px-4 py-4">
             <div className="space-y-3">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <NavLink
@@ -214,8 +224,9 @@ export function ClientShell() {
               })}
             </div>
           </nav>
-        </aside>
-      </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }

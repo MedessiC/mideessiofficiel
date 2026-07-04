@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BookOpen, Plus, Edit2, Trash2, Save, X, Eye, Palette, Sparkles, Users, Loader, LogOut, TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle
+  BookOpen, Plus, Edit2, Trash2, Save, X, Eye, Palette, Sparkles, Users, Loader, LogOut, TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle, FileText
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -63,6 +63,7 @@ const AdminDashboard = () => {
     level: 'Débutant'
   });
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [uploadHint, setUploadHint] = useState('');
 
   const categories = [
     { id: 'mobile', name: 'Mobile', icon: <Download className="w-4 h-4" /> },
@@ -149,6 +150,11 @@ const AdminDashboard = () => {
     navigate('/admin/login');
   };
 
+  const handlePdfFileChange = (file: File | null) => {
+    setPdfFile(file);
+    setUploadHint(file ? `Fichier sélectionné : ${file.name}` : 'Téléversez un PDF ou renseignez un lien direct.');
+  };
+
   const uploadPdfToStorage = async (file: File) => {
     const filePath = `pdfs/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -173,13 +179,13 @@ const AdminDashboard = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.buy_url || !formData.description) {
-      addToast('error', 'Veuillez remplir tous les champs obligatoires');
+    if (!formData.title || !formData.description || !formData.article_url || !formData.buy_url) {
+      addToast('error', 'Titre, description et liens sont obligatoires');
       return;
     }
 
     if (!editingBook && !pdfFile && !formData.pdf_url) {
-      addToast('error', 'Veuillez uploader un fichier PDF');
+      addToast('error', 'Ajoutez un PDF ou un lien direct pour publier');
       return;
     }
 
@@ -296,6 +302,7 @@ const AdminDashboard = () => {
       level: 'Débutant'
     });
     setPdfFile(null);
+    setUploadHint('');
     setEditingBook(null);
     setShowForm(false);
   };
@@ -532,6 +539,18 @@ const AdminDashboard = () => {
             {/* Form Content */}
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
               <div className="p-4 sm:p-6 space-y-6">
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                  <div className="flex items-start gap-3">
+                    <FileText className="mt-0.5 h-5 w-5 text-blue-600 dark:text-blue-300" />
+                    <div>
+                      <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">Prévisualisation du PDF</p>
+                      <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                        {formData.title || 'Ajoutez un titre'} • {formData.category || 'catégorie'} • {formData.price || 1000} F
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Section: Basic Info */}
                 <div className="space-y-4">
                   <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">Infos</h3>
@@ -632,9 +651,10 @@ const AdminDashboard = () => {
                         <input
                           type="file"
                           accept="application/pdf"
-                          onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                          onChange={(e) => handlePdfFileChange(e.target.files?.[0] || null)}
                           className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gold file:text-midnight hover:file:bg-yellow-400"
                         />
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{uploadHint || 'Téléversez un PDF ou renseignez un lien direct.'}</p>
                         {formData.pdf_url && !pdfFile && (
                           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                             Lien PDF actuel : <a href={formData.pdf_url} target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-300 hover:underline">Ouvrir</a>

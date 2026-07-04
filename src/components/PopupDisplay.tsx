@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Bell, CheckCircle, Gift, Clock, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { toCloudinaryUrl } from '../utils/cloudinaryImage';
 
 interface Popup {
   id: string;
@@ -198,7 +199,7 @@ const PopupDisplay = ({ currentPage }: PopupDisplayProps) => {
         {popup.image_url && (
           <div className="relative w-full h-24 xs:h-28 sm:h-40 rounded-lg overflow-hidden bg-gradient-to-br from-[#ffd700]/20 to-[#191970]/20 flex-shrink-0 border border-[#ffd700]/30">
             <img
-              src={popup.image_url}
+              src={toCloudinaryUrl(popup.image_url, { width: 800, height: 400, quality: 80, crop: 'fill' })}
               alt={popup.title}
               className="w-full h-full object-cover"
               loading="lazy"

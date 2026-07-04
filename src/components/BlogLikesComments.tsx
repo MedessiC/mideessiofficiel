@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Trash2, AlertCircle, Loader } from 'lucide-react';
+import { Flame, MessageCircle, Trash2, AlertCircle, Loader } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
@@ -196,7 +196,7 @@ export default function BlogLikesComments({ blogId, blogTitle }: BlogLikesCommen
               : 'bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
           }`}
         >
-          <Heart className={isLiked ? 'fill-current' : ''} size={20} />
+          <Flame className={isLiked ? 'fill-current text-orange-500' : ''} size={20} />
           <span>{likes} {likes === 1 ? 'like' : 'likes'}</span>
         </button>
       </div>

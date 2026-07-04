@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Github, Facebook, Globe } from 'lucide-react';
 import SEO from '../components/SEO';
+import { normalizeEmail, sanitizeUsername, validatePassword } from '../utils/authProfile';
 
 export default function Signup() {
   const [email, setEmail] = useState('');
@@ -15,14 +16,18 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const { signUp, signInWithProvider } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     // Validations
-    if (!email || !password || !username || !confirmPassword) {
+    const normalizedEmail = normalizeEmail(email);
+    const safeUsername = sanitizeUsername(username);
+    const passwordValidation = validatePassword(password);
+
+    if (!normalizedEmail || !password || !safeUsername || !confirmPassword) {
       setError('Tous les champs sont requis');
       return;
     }
@@ -32,25 +37,24 @@ export default function Signup() {
       return;
     }
 
-    if (password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.message || 'Mot de passe invalide');
       return;
     }
 
-    if (username.length < 3) {
+    if (safeUsername.length < 3) {
       setError('Le nom d\'utilisateur doit contenir au moins 3 caractères');
       return;
     }
 
-    // Email validation
-    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    if (!normalizedEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       setError('Veuillez entrer une adresse email valide');
       return;
     }
 
     setLoading(true);
     try {
-      const { error: signupError } = await signUp(email, password, username);
+      const { error: signupError } = await signUp(normalizedEmail, password, safeUsername);
 
       if (signupError) {
         setError(signupError);
@@ -65,6 +69,23 @@ export default function Signup() {
       }, 3000);
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue');
+      setLoading(false);
+    }
+  };
+
+  const handleProviderSignup = async (provider: 'google' | 'github' | 'facebook') => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const { error } = await signInWithProvider(provider);
+      if (error) {
+        setError(error);
+        setLoading(false);
+      }
+      // OAuth flow is redirected by Supabase
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la connexion sociale');
       setLoading(false);
     }
   };
@@ -265,6 +286,37 @@ export default function Signup() {
               <div className="flex-1 h-px bg-slate-300 dark:bg-slate-600"></div>
               <span className="text-xs text-slate-500 dark:text-slate-400 font-poppins">ou</span>
               <div className="flex-1 h-px bg-slate-300 dark:bg-slate-600"></div>
+            </div>
+
+            {/* OAuth Buttons */}
+            <div className="space-y-3 mb-6">
+              <button
+                type="button"
+                onClick={() => handleProviderSignup('google')}
+                disabled={loading}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50"
+              >
+                <Globe className="h-5 w-5 text-red-600" />
+                Continuer avec Google
+              </button>
+              <button
+                type="button"
+                onClick={() => handleProviderSignup('github')}
+                disabled={loading}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition disabled:opacity-50"
+              >
+                <Github className="h-5 w-5" />
+                Continuer avec GitHub
+              </button>
+              <button
+                type="button"
+                onClick={() => handleProviderSignup('facebook')}
+                disabled={loading}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                <Facebook className="h-5 w-5" />
+                Continuer avec Facebook
+              </button>
             </div>
 
             {/* Footer Links */}

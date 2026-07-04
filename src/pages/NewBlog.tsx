@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Calendar, User, ArrowRight, TrendingUp, Search, Loader2, Tag, Clock } from 'lucide-react';
 import SEO from '../components/SEO';
 import { supabase, BlogPost, BlogCategory } from '../lib/supabase';
+import { toCloudinaryUrl } from '../utils/cloudinaryImage';
 
 // Skeleton pour le chargement
 const ArticleSkeleton = () => (
@@ -172,7 +173,7 @@ const NewBlog = () => {
             >
               <div className="relative h-72 lg:h-full overflow-hidden bg-gray-100 dark:bg-gray-700">
                 <img
-                  src={featuredPost.image_url}
+                  src={toCloudinaryUrl(featuredPost.image_url, { width: 1600, height: 900, quality: 80, crop: 'fill' })}
                   alt={featuredPost.title}
                   loading="lazy"
                   decoding="async"
@@ -291,7 +292,7 @@ const NewBlog = () => {
               >
                 <div className="relative h-56 overflow-hidden bg-gray-100 dark:bg-gray-700">
                   <img
-                    src={post.image_url}
+                    src={toCloudinaryUrl(post.image_url, { width: 800, height: 500, quality: 80, crop: 'fill' })}
                     alt={post.title}
                     loading="lazy"
                     decoding="async"

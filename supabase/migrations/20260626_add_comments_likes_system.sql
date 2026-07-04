@@ -17,6 +17,25 @@ CREATE TABLE IF NOT EXISTS blog_likes (
   UNIQUE(blog_id, user_id)
 );
 
+-- Ensure the blog_posts table exists for the blog_id reference pattern
+CREATE TABLE IF NOT EXISTS blog_posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  excerpt TEXT DEFAULT '',
+  content TEXT DEFAULT '',
+  image_url TEXT DEFAULT '',
+  author TEXT DEFAULT 'MIDEESSI Team',
+  category TEXT DEFAULT 'Général',
+  tags TEXT[] DEFAULT '{}',
+  is_featured BOOLEAN DEFAULT false,
+  is_published BOOLEAN DEFAULT false,
+  views INTEGER DEFAULT 0,
+  published_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create book_comments table
 CREATE TABLE IF NOT EXISTS book_comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
