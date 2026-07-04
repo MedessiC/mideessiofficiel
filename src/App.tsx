@@ -37,6 +37,7 @@ import AdminClientManagement from './pages/AdminClientManagement';
 import AdminLogin from './pages/AdminLogin';
 import AdminPostEditor from './pages/AdminPostEditor';
 import AdminPdfs from './pages/AdminPdfs';
+import AdminSolutions from './pages/AdminSolutions';
 import ShareRedirect from './pages/ShareRedirect';
 import TeamMemberProfile from './pages/TeamMemberProfile';
 import Signup from './pages/Signup';
@@ -63,7 +64,9 @@ import AdminQuoteRequests from './pages/AdminQuoteRequests';
 function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const isAuthRoute = location.pathname === '/login' || location.pathname === '/admin/login' || location.pathname === '/signup' || location.pathname === '/clients';
+  // Keep global header/footer visible for admin pages to match site styling.
+  // Only hide global nav for public auth flows (non-admin) like unified login and signup.
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/clients';
   const isClientRoute = location.pathname.startsWith('/clients/');
 
   return (
@@ -119,6 +122,7 @@ function AppContent() {
           </Route>
           
           <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/solutions" element={<ProtectedRoute requiredRole="admin"><AdminSolutions /></ProtectedRoute>} />
           <Route path="/admin/clients" element={<ProtectedRoute requiredRole="admin"><AdminClientManagement /></ProtectedRoute>} />
           <Route path="/admin/pdfeditor" element={<ProtectedRoute requiredRole="admin"><AdminPdfs /></ProtectedRoute>} />
           <Route path="/admin/quotes" element={<ProtectedRoute requiredRole="admin"><AdminQuoteRequests /></ProtectedRoute>} />

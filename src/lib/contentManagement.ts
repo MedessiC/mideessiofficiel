@@ -152,8 +152,13 @@ export const syncRecruitmentOffers = async (): Promise<RecruitmentOffer[]> => {
       const offers = data
         .map((row) => mapRecruitmentOffer(row as Record<string, unknown>))
         .filter((item) => item.isPublished && !deletedIds.includes(item.id));
-      writeStoredItems(STORAGE_KEYS.recruitment, offers);
-      return offers;
+      // Only overwrite local cache when Supabase actually returned rows.
+      if (offers.length > 0) {
+        writeStoredItems(STORAGE_KEYS.recruitment, offers);
+        return offers;
+      }
+      // If Supabase returned an empty list, keep local cached items.
+      return getRecruitmentOffers();
     }
   } catch (error) {
     console.error('Unable to sync recruitment offers:', error);
@@ -325,7 +330,6 @@ const normalizeProjectPayload = (project: Omit<DynamicProject, 'id' | 'createdAt
 export const syncDynamicProjects = async (): Promise<DynamicProject[]> => {
   try {
     const { data, error } = await supabase.from('dynamic_projects').select('*').order('created_at', { ascending: false });
-
     if (!error && Array.isArray(data)) {
       const projects = data.map((row) => ({
         id: String(row.id || `project-${Date.now()}`),
@@ -340,18 +344,22 @@ export const syncDynamicProjects = async (): Promise<DynamicProject[]> => {
         website: String(row.website || ''),
         status: (row.status as Solution['status']) || 'En cours',
         launchDate: String(row.launch_date || ''),
-        targetAudience: Array.isArray(row.target_audience) ? row.target_audience.filter(Boolean).map((item) => String(item)) : [],
+        targetAudience: Array.isArray(row.target_audience) ? row.target_audience.filter(Boolean).map((item: unknown) => String(item)) : [],
         features: Array.isArray(row.features) ? row.features : [],
-        benefits: Array.isArray(row.benefits) ? row.benefits.filter(Boolean).map((item) => String(item)) : [],
-        technologies: Array.isArray(row.technologies) ? row.technologies.filter(Boolean).map((item) => String(item)) : [],
+        benefits: Array.isArray(row.benefits) ? row.benefits.filter(Boolean).map((item: unknown) => String(item)) : [],
+        technologies: Array.isArray(row.technologies) ? row.technologies.filter(Boolean).map((item: unknown) => String(item)) : [],
         cta: { text: String(row.cta_text || 'Découvrir'), url: String(row.cta_url || row.website || '#') },
         contact: { email: String(row.contact_email || 'contact@mideessi.com') },
         isPublished: Boolean(row.is_published ?? true),
         createdAt: String(row.created_at || new Date().toISOString()),
       })) as DynamicProject[];
 
-      writeStoredItems(STORAGE_KEYS.projects, projects);
-      return projects.filter((item) => item.isPublished);
+      // Only update local cache when Supabase returned rows
+      if (projects.length > 0) {
+        writeStoredItems(STORAGE_KEYS.projects, projects);
+        return projects.filter((item) => item.isPublished);
+      }
+      return getDynamicProjects();
     }
   } catch (error) {
     console.error('Unable to sync dynamic projects:', error);
@@ -405,10 +413,10 @@ export const createDynamicProject = async (project: Omit<DynamicProject, 'id' | 
         website: String(data.website || normalized.website),
         status: (data.status as Solution['status']) || normalized.status,
         launchDate: String(data.launch_date || normalized.launchDate),
-        targetAudience: Array.isArray(data.target_audience) ? data.target_audience.filter(Boolean).map((item) => String(item)) : normalized.targetAudience,
+        targetAudience: Array.isArray(data.target_audience) ? data.target_audience.filter(Boolean).map((item: unknown) => String(item)) : normalized.targetAudience,
         features: Array.isArray(data.features) ? data.features : normalized.features,
-        benefits: Array.isArray(data.benefits) ? data.benefits.filter(Boolean).map((item) => String(item)) : normalized.benefits,
-        technologies: Array.isArray(data.technologies) ? data.technologies.filter(Boolean).map((item) => String(item)) : normalized.technologies,
+        benefits: Array.isArray(data.benefits) ? data.benefits.filter(Boolean).map((item: unknown) => String(item)) : normalized.benefits,
+        technologies: Array.isArray(data.technologies) ? data.technologies.filter(Boolean).map((item: unknown) => String(item)) : normalized.technologies,
         cta: { text: String(data.cta_text || normalized.cta.text || 'Découvrir'), url: String(data.cta_url || normalized.cta.url || normalized.website || '#') },
         contact: { email: String(data.contact_email || normalized.contact.email || 'contact@mideessi.com') },
         isPublished: Boolean(data.is_published ?? normalized.isPublished),
@@ -445,9 +453,9 @@ export const syncDynamicTeamMembers = async (): Promise<TeamMember[]> => {
         fullBio: String(row.full_bio || ''),
         joinDate: String(row.join_date || ''),
         education: String(row.education || ''),
-        skills: Array.isArray(row.skills) ? row.skills.filter(Boolean).map((item) => String(item)) : [],
-        specialties: Array.isArray(row.specialties) ? row.specialties.filter(Boolean).map((item) => String(item)) : [],
-        passions: Array.isArray(row.passions) ? row.passions.filter(Boolean).map((item) => String(item)) : [],
+        skills: Array.isArray(row.skills) ? row.skills.filter(Boolean).map((item: unknown) => String(item)) : [],
+        specialties: Array.isArray(row.specialties) ? row.specialties.filter(Boolean).map((item: unknown) => String(item)) : [],
+        passions: Array.isArray(row.passions) ? row.passions.filter(Boolean).map((item: unknown) => String(item)) : [],
         image: String(row.image_url || row.image || ''),
         location: String(row.location || ''),
         email: row.email ? String(row.email) : undefined,
@@ -460,8 +468,12 @@ export const syncDynamicTeamMembers = async (): Promise<TeamMember[]> => {
         projects: Array.isArray(row.projects) ? row.projects : [],
       })) as TeamMember[];
 
-      writeStoredItems(STORAGE_KEYS.team, members);
-      return members;
+      if (members.length > 0) {
+        writeStoredItems(STORAGE_KEYS.team, members);
+        return members;
+      }
+
+      return getDynamicTeamMembers();
     }
   } catch (error) {
     console.error('Unable to sync dynamic team members:', error);
@@ -507,9 +519,9 @@ export const createDynamicTeamMember = async (member: Omit<TeamMember, 'id'>): P
         fullBio: String(data.full_bio || member.fullBio),
         joinDate: String(data.join_date || member.joinDate),
         education: String(data.education || member.education),
-        skills: Array.isArray(data.skills) ? data.skills.filter(Boolean).map((item) => String(item)) : member.skills,
-        specialties: Array.isArray(data.specialties) ? data.specialties.filter(Boolean).map((item) => String(item)) : member.specialties,
-        passions: Array.isArray(data.passions) ? data.passions.filter(Boolean).map((item) => String(item)) : member.passions,
+        skills: Array.isArray(data.skills) ? data.skills.filter(Boolean).map((item: unknown) => String(item)) : member.skills,
+        specialties: Array.isArray(data.specialties) ? data.specialties.filter(Boolean).map((item: unknown) => String(item)) : member.specialties,
+        passions: Array.isArray(data.passions) ? data.passions.filter(Boolean).map((item: unknown) => String(item)) : member.passions,
         image: String(data.image_url || member.image),
         location: String(data.location || member.location),
         email: data.email ? String(data.email) : undefined,

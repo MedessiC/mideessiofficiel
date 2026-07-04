@@ -3,13 +3,18 @@ import { useEffect, useState } from 'react';
 import SEO from '../components/SEO';
 import { categories, solutions } from '../data/solutions';
 import { getIcon } from '../utils/iconMapper';
-import { getDynamicProjects, mapDynamicProjectToSolution } from '../lib/contentManagement';
+import { getDynamicProjects, mapDynamicProjectToSolution, type DynamicProject } from '../lib/contentManagement';
+import { supabase } from '../lib/supabase';
 
 const Solutions = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedSolutionId, setSelectedSolutionId] = useState<string | null>(solutions[0]?.id ?? null);
   const [showMobileDetail, setShowMobileDetail] = useState(false);
-  const [dynamicProjects, setDynamicProjects] = useState(getDynamicProjects());
+  const [dynamicProjects, setDynamicProjects] = useState<DynamicProject[]>(getDynamicProjects());
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
+  const [hasMoreProjects, setHasMoreProjects] = useState(true);
+  const [projectsLoading, setProjectsLoading] = useState(false);
   const allSolutions = [...solutions, ...dynamicProjects.map(mapDynamicProjectToSolution)];
   const solutionsByCategories = categories
     .map((cat) => ({ category: cat, solutions: allSolutions.filter((item) => item.category === cat.id) }))
@@ -22,17 +27,77 @@ const Solutions = () => {
     visibleSolutions.find((solution) => solution.id === selectedSolutionId) ?? visibleSolutions[0] ?? null;
 
   useEffect(() => {
+    // initial load
+    void fetchProjects(true);
+
     const handler = () => {
-      const freshProjects = getDynamicProjects();
-      setDynamicProjects(freshProjects);
-      if (selectedSolutionId && !freshProjects.some((project) => project.id === selectedSolutionId) && !solutions.some((solution) => solution.id === selectedSolutionId)) {
-        setSelectedSolutionId(freshProjects[0]?.id ?? solutions[0]?.id ?? null);
-      }
+      void fetchProjects(true);
     };
 
     window.addEventListener('mideessi-content-updated', handler);
     return () => window.removeEventListener('mideessi-content-updated', handler);
-  }, [selectedSolutionId]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchProjects = async (reset = false) => {
+    setProjectsLoading(true);
+    try {
+      const currentPage = reset ? 0 : page;
+      const start = currentPage * pageSize;
+      const end = start + pageSize - 1;
+
+      const { data, count, error } = await supabase
+        .from('dynamic_projects')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(start, end);
+
+      if (!error && Array.isArray(data)) {
+        const mapped = data.map((row) => ({
+          id: String(row.id || `project-${Date.now()}`),
+          name: String(row.name || ''),
+          slug: String(row.slug || ''),
+          category: (row.category as any) || 'autre',
+          tagline: String(row.tagline || ''),
+          description: String(row.description || ''),
+          longDescription: String(row.long_description || ''),
+          image: String(row.image_url || row.image || ''),
+          logo: String(row.logo_url || row.logo || ''),
+          website: String(row.website || ''),
+          status: (row.status as any) || 'En cours',
+          launchDate: String(row.launch_date || ''),
+          targetAudience: Array.isArray(row.target_audience) ? row.target_audience.filter(Boolean).map((item: unknown) => String(item)) : [],
+          features: Array.isArray(row.features) ? row.features : [],
+          benefits: Array.isArray(row.benefits) ? row.benefits.filter(Boolean).map((item: unknown) => String(item)) : [],
+          technologies: Array.isArray(row.technologies) ? row.technologies.filter(Boolean).map((item: unknown) => String(item)) : [],
+          cta: { text: String(row.cta_text || 'Découvrir'), url: String(row.cta_url || row.website || '#') },
+          contact: { email: String(row.contact_email || 'contact@mideessi.com') },
+          isPublished: Boolean(row.is_published ?? true),
+          createdAt: String(row.created_at || new Date().toISOString()),
+        })) as DynamicProject[];
+
+        if (mapped.length > 0) {
+          setDynamicProjects((prev) => (reset ? mapped : [...prev, ...mapped]));
+          setHasMoreProjects(mapped.length === pageSize && (typeof count !== 'number' || start + mapped.length < count));
+          if (reset) setPage(1); else setPage((p) => p + 1);
+        } else if (reset) {
+          // fallback to local cache
+          setDynamicProjects(getDynamicProjects());
+          setHasMoreProjects(false);
+        }
+      } else {
+        // on error fallback to cached projects
+        setDynamicProjects(getDynamicProjects());
+        setHasMoreProjects(false);
+        if (error) console.error('Error fetching dynamic projects:', error);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching projects:', err);
+      setDynamicProjects(getDynamicProjects());
+      setHasMoreProjects(false);
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
 
   const handleSelectSolution = (id: string) => {
     setSelectedSolutionId(id);
@@ -264,6 +329,18 @@ const Solutions = () => {
                   </div>
                 </div>
               ))}
+
+              {hasMoreProjects && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => void fetchProjects(false)}
+                    disabled={projectsLoading}
+                    className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                  >
+                    {projectsLoading ? 'Chargement...' : 'Charger plus de solutions'}
+                  </button>
+                </div>
+              )}
 
               {filteredCategories.length === 0 && (
                 <div className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 py-12 text-center dark:border-gray-700 dark:bg-gray-800/60">

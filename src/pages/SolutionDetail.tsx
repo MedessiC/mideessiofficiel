@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, ExternalLink, CheckCircle, Mail, MessageCircle, Users, Award,
-  Sparkles, ArrowRight, Briefcase, Code
+  Sparkles, ArrowRight, Briefcase, Code, Pen
 } from 'lucide-react';
 import SEO from '../components/SEO';
 import { getSolutionBySlug, Solution } from '../data/solutions';
+import { supabase } from '../lib/supabase';
+import { mapDynamicProjectToSolution } from '../lib/contentManagement';
 import { getIcon } from '../utils/iconMapper';
 
 const SolutionDetail = () => {
@@ -15,12 +17,54 @@ const SolutionDetail = () => {
   const [activeTab, setActiveTab] = useState<'features' | 'benefits' | 'contact'>('features');
 
   useEffect(() => {
-    const foundSolution = getSolutionBySlug(slug || '');
-    if (foundSolution) {
-      setSolution(foundSolution);
-    } else {
-      navigate('/solutions');
-    }
+    const load = async () => {
+      if (!slug) return navigate('/solutions');
+
+      // Try to load dynamic project from Supabase first
+      try {
+        const { data, error } = await supabase.from('dynamic_projects').select('*').eq('slug', slug).maybeSingle();
+        if (!error && data) {
+          const mapped = mapDynamicProjectToSolution({
+            id: String(data.id || `project-${Date.now()}`),
+            name: String(data.name || ''),
+            slug: String(data.slug || ''),
+            category: (data.category as any) || 'autre',
+            tagline: String(data.tagline || ''),
+            description: String(data.description || ''),
+            longDescription: String(data.long_description || ''),
+            image: String(data.image_url || data.image || ''),
+            logo: String(data.logo_url || data.logo || ''),
+            website: String(data.website || ''),
+            status: (data.status as any) || 'En cours',
+            launchDate: String(data.launch_date || ''),
+            targetAudience: Array.isArray(data.target_audience) ? data.target_audience.filter(Boolean).map((i: unknown) => String(i)) : [],
+            features: Array.isArray(data.features) ? data.features : [],
+            benefits: Array.isArray(data.benefits) ? data.benefits.filter(Boolean).map((i: unknown) => String(i)) : [],
+            technologies: Array.isArray(data.technologies) ? data.technologies.filter(Boolean).map((i: unknown) => String(i)) : [],
+            stats: data.stats || undefined,
+            cta: { text: String(data.cta_text || 'Découvrir'), url: String(data.cta_url || data.website || '#') },
+            contact: { email: String(data.contact_email || 'contact@mideessi.com') },
+            isPublished: Boolean(data.is_published ?? true),
+            createdAt: String(data.created_at || new Date().toISOString()),
+          });
+
+          setSolution(mapped);
+          return;
+        }
+      } catch (err) {
+        console.error('Error loading dynamic project:', err);
+      }
+
+      // Fallback to static solutions list
+      const foundSolution = getSolutionBySlug(slug || '');
+      if (foundSolution) {
+        setSolution(foundSolution);
+      } else {
+        navigate('/solutions');
+      }
+    };
+
+    void load();
   }, [slug, navigate]);
 
   if (!solution) {
@@ -83,11 +127,19 @@ const SolutionDetail = () => {
                 <span className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap flex-shrink-0 ${getStatusColor(solution.status)}`}>
                   {solution.status}
                 </span>
+                <div className="ml-auto flex items-center gap-2">
+                  <a href={`/admin/solutions`} className="hidden md:inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:bg-white/20">
+                    <Pen className="w-4 h-4" /> Editer
+                  </a>
+                </div>
               </div>
               <p className="text-lg md:text-xl lg:text-2xl text-gray-200 mb-4 md:mb-6 font-semibold">{solution.tagline}</p>
               <p className="text-sm md:text-base lg:text-lg text-gray-300 leading-relaxed max-w-xl">
                 {solution.longDescription}
               </p>
+              {solution.createdAt && (
+                <p className="mt-3 text-xs text-gray-200">Dernière mise à jour: {new Date(solution.createdAt).toLocaleDateString('fr-FR')}</p>
+              )}
             </div>
 
             {/* Quick Stats - Responsive Grid */}

@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {
-  BookOpen, Plus, Edit2, Trash2, Save, X, Eye, Palette, Sparkles, Users, Loader, LogOut, TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle, FileText
+  BookOpen, Plus, Edit2, Trash2, Save, X, Eye, Palette, Sparkles, Users, Loader, LogOut,
+  TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle, FileText, Upload, Image, ExternalLink
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { uploadFileToCloudinary } from '../lib/cloudinary';
 
 type Book = {
   id: string | null;
@@ -42,6 +44,16 @@ const AdminDashboard = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // Upload states
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string>('');
+  const [uploadProgress, setUploadProgress] = useState<{ pdf: number; cover: number } | null>(null);
+  const [uploadHint, setUploadHint] = useState('');
+
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState<Book>({
     id: null,
     title: '',
@@ -62,8 +74,6 @@ const AdminDashboard = () => {
     pages: 50,
     level: 'Débutant'
   });
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [uploadHint, setUploadHint] = useState('');
 
   const categories = [
     { id: 'mobile', name: 'Mobile', icon: <Download className="w-4 h-4" /> },
@@ -83,6 +93,7 @@ const AdminDashboard = () => {
     { id: 'from-indigo-500 to-indigo-700', name: 'Indigo', preview: 'bg-gradient-to-br from-indigo-500 to-indigo-700' },
     { id: 'from-pink-500 to-pink-700', name: 'Rose', preview: 'bg-gradient-to-br from-pink-500 to-pink-700' },
     { id: 'from-teal-500 to-teal-700', name: 'Turquoise', preview: 'bg-gradient-to-br from-teal-500 to-teal-700' },
+    { id: 'from-[#191970] to-[#2d2daa]', name: 'Midnight', preview: 'bg-gradient-to-br from-[#191970] to-[#2d2daa]' },
   ];
 
   const levels = [
@@ -94,7 +105,7 @@ const AdminDashboard = () => {
   const addToast = (type: 'success' | 'error', message: string) => {
     const id = Date.now().toString();
     setToasts(prev => [...prev, { id, type, message }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
   };
 
   useEffect(() => {
@@ -105,7 +116,7 @@ const AdminDashboard = () => {
     try {
       setIsAuthenticating(true);
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
+
       if (userError || !user) {
         navigate('/admin/login');
         return;
@@ -150,52 +161,68 @@ const AdminDashboard = () => {
     navigate('/admin/login');
   };
 
+  // ── Cover image file picker ───────────────────────────────────────────────
+  const handleCoverFileChange = (file: File | null) => {
+    setCoverFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => setCoverPreview(e.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setCoverPreview('');
+    }
+  };
+
+  // ── PDF file picker ───────────────────────────────────────────────────────
   const handlePdfFileChange = (file: File | null) => {
     setPdfFile(file);
-    setUploadHint(file ? `Fichier sélectionné : ${file.name}` : 'Téléversez un PDF ou renseignez un lien direct.');
+    setUploadHint(file ? `📄 ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} Mo)` : '');
   };
 
-  const uploadPdfToStorage = async (file: File) => {
-    const filePath = `pdfs/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('pdfs')
-      .upload(filePath, file, { cacheControl: '3600', upsert: true });
-
-    if (uploadError) {
-      throw uploadError;
+  // ── Upload to Cloudinary ──────────────────────────────────────────────────
+  const uploadToCloudinary = async (file: File, folder: string, progressKey: 'pdf' | 'cover') => {
+    setUploadProgress(prev => ({ ...(prev ?? { pdf: 0, cover: 0 }), [progressKey]: 10 }));
+    try {
+      const url = await uploadFileToCloudinary(file, folder);
+      setUploadProgress(prev => ({ ...(prev ?? { pdf: 0, cover: 0 }), [progressKey]: 100 }));
+      return url;
+    } catch (err) {
+      setUploadProgress(null);
+      throw err;
     }
-
-    const { data: publicUrlData, error: publicUrlError } = supabase.storage
-      .from('pdfs')
-      .getPublicUrl(filePath);
-
-    if (publicUrlError) {
-      throw publicUrlError;
-    }
-
-    return publicUrlData.publicUrl;
   };
 
+  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.title || !formData.description || !formData.article_url || !formData.buy_url) {
-      addToast('error', 'Titre, description et liens sont obligatoires');
+
+    if (!formData.title || !formData.description) {
+      addToast('error', 'Le titre et la description sont obligatoires');
       return;
     }
 
     if (!editingBook && !pdfFile && !formData.pdf_url) {
-      addToast('error', 'Ajoutez un PDF ou un lien direct pour publier');
+      addToast('error', 'Ajoutez un fichier PDF ou un lien direct pour publier');
       return;
     }
 
     setLoading(true);
+    setUploadProgress({ pdf: 0, cover: 0 });
 
     try {
       let pdfUrl = formData.pdf_url;
+      let coverImageUrl = formData.cover_image;
 
+      // Upload PDF to Cloudinary
       if (pdfFile) {
-        pdfUrl = await uploadPdfToStorage(pdfFile);
+        addToast('success', '📤 Upload du PDF en cours...');
+        pdfUrl = await uploadToCloudinary(pdfFile, 'mideessi/pdfs', 'pdf');
+      }
+
+      // Upload cover image to Cloudinary
+      if (coverFile) {
+        addToast('success', '🖼️ Upload de la couverture en cours...');
+        coverImageUrl = await uploadToCloudinary(coverFile, 'mideessi/covers', 'cover');
       }
 
       if (!pdfUrl) {
@@ -210,7 +237,7 @@ const AdminDashboard = () => {
         price: formData.price,
         author: formData.author,
         cover_color: formData.cover_color,
-        cover_image: formData.cover_image,
+        cover_image: coverImageUrl,
         article_url: formData.article_url,
         buy_url: formData.buy_url,
         pdf_url: pdfUrl,
@@ -230,21 +257,16 @@ const AdminDashboard = () => {
           .eq('id', editingBook.id);
 
         if (error) throw error;
-        setBooks(books.map(b => b.id === editingBook.id ? { ...formData, id: editingBook.id, pdf_url: pdfUrl } : b));
-        addToast('success', 'PDF mis à jour');
+        setBooks(books.map(b => b.id === editingBook.id ? { ...formData, id: editingBook.id, pdf_url: pdfUrl, cover_image: coverImageUrl } : b));
+        addToast('success', '✅ PDF mis à jour avec succès');
       } else {
         const { error } = await supabase
           .from('books')
-          .insert([
-            {
-              ...payload,
-              created_at: new Date().toISOString(),
-            }
-          ]);
+          .insert([{ ...payload, created_at: new Date().toISOString() }]);
 
         if (error) throw error;
         await fetchBooks();
-        addToast('success', 'PDF publié');
+        addToast('success', '🚀 PDF publié avec succès sur la bibliothèque');
       }
 
       resetForm();
@@ -253,12 +275,13 @@ const AdminDashboard = () => {
       addToast('error', err.message || 'Erreur lors de la publication');
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce PDF ?')) return;
-    
+
     try {
       const { error } = await supabase
         .from('books')
@@ -267,7 +290,7 @@ const AdminDashboard = () => {
 
       if (error) throw error;
       setBooks(books.filter(b => b.id !== id));
-      addToast('success', 'PDF supprimé ✓');
+      addToast('success', '🗑️ PDF supprimé');
     } catch (err: any) {
       console.error('Erreur suppression:', err);
       addToast('error', err.message || 'Erreur lors de la suppression');
@@ -277,6 +300,7 @@ const AdminDashboard = () => {
   const handleEdit = (book: Book) => {
     setEditingBook(book);
     setFormData(book);
+    setCoverPreview(book.cover_image || '');
     setShowForm(true);
   };
 
@@ -302,7 +326,10 @@ const AdminDashboard = () => {
       level: 'Débutant'
     });
     setPdfFile(null);
+    setCoverFile(null);
+    setCoverPreview('');
     setUploadHint('');
+    setUploadProgress(null);
     setEditingBook(null);
     setShowForm(false);
   };
@@ -351,21 +378,22 @@ const AdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex-shrink-0 p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <BookOpen className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <div className="flex-shrink-0 p-2 bg-[var(--brand-midnight)] rounded-lg">
+                <BookOpen className="w-6 h-6 text-[var(--brand-gold)]" />
               </div>
               <div className="min-w-0">
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">Admin PDFs</h1>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">Gestion des contenus</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">Gestion des ebooks · Cloudinary</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowForm(true)}
-                className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold px-4 py-2 rounded-lg transition-colors min-h-10 text-sm sm:text-base"
+                className="inline-flex items-center justify-center gap-2 bg-[var(--brand-midnight)] hover:bg-[var(--brand-midnight-dark)] text-[var(--brand-gold)] font-semibold px-4 py-2 rounded-lg transition-colors min-h-10 text-sm sm:text-base"
               >
                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden sm:inline">Nouveau</span>
+                <span className="hidden sm:inline">Nouveau PDF</span>
+                <span className="sm:hidden">Nouveau</span>
               </button>
               <button
                 onClick={handleLogout}
@@ -386,7 +414,7 @@ const AdminDashboard = () => {
           {[
             { label: 'Total', value: books.length, icon: BookOpen, color: 'blue' },
             { label: 'Nouveaux', value: books.filter(b => b.is_new).length, icon: Sparkles, color: 'yellow' },
-            { label: 'Best', value: books.filter(b => b.is_bestseller).length, icon: Award, color: 'red' },
+            { label: 'Bestsellers', value: books.filter(b => b.is_bestseller).length, icon: Award, color: 'red' },
             { label: 'Étudiants', value: books.reduce((sum, b) => sum + b.students, 0), icon: Users, color: 'green' },
           ].map((stat) => {
             const Icon = stat.icon;
@@ -413,8 +441,11 @@ const AdminDashboard = () => {
 
         {/* Books Section */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Vos PDFs</h2>
+          <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Bibliothèque ({books.length})</h2>
+            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
+              Stockage : Cloudinary
+            </span>
           </div>
 
           {books.length === 0 ? (
@@ -422,7 +453,7 @@ const AdminDashboard = () => {
               <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto" />
               <div>
                 <p className="text-gray-500 dark:text-gray-400 font-medium">Aucun PDF publié</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Créez votre premier PDF pour commencer</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Créez votre premier ebook pour commencer</p>
               </div>
             </div>
           ) : (
@@ -440,7 +471,7 @@ const AdminDashboard = () => {
                       <BookOpen className="w-12 h-12 text-white opacity-50" />
                     )}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                    
+
                     {/* Badges */}
                     <div className="absolute top-2 right-2 flex flex-col gap-1">
                       {book.is_new && <span className="px-2 py-1 bg-yellow-400 text-gray-900 text-xs font-bold rounded-full">✨ NEW</span>}
@@ -453,12 +484,21 @@ const AdminDashboard = () => {
                         {book.level}
                       </span>
                     </div>
+
+                    {/* PDF indicator */}
+                    {book.pdf_url && (
+                      <div className="absolute top-2 left-2">
+                        <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
+                          <FileText className="w-3 h-3" /> PDF
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 p-4 flex flex-col">
-                    <h3 className="font-bold text-gray-900 dark:text-white line-clamp-2 text-sm mb-2">{book.title}</h3>
-                    
+                    <h3 className="font-bold text-gray-900 dark:text-white line-clamp-2 text-sm mb-1">{book.title}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{book.author} · {book.category}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">{book.description}</p>
 
                     {/* Stats */}
@@ -466,49 +506,53 @@ const AdminDashboard = () => {
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Sparkles className="w-3 h-3 text-yellow-400" />
-                          <span className="font-bold text-xs">{book.rating}</span>
+                          <span className="font-bold text-xs text-gray-700 dark:text-gray-300">{book.rating}</span>
                         </div>
+                        <p className="text-xs text-gray-400 mt-0.5">Note</p>
                       </div>
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Users className="w-3 h-3 text-blue-500" />
-                          <span className="font-bold text-xs">{book.students}</span>
+                          <span className="font-bold text-xs text-gray-700 dark:text-gray-300">{book.students}</span>
                         </div>
+                        <p className="text-xs text-gray-400 mt-0.5">Lecteurs</p>
                       </div>
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-1">
                           <BookOpen className="w-3 h-3 text-green-500" />
-                          <span className="font-bold text-xs">{book.pages}p</span>
+                          <span className="font-bold text-xs text-gray-700 dark:text-gray-300">{book.pages}p</span>
                         </div>
+                        <p className="text-xs text-gray-400 mt-0.5">Pages</p>
                       </div>
                     </div>
 
-                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-3">{book.price} F</p>
+                    <p className="text-base font-bold text-[var(--brand-midnight)] dark:text-[var(--brand-gold)] mb-3">{book.price} FCFA</p>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 mt-auto">
-                      <a
-                        href={book.article_url}
+                    <div className="flex items-center gap-2 mt-auto flex-wrap">
+                      {/* View public page */}
+                      <Link
+                        to={`/library/${book.id}`}
                         target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg font-medium text-sm transition-colors"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-2 bg-[var(--brand-midnight)]/10 hover:bg-[var(--brand-midnight)]/20 text-[var(--brand-midnight)] dark:text-[var(--brand-gold)] rounded-lg font-medium text-xs transition-colors"
+                        title="Voir la page publique"
                       >
-                        <Eye className="w-4 h-4" />
+                        <ExternalLink className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Voir</span>
-                      </a>
+                      </Link>
                       <button
                         onClick={() => handleEdit(book)}
-                        className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 rounded-lg font-medium text-sm transition-colors"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800/40 rounded-lg font-medium text-xs transition-colors"
                       >
-                        <Edit2 className="w-4 h-4" />
-                        <span className="hidden sm:inline">Edit</span>
+                        <Edit2 className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Modifier</span>
                       </button>
                       <button
                         onClick={() => handleDelete(book.id!)}
-                        className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 rounded-lg font-medium text-sm transition-colors"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/40 rounded-lg font-medium text-xs transition-colors"
                       >
-                        <Trash2 className="w-4 h-4" />
-                        <span className="hidden sm:inline">Del</span>
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Suppr.</span>
                       </button>
                     </div>
                   </div>
@@ -519,51 +563,81 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Form Modal */}
+      {/* ── Form Modal ──────────────────────────────────────────────────────── */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
           <div className="bg-white dark:bg-gray-800 w-full sm:max-w-3xl sm:rounded-2xl shadow-2xl sm:my-8 h-screen sm:h-auto max-h-screen sm:max-h-[90vh] flex flex-col rounded-t-3xl sm:rounded-2xl">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                {editingBook ? 'Modifier le PDF' : 'Nouveau PDF'}
-              </h2>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-[var(--brand-midnight)] text-white rounded-t-3xl sm:rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <BookOpen className="w-5 h-5 text-[var(--brand-gold)]" />
+                <h2 className="text-xl sm:text-2xl font-bold">
+                  {editingBook ? 'Modifier le PDF' : 'Publier un nouveau PDF'}
+                </h2>
+              </div>
               <button
                 onClick={resetForm}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               >
-                <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
             {/* Form Content */}
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
               <div className="p-4 sm:p-6 space-y-6">
-                <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+
+                {/* ── Preview banner ── */}
+                <div className="rounded-2xl border border-[var(--brand-midnight)]/20 bg-[var(--brand-midnight)]/5 p-4">
                   <div className="flex items-start gap-3">
-                    <FileText className="mt-0.5 h-5 w-5 text-blue-600 dark:text-blue-300" />
+                    <FileText className="mt-0.5 h-5 w-5 text-[var(--brand-midnight)]" />
                     <div>
-                      <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">Prévisualisation du PDF</p>
-                      <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
-                        {formData.title || 'Ajoutez un titre'} • {formData.category || 'catégorie'} • {formData.price || 1000} F
+                      <p className="text-sm font-semibold text-[var(--brand-midnight)] dark:text-[var(--brand-gold)]">
+                        {formData.title || '— Titre du livre —'}
                       </p>
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        {formData.category} · {formData.level} · {formData.price} FCFA · {formData.pages}p
+                      </p>
+                      {(pdfFile || formData.pdf_url) && (
+                        <p className="mt-1 text-xs text-green-600 font-medium flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          {pdfFile ? `PDF prêt : ${pdfFile.name}` : 'PDF existant configuré'}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Section: Basic Info */}
-                <div className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">Infos</h3>
-                  
+                {/* ── Section: Infos de base ── */}
+                <section className="space-y-4">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                    📚 Informations générales
+                  </h3>
+
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Titre *</label>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Titre du livre *
+                    </label>
                     <input
                       type="text"
                       value={formData.title}
-                      onChange={(e) => setFormData({...formData, title: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="Titre du PDF"
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="Ex: Guide complet du développement mobile"
                       required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Auteur
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.author}
+                      onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="MIDEESSI Team"
                     />
                   </div>
 
@@ -572,21 +646,20 @@ const AdminDashboard = () => {
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Catégorie *</label>
                       <select
                         value={formData.category}
-                        onChange={(e) => setFormData({...formData, category: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                       >
                         {categories.map(cat => (
                           <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
                       </select>
                     </div>
-
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Niveau *</label>
                       <select
                         value={formData.level}
-                        onChange={(e) => setFormData({...formData, level: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                        onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                       >
                         {levels.map(lvl => (
                           <option key={lvl.id} value={lvl.id}>{lvl.name}</option>
@@ -596,229 +669,337 @@ const AdminDashboard = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Description *</label>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Description *
+                    </label>
                     <textarea
                       value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                      placeholder="Décrivez le PDF..."
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={4}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                      placeholder="Décrivez le contenu du livre, ce que le lecteur va apprendre..."
                       required
                     />
                   </div>
-                </div>
+                </section>
 
-                {/* Section: Appearance */}
-                <div className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">Apparence</h3>
-                  
+                {/* ── Section: Fichiers (Cloudinary) ── */}
+                <section className="space-y-4">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                    ☁️ Fichiers (Cloudinary)
+                  </h3>
+
+                  {/* PDF Upload */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Couleur</label>
-                    <div className="grid grid-cols-4 sm:grid-cols-4 gap-2">
-                      {coverColors.map(color => (
-                        <button
-                          key={color.id}
-                          type="button"
-                          onClick={() => setFormData({...formData, cover_color: color.id})}
-                          className={`h-12 rounded-lg ${color.preview} transition-all ${
-                            formData.cover_color === color.id ? 'ring-4 ring-offset-2 ring-blue-400 dark:ring-offset-gray-800' : 'hover:scale-105'
-                          }`}
-                          title={color.name}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Image (optionnel)</label>
-                    <input
-                      type="url"
-                      value={formData.cover_image}
-                      onChange={(e) => setFormData({...formData, cover_image: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                      placeholder="URL de l'image"
-                    />
-                  </div>
-                </div>
-
-                {/* Section: URLs & Metadata */}
-                <div className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">Liens</h3>
-                  
-<div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Fichier PDF *</label>
-                        <input
-                          type="file"
-                          accept="application/pdf"
-                          onChange={(e) => handlePdfFileChange(e.target.files?.[0] || null)}
-                          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gold file:text-midnight hover:file:bg-yellow-400"
-                        />
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{uploadHint || 'Téléversez un PDF ou renseignez un lien direct.'}</p>
-                        {formData.pdf_url && !pdfFile && (
-                          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                            Lien PDF actuel : <a href={formData.pdf_url} target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-300 hover:underline">Ouvrir</a>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Fichier PDF *
+                    </label>
+                    <div
+                      className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center hover:border-[var(--brand-midnight)] transition-colors cursor-pointer group"
+                      onClick={() => pdfInputRef.current?.click()}
+                    >
+                      <input
+                        ref={pdfInputRef}
+                        type="file"
+                        accept="application/pdf"
+                        className="hidden"
+                        onChange={(e) => handlePdfFileChange(e.target.files?.[0] || null)}
+                      />
+                      <Upload className="w-8 h-8 text-gray-400 group-hover:text-[var(--brand-midnight)] mx-auto mb-2 transition-colors" />
+                      {pdfFile ? (
+                        <div>
+                          <p className="text-sm font-semibold text-green-600">{pdfFile.name}</p>
+                          <p className="text-xs text-gray-500">{(pdfFile.size / 1024 / 1024).toFixed(1)} Mo · Sera uploadé sur Cloudinary</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                            Cliquez pour sélectionner un PDF
                           </p>
+                          <p className="text-xs text-gray-400 mt-1">ou glissez-déposez ici</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* URL fallback for existing books */}
+                    {(editingBook || formData.pdf_url) && (
+                      <div className="mt-3">
+                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          Ou lien PDF direct (si vous ne ré-uploadez pas)
+                        </label>
+                        <input
+                          type="url"
+                          value={formData.pdf_url}
+                          onChange={(e) => setFormData({ ...formData, pdf_url: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          placeholder="https://res.cloudinary.com/..."
+                        />
+                        {formData.pdf_url && !pdfFile && (
+                          <a href={formData.pdf_url} target="_blank" rel="noreferrer"
+                            className="inline-flex items-center gap-1 mt-1 text-xs text-blue-600 hover:underline">
+                            <ExternalLink className="w-3 h-3" /> Voir le PDF actuel
+                          </a>
                         )}
                       </div>
-                    </div>
+                    )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Progress bars */}
+                    {uploadProgress && (
+                      <div className="mt-3 space-y-2">
+                        {uploadProgress.pdf > 0 && (
+                          <div>
+                            <div className="flex justify-between text-xs text-gray-500 mb-1">
+                              <span>Upload PDF…</span>
+                              <span>{uploadProgress.pdf}%</span>
+                            </div>
+                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[var(--brand-midnight)] transition-all duration-500 rounded-full"
+                                style={{ width: `${uploadProgress.pdf}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        {uploadProgress.cover > 0 && (
+                          <div>
+                            <div className="flex justify-between text-xs text-gray-500 mb-1">
+                              <span>Upload couverture…</span>
+                              <span>{uploadProgress.cover}%</span>
+                            </div>
+                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[var(--brand-gold)] transition-all duration-500 rounded-full"
+                                style={{ width: `${uploadProgress.cover}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Cover Image Upload */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Image de couverture (optionnel)
+                    </label>
+                    <div className="flex gap-4 items-start">
+                      {/* Preview */}
+                      <div
+                        className={`w-24 h-32 rounded-lg flex-shrink-0 overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 cursor-pointer hover:border-[var(--brand-gold)] transition-colors flex items-center justify-center bg-gradient-to-br ${formData.cover_color}`}
+                        onClick={() => coverInputRef.current?.click()}
+                      >
+                        {coverPreview ? (
+                          <img src={coverPreview} alt="Couverture" className="w-full h-full object-cover" />
+                        ) : (
+                          <Image className="w-6 h-6 text-white/60" />
+                        )}
+                      </div>
+
+                      <div className="flex-1">
+                        <input
+                          ref={coverInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleCoverFileChange(e.target.files?.[0] || null)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => coverInputRef.current?.click()}
+                          className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:border-[var(--brand-gold)] hover:text-[var(--brand-midnight)] dark:hover:text-[var(--brand-gold)] transition-colors text-left flex items-center gap-2"
+                        >
+                          <Upload className="w-4 h-4" />
+                          {coverFile ? coverFile.name : 'Choisir une image…'}
+                        </button>
+                        <p className="text-xs text-gray-400 mt-2">
+                          JPG, PNG, WebP. Max 5Mo. Uploadée sur Cloudinary.
+                        </p>
+                        {/* Or URL */}
+                        <input
+                          type="url"
+                          value={coverFile ? '' : formData.cover_image}
+                          onChange={(e) => { setFormData({ ...formData, cover_image: e.target.value }); setCoverPreview(e.target.value); }}
+                          className="mt-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                          placeholder="Ou entrez une URL d'image..."
+                          disabled={!!coverFile}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* ── Section: Apparence ── */}
+                <section className="space-y-4">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                    🎨 Couleur de fond (si pas d'image)
+                  </h3>
+                  <div className="grid grid-cols-5 sm:grid-cols-9 gap-2">
+                    {coverColors.map(color => (
+                      <button
+                        key={color.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, cover_color: color.id })}
+                        className={`h-10 rounded-lg ${color.preview} transition-all ${
+                          formData.cover_color === color.id ? 'ring-4 ring-offset-2 ring-[var(--brand-gold)] dark:ring-offset-gray-800 scale-110' : 'hover:scale-105'
+                        }`}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                {/* ── Section: Liens (optionnels) ── */}
+                <section className="space-y-4">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                    🔗 Liens externes (optionnels)
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Article *</label>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Article de blog associé
+                      </label>
                       <input
                         type="url"
                         value={formData.article_url}
-                        onChange={(e) => setFormData({...formData, article_url: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                        placeholder="URL article"
-                        required
+                        onChange={(e) => setFormData({ ...formData, article_url: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                        placeholder="https://..."
                       />
                     </div>
-
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Achat *</label>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Lien d'achat
+                      </label>
                       <input
                         type="url"
                         value={formData.buy_url}
-                        onChange={(e) => setFormData({...formData, buy_url: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                        placeholder="URL achat"
-                        required
+                        onChange={(e) => setFormData({ ...formData, buy_url: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                        placeholder="https://..."
                       />
                     </div>
                   </div>
+                </section>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {/* ── Section: Métadonnées ── */}
+                <section className="space-y-4">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                    📊 Statistiques
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Prix</label>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Prix (FCFA)</label>
                       <input
                         type="number"
                         value={formData.price}
-                        onChange={(e) => setFormData({...formData, price: parseInt(e.target.value) || 1000})}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                        onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         min="0"
                       />
                     </div>
-
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Pages</label>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Pages</label>
                       <input
                         type="number"
                         value={formData.pages}
-                        onChange={(e) => setFormData({...formData, pages: parseInt(e.target.value) || 50})}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                        onChange={(e) => setFormData({ ...formData, pages: parseInt(e.target.value) || 1 })}
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         min="1"
                       />
                     </div>
-
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Note</label>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Note /5</label>
                       <input
                         type="number"
                         step="0.1"
                         value={formData.rating}
-                        onChange={(e) => setFormData({...formData, rating: parseFloat(e.target.value) || 4.5})}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                        min="0"
-                        max="5"
+                        onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) || 4.5 })}
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        min="0" max="5"
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Étudiants</label>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Lecteurs</label>
                       <input
                         type="number"
                         value={formData.students}
-                        onChange={(e) => setFormData({...formData, students: parseInt(e.target.value) || 0})}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                        onChange={(e) => setFormData({ ...formData, students: parseInt(e.target.value) || 0 })}
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         min="0"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Semaine</label>
-                      <input
-                        type="text"
-                        value={formData.week_added}
-                        onChange={(e) => setFormData({...formData, week_added: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                        placeholder="Ex: 15 janvier"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Auteur</label>
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Semaine d'ajout</label>
                     <input
                       type="text"
-                      value={formData.author}
-                      onChange={(e) => setFormData({...formData, author: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                      placeholder="MIDEESSI Team"
+                      value={formData.week_added}
+                      onChange={(e) => setFormData({ ...formData, week_added: e.target.value })}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="Ex: 4 juillet 2026"
                     />
                   </div>
-                </div>
+                </section>
 
-                {/* Section: Badges */}
-                <div className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b pb-2">Badges</h3>
-                  
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-yellow-400 transition-colors cursor-pointer">
+                {/* ── Section: Badges ── */}
+                <section className="space-y-4">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                    🏷️ Badges
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label className="flex items-center gap-3 p-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-yellow-400 transition-colors cursor-pointer">
                       <input
                         type="checkbox"
                         checked={formData.is_new}
-                        onChange={(e) => setFormData({...formData, is_new: e.target.checked})}
-                        className="w-5 h-5 rounded"
+                        onChange={(e) => setFormData({ ...formData, is_new: e.target.checked })}
+                        className="w-5 h-5 rounded accent-[var(--brand-gold)]"
                       />
                       <div>
                         <p className="font-bold text-gray-900 dark:text-white">✨ Nouveau</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Badge "NOUVEAU"</p>
+                        <p className="text-xs text-gray-500">Badge "NEW" sur la carte</p>
                       </div>
                     </label>
-
-                    <label className="flex items-center gap-3 p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-red-400 transition-colors cursor-pointer">
+                    <label className="flex items-center gap-3 p-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-red-400 transition-colors cursor-pointer">
                       <input
                         type="checkbox"
                         checked={formData.is_bestseller}
-                        onChange={(e) => setFormData({...formData, is_bestseller: e.target.checked})}
-                        className="w-5 h-5 rounded"
+                        onChange={(e) => setFormData({ ...formData, is_bestseller: e.target.checked })}
+                        className="w-5 h-5 rounded accent-red-500"
                       />
                       <div>
                         <p className="font-bold text-gray-900 dark:text-white">🔥 Bestseller</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Badge "BEST"</p>
+                        <p className="text-xs text-gray-500">Badge "BEST" + mis en avant</p>
                       </div>
                     </label>
                   </div>
-                </div>
+                </section>
               </div>
 
-              {/* Footer */}
-              <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 p-4 sm:p-6 flex-shrink-0 flex items-center gap-3">
+              {/* Form Footer */}
+              <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 p-4 sm:p-6 flex-shrink-0 flex items-center gap-3">
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--brand-midnight)] hover:bg-[var(--brand-midnight-dark)] text-[var(--brand-gold)] font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
                       <Loader className="w-5 h-5 animate-spin" />
-                      <span className="hidden sm:inline">Publication...</span>
+                      <span>Publication…</span>
                     </>
                   ) : (
                     <>
                       <Save className="w-5 h-5" />
-                      <span>{editingBook ? 'Mettre à jour' : 'Publier'}</span>
+                      <span>{editingBook ? 'Mettre à jour' : '🚀 Publier'}</span>
                     </>
                   )}
                 </button>

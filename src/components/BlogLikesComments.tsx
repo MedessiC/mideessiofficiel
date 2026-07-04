@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Flame, MessageCircle, Trash2, AlertCircle, Loader } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Avatar } from './ui/Avatar';
 
 interface BlogComment {
   id: string;
@@ -10,7 +11,7 @@ interface BlogComment {
   user_id: string;
   created_at: string;
   users?: {
-    username: string;
+    username: string | null;
     avatar_url: string | null;
   };
 }
@@ -257,20 +258,34 @@ export default function BlogLikesComments({ blogId, blogTitle }: BlogLikesCommen
             </p>
           ) : (
             comments.map((comment) => (
-              <div key={comment.id} className="p-4 rounded-lg bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600/50 space-y-2">
-                <div className="flex items-start justify-between gap-4">
+              <div key={comment.id} className="p-4 rounded-lg bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600/50">
+                <div className="flex items-start gap-4">
+                  <Avatar
+                    name={comment.users?.username || 'Utilisateur'}
+                    src={comment.users?.avatar_url || null}
+                    size="sm"
+                    className="flex-shrink-0"
+                  />
                   <div className="flex-1">
-                    <p className="font-semibold text-slate-900 dark:text-white font-poppins">
-                      {comment.users?.username || 'Utilisateur'}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {new Date(comment.created_at).toLocaleDateString('fr-FR', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <Link
+                        to={`/profile/${encodeURIComponent(comment.users?.username || 'utilisateur')}`}
+                        className="font-semibold text-slate-900 dark:text-white hover:text-gold transition"
+                      >
+                        {comment.users?.username || 'Utilisateur'}
+                      </Link>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {new Date(comment.created_at).toLocaleDateString('fr-FR', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap font-poppins mt-3">
+                      {comment.content}
                     </p>
                   </div>
                   {user?.id === comment.user_id && (
@@ -283,9 +298,6 @@ export default function BlogLikesComments({ blogId, blogTitle }: BlogLikesCommen
                     </button>
                   )}
                 </div>
-                <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap font-poppins">
-                  {comment.content}
-                </p>
               </div>
             ))
           )}

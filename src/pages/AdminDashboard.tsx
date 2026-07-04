@@ -20,10 +20,13 @@ const AdminDashboard = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [postsLoading, setPostsLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, published: 0, draft: 0, views: 0 });
+  const [page, setPage] = useState(0);
+  const pageSize = 10; // articles par page
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     checkAuth();
-    fetchPosts();
+    fetchPosts(true);
   }, []);
 
   const checkAuth = async () => {
@@ -47,19 +50,45 @@ const AdminDashboard = () => {
     setAuthLoading(false);
   };
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (reset = false) => {
     setPostsLoading(true);
 
-    const { data } = await supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
+    const currentPage = reset ? 0 : page;
+    const start = currentPage * pageSize;
+    const end = start + pageSize - 1;
 
-    if (data) {
-      setPosts(data);
-      setStats({
-        total: data.length,
-        published: data.filter((post) => post.is_published).length,
-        draft: data.filter((post) => !post.is_published).length,
-        views: data.reduce((sum, post) => sum + (post.views || 0), 0),
-      });
+    const { data, count, error } = await supabase
+      .from('blog_posts')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(start, end);
+
+    if (!error) {
+      if (data && data.length > 0) {
+        setPosts((prev) => (reset ? data : [...prev, ...data]));
+
+        // Update stats using count when available
+        const totalCount = typeof count === 'number' ? count : (reset ? data.length : posts.length + data.length);
+        const combined = reset ? data : [...posts, ...data];
+        setStats({
+          total: totalCount,
+          published: combined.filter((post) => post.is_published).length,
+          draft: combined.filter((post) => !post.is_published).length,
+          views: combined.reduce((sum, post) => sum + (post.views || 0), 0),
+        });
+
+        setHasMore(data.length === pageSize && (typeof count !== 'number' || start + data.length < count));
+        if (reset) setPage(1); else setPage((p) => p + 1);
+      } else {
+        // no data returned
+        if (reset) {
+          setPosts([]);
+          setStats({ total: 0, published: 0, draft: 0, views: 0 });
+        }
+        setHasMore(false);
+      }
+    } else {
+      console.error('Error fetching posts:', error);
     }
 
     setPostsLoading(false);
@@ -194,6 +223,13 @@ const AdminDashboard = () => {
                   <Plus className="w-4 h-4" />
                   Nouvel article
                 </Link>
+                <Link
+                  to="/admin/solutions"
+                  className="ml-3 inline-flex items-center justify-center gap-2 rounded-full bg-gold px-4 py-2 text-sm font-semibold text-midnight transition hover:brightness-95"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Solutions
+                </Link>
               </div>
 
               {posts.length === 0 ? (
@@ -260,6 +296,16 @@ const AdminDashboard = () => {
                       </div>
                     </article>
                   ))}
+                  {hasMore && (
+                    <div className="text-center mt-4">
+                      <button
+                        onClick={() => fetchPosts(false)}
+                        className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                      >
+                        Charger plus
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
