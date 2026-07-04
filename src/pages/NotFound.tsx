@@ -1,4 +1,5 @@
 import { Home, ArrowLeft, Search, FileQuestion } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const NotFound = () => {
   const quickLinks = [
