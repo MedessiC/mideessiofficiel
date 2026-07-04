@@ -43,6 +43,7 @@ export async function uploadFileToCloudinary(file: File, folder = 'mideessi', re
   formData.append('folder', signatureData.folder);
   formData.append('resource_type', resourceType);
 
+  console.debug('[Cloudinary] sending upload request', { uploadUrl, folder, resourceType, fileName: file.name, fileType: file.type, fileSize: file.size });
   const uploadResponse = await fetch(uploadUrl, {
     method: 'POST',
     body: formData,
@@ -62,6 +63,11 @@ export async function uploadFileToCloudinary(file: File, folder = 'mideessi', re
   if (!uploadResponse.ok) {
     console.error('[Cloudinary] Upload failed', { status: uploadResponse.status, statusText: uploadResponse.statusText, result });
     throw new Error(result?.error?.message || `Erreur Cloudinary lors de l’upload (${uploadResponse.status} ${uploadResponse.statusText})`);
+  }
+
+  if (!result || typeof result !== 'object' || (!result.secure_url && !result.url)) {
+    console.error('[Cloudinary] Unexpected upload result', { result });
+    throw new Error('Erreur Cloudinary : réponse inattendue de l’upload');
   }
 
   console.debug('[Cloudinary] Upload succeeded', { secure_url: result?.secure_url || result?.url });

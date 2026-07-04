@@ -183,11 +183,14 @@ const AdminDashboard = () => {
   // ── Upload to Cloudinary ──────────────────────────────────────────────────
   const uploadToCloudinary = async (file: File, folder: string, progressKey: 'pdf' | 'cover', resourceType: 'auto' | 'raw' = 'auto') => {
     setUploadProgress(prev => ({ ...(prev ?? { pdf: 0, cover: 0 }), [progressKey]: 10 }));
+    console.debug('[AdminPdfs] uploadToCloudinary', { fileName: file.name, fileType: file.type, fileSize: file.size, folder, progressKey, resourceType });
     try {
       const url = await uploadFileToCloudinary(file, folder, resourceType);
+      console.debug('[AdminPdfs] uploadToCloudinary succeeded', { url, folder, resourceType });
       setUploadProgress(prev => ({ ...(prev ?? { pdf: 0, cover: 0 }), [progressKey]: 100 }));
       return url;
     } catch (err) {
+      console.error('[AdminPdfs] uploadToCloudinary failed', { err, folder, progressKey, resourceType, fileName: file.name });
       setUploadProgress(null);
       throw err;
     }
