@@ -513,10 +513,16 @@ app.get('/api/proxy-pdf', async (req, res) => {
     const contentLength = upstream.headers.get('content-length');
     const cacheControl = upstream.headers.get('cache-control') || 'public, max-age=31536000, immutable';
     const disposition = upstream.headers.get('content-disposition') || 'inline';
+    const contentRange = upstream.headers.get('content-range');
+    const acceptRanges = upstream.headers.get('accept-ranges');
+    const etag = upstream.headers.get('etag');
 
     res.status(status);
     res.set('Content-Type', contentType);
     if (contentLength) res.set('Content-Length', contentLength);
+    if (contentRange) res.set('Content-Range', contentRange);
+    if (acceptRanges) res.set('Accept-Ranges', acceptRanges);
+    if (etag) res.set('ETag', etag);
     res.set('Cache-Control', cacheControl);
     res.set('Content-Disposition', disposition);
 
