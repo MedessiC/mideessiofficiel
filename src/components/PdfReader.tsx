@@ -94,21 +94,21 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   };
 
   const toolbar = (
-    <div className="flex items-center justify-between gap-2 px-3 py-2 bg-white border-b">
-      <div className="flex items-center gap-2">
-        <button onClick={prev} title="Page précédente" className="px-2 py-1 rounded bg-gray-100"><ChevronLeft /></button>
-        <button onClick={next} title="Page suivante" className="px-2 py-1 rounded bg-gray-100"><ChevronRight /></button>
+    <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-2 px-3 py-2 bg-white border-b">
+      <div className="flex items-center gap-2 overflow-x-auto">
+        <button onClick={prev} title="Page précédente" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-gray-100 p-2"><ChevronLeft /></button>
+        <button onClick={next} title="Page suivante" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-gray-100 p-2"><ChevronRight /></button>
         <div className="text-sm px-2">{pageNum} / {pageCount || '–'}</div>
-        <div className="h-6 w-px bg-gray-200 mx-2" />
-        <button onClick={zoomOut} title="Zoom out" className="px-2 py-1 rounded bg-gray-100"><ZoomOut /></button>
-        <button onClick={zoomIn} title="Zoom in" className="px-2 py-1 rounded bg-gray-100"><ZoomIn /></button>
+        <div className="h-6 w-px bg-gray-200 mx-2 hidden sm:block" />
+        <button onClick={zoomOut} title="Zoom out" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-gray-100 p-2"><ZoomOut /></button>
+        <button onClick={zoomIn} title="Zoom in" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-gray-100 p-2"><ZoomIn /></button>
         <div className="text-sm px-2">{Math.round(scale * 100)}%</div>
       </div>
       <div className="flex items-center gap-2">
-        <button onClick={download} title="Télécharger" className="px-2 py-1 rounded bg-gray-100"><Download /></button>
-        <a href={effectiveUrl} target="_blank" rel="noreferrer" title="Ouvrir dans un nouvel onglet" className="px-2 py-1 rounded bg-gray-100"><ExternalLink /></a>
-        <button onClick={() => setIsFullscreen(f => !f)} title="Plein écran" className="px-2 py-1 rounded bg-gray-100">{isFullscreen ? <Minimize2 /> : <Maximize2 />}</button>
-        {onClose && <button onClick={onClose} title="Fermer" className="px-2 py-1 rounded bg-red-100"><X /></button>}
+        <button onClick={download} title="Télécharger" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-gray-100 p-2"><Download /></button>
+        <a href={effectiveUrl} target="_blank" rel="noreferrer" title="Ouvrir dans un nouvel onglet" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-gray-100 p-2"><ExternalLink /></a>
+        <button onClick={() => setIsFullscreen(f => !f)} title="Plein écran" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-gray-100 p-2">{isFullscreen ? <Minimize2 /> : <Maximize2 />}</button>
+        {onClose && <button onClick={onClose} title="Fermer" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-red-100 p-2"><X /></button>}
       </div>
     </div>
   );
@@ -121,7 +121,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-gray-50">
         {loading && <div className="text-sm text-gray-500">Chargement du PDF…</div>}
         {error && <div className="text-sm text-red-600">{error}</div>}
-        <canvas ref={canvasRef} style={{ boxShadow: '0 6px 20px rgba(0,0,0,0.12)' }} />
+        <canvas ref={canvasRef} style={{ boxShadow: '0 6px 20px rgba(0,0,0,0.12)', maxWidth: '100%', height: 'auto' }} />
       </div>
     </div>
   );
