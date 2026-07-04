@@ -8,6 +8,7 @@ import {
   FileText, Sparkles, Plus, Share2, Eye, X, BookMarked
 } from 'lucide-react';
 import SEO from '../components/SEO';
+import PdfReader from '../components/PdfReader';
 
 interface Book {
   id: string;
@@ -50,6 +51,8 @@ export default function MyLibrary() {
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [readingPdfUrl, setReadingPdfUrl] = useState<string | null>(null);
+  const [readingPdfTitle, setReadingPdfTitle] = useState('');
 
   // Time-based greeting helper
   const [greeting, setGreeting] = useState('Bienvenue');
@@ -530,14 +533,15 @@ export default function MyLibrary() {
                       <Eye size={14} /> Fiche
                     </Link>
                     {selectedBook.pdf_url ? (
-                      <a
-                        href={selectedBook.pdf_url}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        onClick={() => {
+                          setReadingPdfUrl(selectedBook.pdf_url!);
+                          setReadingPdfTitle(selectedBook.title);
+                        }}
                         className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gold text-midnight hover:bg-yellow-400 text-xs font-black py-2.5 transition-all shadow-md active:scale-95"
                       >
                         <Download size={14} /> Lire PDF
-                      </a>
+                      </button>
                     ) : (
                       <button
                         disabled
@@ -659,14 +663,16 @@ export default function MyLibrary() {
                   <Eye size={13} /> Fiche
                 </Link>
                 {selectedBook.pdf_url ? (
-                  <a
-                    href={selectedBook.pdf_url}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    onClick={() => {
+                      setReadingPdfUrl(selectedBook.pdf_url!);
+                      setReadingPdfTitle(selectedBook.title);
+                      setIsMobileDetailOpen(false);
+                    }}
                     className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gold text-midnight hover:bg-yellow-400 text-xs font-black py-2.5 transition-all shadow-md"
                   >
                     <Download size={13} /> PDF
-                  </a>
+                  </button>
                 ) : (
                   <button
                     disabled
@@ -680,6 +686,16 @@ export default function MyLibrary() {
             
           </div>
         </div>
+      )}
+
+      {/* PDF Reader Modal */}
+      {readingPdfUrl && (
+        <PdfReader
+          pdfUrl={readingPdfUrl}
+          title={readingPdfTitle}
+          modal
+          onClose={() => setReadingPdfUrl(null)}
+        />
       )}
     </div>
   );
