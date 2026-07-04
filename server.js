@@ -497,6 +497,9 @@ app.get('/api/proxy-pdf', async (req, res) => {
     // Forward Range header when present (for partial content / streaming)
     const fetchHeaders = {};
     if (req.headers.range) fetchHeaders.Range = req.headers.range;
+    // Mirror a browser User-Agent + Accept to avoid upstream returning HTML/landing pages
+    fetchHeaders['User-Agent'] = req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36';
+    fetchHeaders['Accept'] = 'application/pdf,application/octet-stream;q=0.9,*/*;q=0.8';
 
     const upstream = await fetch(url, { redirect: 'follow', headers: fetchHeaders });
     const status = upstream.status;
@@ -509,13 +512,20 @@ app.get('/api/proxy-pdf', async (req, res) => {
     }
 
     // Determine content-type and other headers
-    const contentType = upstream.headers.get('content-type') || 'application/pdf';
+    const contentType = (upstream.headers.get('content-type') || '').toLowerCase() || 'application/octet-stream';
     const contentLength = upstream.headers.get('content-length');
     const cacheControl = upstream.headers.get('cache-control') || 'public, max-age=31536000, immutable';
     const disposition = upstream.headers.get('content-disposition') || 'inline';
     const contentRange = upstream.headers.get('content-range');
     const acceptRanges = upstream.headers.get('accept-ranges');
     const etag = upstream.headers.get('etag');
+
+    // If upstream returns HTML (landing/error page), bail out with a clear error for debugging
+    if (!/pdf|octet-stream|x-pdf/.test(contentType)) {
+      const bodyText = await upstream.text().catch(() => '');
+      console.error('[proxy-pdf] upstream returned non-PDF content-type', { url, status, contentType, snippet: bodyText.slice(0, 800) });
+      return res.status(502).json({ error: 'Upstream did not return a PDF', status, contentType, snippet: bodyText.slice(0, 800) });
+    }
 
     res.status(status);
     res.set('Content-Type', contentType);
