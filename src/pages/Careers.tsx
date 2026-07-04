@@ -8,6 +8,12 @@ const Careers = () => {
   const [offers, setOffers] = useState(getRecruitmentOffers());
   const [feedback, setFeedback] = useState('');
 
+  const getPreview = (value: string, maxLength = 180) => {
+    if (!value) return '';
+    if (value.length <= maxLength) return value;
+    return `${value.slice(0, maxLength).trimEnd()}…`;
+  };
+
   useEffect(() => {
     const loadOffers = async () => {
       setOffers(await syncRecruitmentOffers());
@@ -125,34 +131,40 @@ const Careers = () => {
               <p className="text-lg text-gray-600 dark:text-gray-300">Aucune offre de recrutement pour le moment.</p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-2">
               {offers.map((offer) => (
-                <div key={offer.id} className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                  <div className="flex items-center gap-2 text-gold">
-                    <Briefcase className="h-5 w-5" />
-                    <span className="text-sm font-semibold uppercase tracking-[0.2em]">{offer.type}</span>
+                <div key={offer.id} className="flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-900">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 text-gold">
+                        <Briefcase className="h-5 w-5" />
+                        <span className="text-sm font-semibold uppercase tracking-[0.2em]">{offer.type}</span>
+                      </div>
+                      <h3 className="mt-3 text-xl font-bold text-midnight dark:text-white">{offer.title}</h3>
+                      <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{offer.role}</p>
+                    </div>
                   </div>
-                  <h3 className="mt-4 text-xl font-bold text-midnight dark:text-white">{offer.title}</h3>
-                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{offer.role}</p>
                   {offer.imageUrl && (
-                    <img src={offer.imageUrl} alt={offer.title} className="mt-4 h-40 w-full rounded-2xl object-cover" />
+                    <img src={offer.imageUrl} alt={offer.title} className="mt-4 h-36 w-full rounded-2xl object-cover sm:h-40" />
                   )}
                   <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <MapPin className="h-4 w-4" />
-                    {offer.location}
+                    <MapPin className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{offer.location}</span>
                   </div>
-                  <p className="mt-4 text-sm leading-relaxed text-gray-600 dark:text-gray-300">{offer.description}</p>
+                  <p className="mt-4 text-sm leading-relaxed text-gray-600 dark:text-gray-300 line-clamp-3 break-words">
+                    {getPreview(offer.description)}
+                  </p>
                   <div className="mt-5">
                     <h4 className="text-sm font-semibold text-midnight dark:text-white">Exigences</h4>
                     <ul className="mt-2 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                      {offer.requirements.map((requirement) => (
-                        <li key={requirement} className="flex gap-2"><span className="text-gold">•</span>{requirement}</li>
+                      {offer.requirements.slice(0, 3).map((requirement) => (
+                        <li key={requirement} className="flex gap-2"><span className="text-gold">•</span><span className="break-words">{requirement}</span></li>
                       ))}
                     </ul>
                   </div>
                   <Link
                     to={`/careers/apply/${offer.slug || offer.id}`}
-                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-midnight px-4 py-2 text-sm font-semibold text-white"
+                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-midnight px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                   >
                     Postuler <ArrowRight className="h-4 w-4" />
                   </Link>
