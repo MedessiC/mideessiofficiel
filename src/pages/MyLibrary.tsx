@@ -54,6 +54,8 @@ export default function MyLibrary() {
   const [readingPdfUrl, setReadingPdfUrl] = useState<string | null>(null);
   const [readingPdfTitle, setReadingPdfTitle] = useState('');
   const [progressions, setProgressions] = useState<Record<string, number>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Time-based greeting helper
   const [greeting, setGreeting] = useState('Bienvenue');
@@ -76,18 +78,35 @@ export default function MyLibrary() {
     loadReadingStatuses();
   }, [user, navigate]);
 
-  // Load and Save book notes from localStorage
+  // Load study notes for currently selected book
   useEffect(() => {
-    if (selectedBook && user) {
-      const savedNote = localStorage.getItem(`book_note_${user.id}_${selectedBook.id}`) || '';
-      setNoteText(savedNote);
+    if (selectedBook) {
+      const dbNote = notes[selectedBook.id] || '';
+      setNoteText(dbNote);
     }
-  }, [selectedBook, user]);
+  }, [selectedBook, notes]);
 
   const handleSaveNote = (text: string) => {
     if (!selectedBook || !user) return;
     setNoteText(text);
-    localStorage.setItem(`book_note_${user.id}_${selectedBook.id}`, text);
+    
+    // Update local state first
+    setNotes(prev => ({ ...prev, [selectedBook.id]: text }));
+
+    // Debounce save to Supabase (500ms delay)
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await supabase.from('book_progress').upsert({
+          book_id: selectedBook.id,
+          user_id: user.id,
+          study_notes: text,
+          last_read_at: new Date().toISOString()
+        }, { onConflict: 'book_id,user_id' });
+      } catch (err) {
+        console.error('Error saving study notes to Supabase:', err);
+      }
+    }, 500);
   };
 
   const loadReadingStatuses = () => {
@@ -146,18 +165,21 @@ export default function MyLibrary() {
         setSelectedBook(books[0]);
       }
 
-      // Récupérer la progression réelle pour chaque livre de l'utilisateur
+      // Récupérer la progression réelle et les notes pour chaque livre de l'utilisateur
       const { data: progressData } = await supabase
         .from('book_progress')
-        .select('book_id, progress_percent')
+        .select('book_id, progress_percent, study_notes')
         .eq('user_id', user.id);
 
       if (progressData) {
         const progMap: Record<string, number> = {};
+        const noteMap: Record<string, string> = {};
         progressData.forEach((p: any) => {
-          progMap[p.book_id] = Number(p.progress_percent);
+          progMap[p.book_id] = Number(p.progress_percent || 0);
+          noteMap[p.book_id] = p.study_notes || '';
         });
         setProgressions(progMap);
+        setNotes(noteMap);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de charger votre bibliothèque');
