@@ -29,10 +29,11 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
 
     (async () => {
       try {
-        const pdfjs = await import('pdfjs-dist');
-        // Use CDN worker for simplicity
+        // Import the legacy build which works well with bundlers like Vite
+        const pdfjs = await import('pdfjs-dist/legacy/build/pdf');
+        // Resolve worker path via bundler so Vite serves it correctly
         // @ts-ignore
-        pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.worker.min.js';
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.js', import.meta.url).toString();
 
         const loadingTask = pdfjs.getDocument(effectiveUrl);
         const doc = await loadingTask.promise;
