@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { Briefcase, FolderKanban, Users, Plus, Send, Sparkles } from 'lucide-react';
 import type { Solution } from '../../data/solutions';
 import type { TeamMember } from '../../data/teamMembers';
-import { createDynamicProject, createDynamicTeamMember, createRecruitmentOffer, getDynamicProjects, getDynamicTeamMembers, getRecruitmentOffers, getRecruitmentApplications, syncDynamicProjects, syncDynamicTeamMembers, syncRecruitmentOffers, type RecruitmentApplication } from '../../lib/contentManagement';
+import { createDynamicProject, createDynamicTeamMember, createRecruitmentOffer, deleteRecruitmentOffer, getDynamicProjects, getDynamicTeamMembers, getRecruitmentOffers, getRecruitmentApplications, syncDynamicProjects, syncDynamicTeamMembers, syncRecruitmentOffers, type RecruitmentApplication } from '../../lib/contentManagement';
 import CloudinaryUploader from './CloudinaryUploader';
 
 const initialRecruitmentForm = {
   title: '',
+  slug: '',
   role: '',
   location: '',
   type: 'Temps plein',
@@ -102,6 +103,7 @@ const ContentManager = () => {
     e.preventDefault();
     await createRecruitmentOffer({
       title: recruitmentForm.title,
+      slug: recruitmentForm.slug,
       role: recruitmentForm.role,
       location: recruitmentForm.location,
       type: recruitmentForm.type,
@@ -172,6 +174,16 @@ const ContentManager = () => {
     setMessage('Nouveau membre ajouté à la page À propos.');
   };
 
+  const handleDeleteOffer = async (offerId: string) => {
+    if (!window.confirm('Supprimer cette offre ?')) return;
+
+    const deleted = await deleteRecruitmentOffer(offerId);
+    const [offers, applications] = await Promise.all([syncRecruitmentOffers(), getRecruitmentApplications()]);
+    setRecruitmentOffers(offers);
+    setRecruitmentApplications(applications);
+    setMessage(deleted ? 'Offre supprimée.' : 'Une erreur est survenue lors de la suppression.');
+  };
+
   const tabs = useMemo(() => [
     { id: 'recruitment', label: 'Recrutement', icon: Briefcase },
     { id: 'projects', label: 'Projets', icon: FolderKanban },
@@ -211,6 +223,7 @@ const ContentManager = () => {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <input required value={recruitmentForm.title} onChange={(e) => setRecruitmentForm({ ...recruitmentForm, title: e.target.value })} placeholder="Titre de l’offre" className="rounded-2xl border border-slate-200 px-4 py-3" />
+              <input value={recruitmentForm.slug} onChange={(e) => setRecruitmentForm({ ...recruitmentForm, slug: e.target.value })} placeholder="Slug de la page (optionnel)" className="rounded-2xl border border-slate-200 px-4 py-3" />
               <input required value={recruitmentForm.role} onChange={(e) => setRecruitmentForm({ ...recruitmentForm, role: e.target.value })} placeholder="Rôle / Poste" className="rounded-2xl border border-slate-200 px-4 py-3" />
               <input value={recruitmentForm.location} onChange={(e) => setRecruitmentForm({ ...recruitmentForm, location: e.target.value })} placeholder="Lieu" className="rounded-2xl border border-slate-200 px-4 py-3" />
               <input value={recruitmentForm.type} onChange={(e) => setRecruitmentForm({ ...recruitmentForm, type: e.target.value })} placeholder="Type (Temps plein, Stage...)" className="rounded-2xl border border-slate-200 px-4 py-3" />
@@ -248,7 +261,10 @@ const ContentManager = () => {
                         <p className="font-semibold text-slate-900">{offer.title}</p>
                         <p className="text-sm text-slate-500">{offer.role} • {offer.location}</p>
                       </div>
-                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Publié</span>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Publié</span>
+                        <button type="button" onClick={() => handleDeleteOffer(offer.id)} className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Supprimer</button>
+                      </div>
                     </div>
                     {offer.imageUrl && (
                       <img src={offer.imageUrl} alt={offer.title} className="mt-3 h-28 w-full rounded-xl object-cover" />

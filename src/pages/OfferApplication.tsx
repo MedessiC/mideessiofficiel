@@ -25,7 +25,7 @@ const OfferApplication = () => {
   useEffect(() => {
     const loadOffer = async () => {
       const offers = await syncRecruitmentOffers();
-      const selectedOffer = offers.find((item) => item.id === offerId) || null;
+      const selectedOffer = offers.find((item) => item.slug === offerId || item.id === offerId) || null;
       setOffer(selectedOffer);
       setIsLoading(false);
     };

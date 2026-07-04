@@ -151,7 +151,7 @@ const Careers = () => {
                     </ul>
                   </div>
                   <Link
-                    to={`/careers/apply/${offer.id}`}
+                    to={`/careers/apply/${offer.slug || offer.id}`}
                     className="mt-6 inline-flex items-center gap-2 rounded-full bg-midnight px-4 py-2 text-sm font-semibold text-white"
                   >
                     Postuler <ArrowRight className="h-4 w-4" />

@@ -4,6 +4,7 @@ import { supabase } from './supabase';
 
 export interface RecruitmentOffer {
   id: string;
+  slug: string;
   title: string;
   role: string;
   location: string;
@@ -66,6 +67,17 @@ const notifyContentUpdate = () => {
   }
 };
 
+const slugify = (value: string) => {
+  return value
+    .toLowerCase()
+    .trim()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+};
+
 const readStoredItems = <T>(key: string): T[] => {
   if (typeof window === 'undefined') return [];
   try {
@@ -84,6 +96,7 @@ const writeStoredItems = <T>(key: string, items: T[]) => {
 
 const mapRecruitmentOffer = (row: Record<string, unknown>): RecruitmentOffer => ({
   id: String(row.id || `recruitment-${Date.now()}`),
+  slug: String(row.slug || slugify(String(row.title || 'offre')) || ''),
   title: String(row.title || ''),
   role: String(row.role || ''),
   location: String(row.location || ''),
@@ -130,8 +143,10 @@ export const syncRecruitmentOffers = async (): Promise<RecruitmentOffer[]> => {
 };
 
 export const createRecruitmentOffer = async (offer: Omit<RecruitmentOffer, 'id' | 'createdAt'>): Promise<RecruitmentOffer> => {
+  const slug = offer.slug || slugify(offer.title || 'offre') || `offre-${Date.now()}`;
   const newOffer: RecruitmentOffer = {
     ...offer,
+    slug,
     imageUrl: offer.imageUrl || '',
     id: `recruitment-${Date.now()}`,
     createdAt: new Date().toISOString(),
@@ -142,6 +157,7 @@ export const createRecruitmentOffer = async (offer: Omit<RecruitmentOffer, 'id' 
       .from('recruitment_offers')
       .insert({
         title: offer.title,
+        slug,
         role: offer.role,
         location: offer.location,
         type: offer.type,
@@ -167,6 +183,20 @@ export const createRecruitmentOffer = async (offer: Omit<RecruitmentOffer, 'id' 
   const items = readStoredItems<RecruitmentOffer>(STORAGE_KEYS.recruitment);
   writeStoredItems(STORAGE_KEYS.recruitment, [newOffer, ...items]);
   return newOffer;
+};
+
+export const deleteRecruitmentOffer = async (offerId: string): Promise<boolean> => {
+  const items = readStoredItems<RecruitmentOffer>(STORAGE_KEYS.recruitment);
+  const remaining = items.filter((item) => item.id !== offerId);
+  writeStoredItems(STORAGE_KEYS.recruitment, remaining);
+
+  try {
+    const { error } = await supabase.from('recruitment_offers').delete().eq('id', offerId);
+    return !error;
+  } catch (error) {
+    console.error('Unable to delete recruitment offer:', error);
+    return true;
+  }
 };
 
 export const getRecruitmentApplications = async (): Promise<RecruitmentApplication[]> => {
