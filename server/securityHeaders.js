@@ -11,9 +11,9 @@ export function getSecurityHeaders() {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://*.unsplash.com",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' https://*.supabase.co https://*.supabase.com https://*.cloudinary.com https://api.cloudinary.com",
+    "connect-src 'self' https://*.supabase.co https://*.supabase.com https://*.cloudinary.com https://api.cloudinary.com https://ep1.adtrafficquality.google",
     "media-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com",
-    "frame-src https://www.youtube.com https://player.vimeo.com",
+    "frame-src https://www.youtube.com https://player.vimeo.com https://googleads.g.doubleclick.net",
     "upgrade-insecure-requests",
   ].join('; ');
 

@@ -11,13 +11,42 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (typeof window !== 'un
 export async function fetchCloudinarySignature(folder = 'mideessi'): Promise<CloudinarySignature> {
   console.debug('[Cloudinary] fetchCloudinarySignature', { API_BASE_URL, folder });
   const response = await fetch(`${API_BASE_URL}/api/cloudinary-signature?folder=${encodeURIComponent(folder)}`);
+
+  const contentType = response.headers.get('content-type') || '';
+  const bodyText = await response.text();
+  console.debug('[Cloudinary] Signature response received', {
+    url: `${API_BASE_URL}/api/cloudinary-signature?folder=${encodeURIComponent(folder)}`,
+    status: response.status,
+    statusText: response.statusText,
+    contentType,
+    bodySnippet: bodyText.slice(0, 200),
+  });
+
   if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
+    let body: any = {};
+    try {
+      body = JSON.parse(bodyText);
+    } catch (err) {
+      console.error('[Cloudinary] Signature fetch failed with invalid JSON body', {
+        status: response.status,
+        statusText: response.statusText,
+        bodyText,
+        err,
+      });
+    }
+
     console.error('[Cloudinary] Signature fetch failed', { status: response.status, statusText: response.statusText, body });
     throw new Error(body.error || 'Impossible de générer la signature Cloudinary');
   }
 
-  const data: CloudinarySignature = await response.json();
+  let data: CloudinarySignature;
+  try {
+    data = JSON.parse(bodyText);
+  } catch (err) {
+    console.error('[Cloudinary] Signature response parse failed', { bodyText, err });
+    throw new Error(`Réponse invalide de l’API de signature Cloudinary : ${bodyText}`);
+  }
+
   console.debug('[Cloudinary] Signature fetched', data);
   return data;
 }

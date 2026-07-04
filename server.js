@@ -454,6 +454,8 @@ app.get('/api/cloudinary-signature', (req, res) => {
   const signatureBase = `folder=${folder}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
   const signature = crypto.createHash('sha1').update(signatureBase).digest('hex');
 
+  console.debug('[Server] Cloudinary signature issued', { folder, timestamp, cloudName: CLOUDINARY_CLOUD_NAME });
+
   res.json({
     cloudName: CLOUDINARY_CLOUD_NAME,
     apiKey: CLOUDINARY_API_KEY,
