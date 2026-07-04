@@ -86,11 +86,15 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const rotate = () => setRotation(r => (r + 90) % 360);
   const download = () => {
     const a = document.createElement('a');
-    a.href = effectiveUrl;
+    // Prefer original Cloudinary URL for download to avoid proxy returning HTML errors
+    const href = isCloudinary ? pdfUrl : effectiveUrl;
+    a.href = href;
     a.download = `${title.replace(/\s+/g, '_')}.pdf`;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
     a.click();
+    a.remove();
   };
 
   const toolbar = (
