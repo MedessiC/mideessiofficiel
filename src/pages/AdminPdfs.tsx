@@ -197,6 +197,31 @@ const AdminDashboard = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.debug('[AdminPdfs] handleSubmit start', {
+      editingBookId: editingBook?.id ?? null,
+      formData: {
+        title: formData.title,
+        category: formData.category,
+        description: formData.description,
+        price: formData.price,
+        author: formData.author,
+        cover_color: formData.cover_color,
+        cover_image: formData.cover_image,
+        article_url: formData.article_url,
+        buy_url: formData.buy_url,
+        pdf_url: formData.pdf_url,
+        week_added: formData.week_added,
+        is_new: formData.is_new,
+        is_bestseller: formData.is_bestseller,
+        rating: formData.rating,
+        students: formData.students,
+        pages: formData.pages,
+        level: formData.level,
+      },
+      pdfFile: pdfFile ? { name: pdfFile.name, type: pdfFile.type, size: pdfFile.size } : null,
+      coverFile: coverFile ? { name: coverFile.name, type: coverFile.type, size: coverFile.size } : null,
+    });
+
     if (!formData.title || !formData.description) {
       addToast('error', 'Le titre et la description sont obligatoires');
       return;
@@ -227,13 +252,17 @@ const AdminDashboard = () => {
       // Upload PDF to Cloudinary as raw
       if (pdfFile) {
         addToast('success', '📤 Upload du PDF en cours...');
+        console.debug('[AdminPdfs] starting Cloudinary PDF upload', { fileName: pdfFile.name, fileType: pdfFile.type });
         pdfUrl = await uploadToCloudinary(pdfFile, 'mideessi/pdfs', 'pdf', 'raw');
+        console.debug('[AdminPdfs] Cloudinary PDF upload completed', { pdfUrl });
       }
 
       // Upload cover image to Cloudinary as image
       if (coverFile) {
         addToast('success', '🖼️ Upload de la couverture en cours...');
+        console.debug('[AdminPdfs] starting Cloudinary cover upload', { fileName: coverFile.name, fileType: coverFile.type });
         coverImageUrl = await uploadToCloudinary(coverFile, 'mideessi/covers', 'cover', 'auto');
+        console.debug('[AdminPdfs] Cloudinary cover upload completed', { coverImageUrl });
       }
 
       if (!pdfUrl) {
@@ -261,6 +290,8 @@ const AdminDashboard = () => {
         level: formData.level,
       };
 
+      console.debug('[AdminPdfs] supabase payload ready', { payload, editing: Boolean(editingBook) });
+
       if (editingBook) {
         const { error } = await supabase
           .from('books')
@@ -276,13 +307,23 @@ const AdminDashboard = () => {
           .insert([{ ...payload, created_at: new Date().toISOString() }]);
 
         if (error) throw error;
+        console.debug('[AdminPdfs] supabase insert succeeded');
         await fetchBooks();
         addToast('success', '🚀 PDF publié avec succès sur la bibliothèque');
       }
 
       resetForm();
     } catch (err: any) {
-      console.error('Erreur publication:', err);
+      console.error('Erreur publication:', err, {
+        editingBookId: editingBook?.id ?? null,
+        formData: {
+          title: formData.title,
+          pdf_url: formData.pdf_url,
+          cover_image: formData.cover_image,
+        },
+        pdfFile: pdfFile ? { name: pdfFile.name, type: pdfFile.type, size: pdfFile.size } : null,
+        coverFile: coverFile ? { name: coverFile.name, type: coverFile.type, size: coverFile.size } : null,
+      });
       addToast('error', err.message || 'Erreur lors de la publication');
     } finally {
       setLoading(false);
