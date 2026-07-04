@@ -218,7 +218,14 @@ const ContentManager = () => {
             <textarea required value={recruitmentForm.description} onChange={(e) => setRecruitmentForm({ ...recruitmentForm, description: e.target.value })} placeholder="Description" rows={5} className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
             <textarea value={recruitmentForm.requirements} onChange={(e) => setRecruitmentForm({ ...recruitmentForm, requirements: e.target.value })} placeholder="Exigences (une par ligne)" rows={4} className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
             <input value={recruitmentForm.applyLink} onChange={(e) => setRecruitmentForm({ ...recruitmentForm, applyLink: e.target.value })} placeholder="Lien de candidature" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
-            <input value={recruitmentForm.imageUrl} onChange={(e) => setRecruitmentForm({ ...recruitmentForm, imageUrl: e.target.value })} placeholder="URL de l’image de l’offre (Cloudinary ou autre)" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+            <CloudinaryUploader
+              label="Image de l’offre"
+              value={recruitmentForm.imageUrl}
+              onChange={(value) => setRecruitmentForm({ ...recruitmentForm, imageUrl: value })}
+              folder="mideessi/recruitment"
+              accept="image/*"
+              showUrlInput={false}
+            />
             <label className="flex items-center gap-2 text-sm text-slate-600">
               <input type="checkbox" checked={recruitmentForm.isPublished} onChange={(e) => setRecruitmentForm({ ...recruitmentForm, isPublished: e.target.checked })} />
               Publier immédiatement

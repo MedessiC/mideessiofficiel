@@ -9,6 +9,7 @@ interface CloudinaryUploaderProps {
   folder?: string;
   placeholder?: string;
   accept?: string;
+  showUrlInput?: boolean;
 }
 
 const CloudinaryUploader = ({
@@ -17,7 +18,8 @@ const CloudinaryUploader = ({
   onChange,
   folder = 'mideessi',
   placeholder = 'https://...',
-  accept = 'image/*,video/*,application/pdf,application/*'
+  accept = 'image/*,video/*,application/pdf,application/*',
+  showUrlInput = true,
 }: CloudinaryUploaderProps) => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -58,13 +60,15 @@ const CloudinaryUploader = ({
           />
         </label>
 
-        <input
-          type="url"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs md:text-sm"
-        />
+        {showUrlInput && (
+          <input
+            type="url"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs md:text-sm"
+          />
+        )}
       </div>
 
       {uploading && (
