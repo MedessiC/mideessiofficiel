@@ -53,6 +53,7 @@ export default function MyLibrary() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [readingPdfUrl, setReadingPdfUrl] = useState<string | null>(null);
   const [readingPdfTitle, setReadingPdfTitle] = useState('');
+  const [progressions, setProgressions] = useState<Record<string, number>>({});
 
   // Time-based greeting helper
   const [greeting, setGreeting] = useState('Bienvenue');
@@ -144,6 +145,20 @@ export default function MyLibrary() {
       if (books.length > 0) {
         setSelectedBook(books[0]);
       }
+
+      // Récupérer la progression réelle pour chaque livre de l'utilisateur
+      const { data: progressData } = await supabase
+        .from('book_progress')
+        .select('book_id, progress_percent')
+        .eq('user_id', user.id);
+
+      if (progressData) {
+        const progMap: Record<string, number> = {};
+        progressData.forEach((p: any) => {
+          progMap[p.book_id] = Number(p.progress_percent);
+        });
+        setProgressions(progMap);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de charger votre bibliothèque');
       console.error('Erreur MyLibrary:', err);
@@ -166,10 +181,13 @@ export default function MyLibrary() {
     }
   };
 
-  const getProgressPercentage = (status: ReadingStatus) => {
+  const getProgressPercentage = (bookId: string, status: ReadingStatus) => {
+    if (progressions[bookId] !== undefined) {
+      return progressions[bookId];
+    }
     switch (status) {
       case 'to-read': return 0;
-      case 'reading': return 45;
+      case 'reading': return 0;
       case 'completed': return 100;
     }
   };
@@ -382,7 +400,7 @@ export default function MyLibrary() {
                 {filteredBooks.map((book) => {
                   const status = readingStatuses[book.id] || 'to-read';
                   const isSelected = selectedBook?.id === book.id;
-                  const progress = getProgressPercentage(status);
+                  const progress = getProgressPercentage(book.id, status);
 
                   return (
                     <div
@@ -694,7 +712,10 @@ export default function MyLibrary() {
           pdfUrl={readingPdfUrl}
           title={readingPdfTitle}
           modal
-          onClose={() => setReadingPdfUrl(null)}
+          onClose={() => {
+            setReadingPdfUrl(null);
+            fetchLibrary(); // Recharger pour afficher la progression mise à jour
+          }}
         />
       )}
     </div>
