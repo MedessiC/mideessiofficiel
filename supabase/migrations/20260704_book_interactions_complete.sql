@@ -246,6 +246,20 @@ BEGIN
   END IF;
 END $$;
 
+-- Ajouter les colonnes manquantes si la table books existait déjà avant cette migration
+ALTER TABLE books ADD COLUMN IF NOT EXISTS cover_color TEXT DEFAULT 'from-blue-500 to-blue-700';
+ALTER TABLE books ADD COLUMN IF NOT EXISTS cover_image TEXT DEFAULT '';
+ALTER TABLE books ADD COLUMN IF NOT EXISTS article_url TEXT DEFAULT '';
+ALTER TABLE books ADD COLUMN IF NOT EXISTS buy_url TEXT DEFAULT '';
+ALTER TABLE books ADD COLUMN IF NOT EXISTS pdf_url TEXT DEFAULT '';
+ALTER TABLE books ADD COLUMN IF NOT EXISTS week_added TEXT DEFAULT '';
+ALTER TABLE books ADD COLUMN IF NOT EXISTS is_new BOOLEAN DEFAULT true;
+ALTER TABLE books ADD COLUMN IF NOT EXISTS is_bestseller BOOLEAN DEFAULT false;
+ALTER TABLE books ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 4.5;
+ALTER TABLE books ADD COLUMN IF NOT EXISTS students INTEGER DEFAULT 0;
+ALTER TABLE books ADD COLUMN IF NOT EXISTS pages INTEGER DEFAULT 50;
+ALTER TABLE books ADD COLUMN IF NOT EXISTS level TEXT DEFAULT 'Débutant';
+
 -- Fonction RPC pour incrémenter les vues de manière sécurisée (pas de RLS bypass nécessaire)
 CREATE OR REPLACE FUNCTION increment_book_views(p_book_id UUID)
 RETURNS void

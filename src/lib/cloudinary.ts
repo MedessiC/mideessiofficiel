@@ -19,9 +19,9 @@ export async function fetchCloudinarySignature(folder = 'mideessi'): Promise<Clo
   return data;
 }
 
-export async function uploadFileToCloudinary(file: File, folder = 'mideessi'): Promise<string> {
+export async function uploadFileToCloudinary(file: File, folder = 'mideessi', resourceType: 'auto' | 'raw' = 'auto'): Promise<string> {
   const signatureData = await fetchCloudinarySignature(folder);
-  const uploadUrl = `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/auto/upload`;
+  const uploadUrl = `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/${resourceType}/upload`;
 
   const formData = new FormData();
   formData.append('file', file);
@@ -29,7 +29,7 @@ export async function uploadFileToCloudinary(file: File, folder = 'mideessi'): P
   formData.append('timestamp', String(signatureData.timestamp));
   formData.append('signature', signatureData.signature);
   formData.append('folder', signatureData.folder);
-  formData.append('resource_type', 'auto');
+  formData.append('resource_type', resourceType);
 
   const uploadResponse = await fetch(uploadUrl, {
     method: 'POST',

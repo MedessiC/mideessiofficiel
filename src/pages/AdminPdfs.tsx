@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadFileToCloudinary } from '../lib/cloudinary';
+import { isCloudinaryUrl } from '../utils/cloudinaryImage';
 
 type Book = {
   id: string | null;
@@ -180,10 +181,10 @@ const AdminDashboard = () => {
   };
 
   // ── Upload to Cloudinary ──────────────────────────────────────────────────
-  const uploadToCloudinary = async (file: File, folder: string, progressKey: 'pdf' | 'cover') => {
+  const uploadToCloudinary = async (file: File, folder: string, progressKey: 'pdf' | 'cover', resourceType: 'auto' | 'raw' = 'auto') => {
     setUploadProgress(prev => ({ ...(prev ?? { pdf: 0, cover: 0 }), [progressKey]: 10 }));
     try {
-      const url = await uploadFileToCloudinary(file, folder);
+      const url = await uploadFileToCloudinary(file, folder, resourceType);
       setUploadProgress(prev => ({ ...(prev ?? { pdf: 0, cover: 0 }), [progressKey]: 100 }));
       return url;
     } catch (err) {
@@ -206,6 +207,16 @@ const AdminDashboard = () => {
       return;
     }
 
+    if (formData.pdf_url && !isCloudinaryUrl(formData.pdf_url)) {
+      addToast('error', 'Le lien PDF doit être hébergé sur Cloudinary');
+      return;
+    }
+
+    if (formData.cover_image && !isCloudinaryUrl(formData.cover_image)) {
+      addToast('error', 'L’image de couverture doit être hébergée sur Cloudinary');
+      return;
+    }
+
     setLoading(true);
     setUploadProgress({ pdf: 0, cover: 0 });
 
@@ -213,16 +224,16 @@ const AdminDashboard = () => {
       let pdfUrl = formData.pdf_url;
       let coverImageUrl = formData.cover_image;
 
-      // Upload PDF to Cloudinary
+      // Upload PDF to Cloudinary as raw
       if (pdfFile) {
         addToast('success', '📤 Upload du PDF en cours...');
-        pdfUrl = await uploadToCloudinary(pdfFile, 'mideessi/pdfs', 'pdf');
+        pdfUrl = await uploadToCloudinary(pdfFile, 'mideessi/pdfs', 'pdf', 'raw');
       }
 
-      // Upload cover image to Cloudinary
+      // Upload cover image to Cloudinary as image
       if (coverFile) {
         addToast('success', '🖼️ Upload de la couverture en cours...');
-        coverImageUrl = await uploadToCloudinary(coverFile, 'mideessi/covers', 'cover');
+        coverImageUrl = await uploadToCloudinary(coverFile, 'mideessi/covers', 'cover', 'auto');
       }
 
       if (!pdfUrl) {
@@ -280,15 +291,27 @@ const AdminDashboard = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!id) {
+      addToast('error', 'ID du PDF invalide');
+      return;
+    }
+
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce PDF ?')) return;
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('books')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select('*');
 
       if (error) throw error;
+      if (!data || data.length === 0) {
+        addToast('error', 'Aucun PDF supprimé : vérifiez l’ID');
+        console.warn('Suppression réussie mais aucune ligne retournée pour id:', id);
+        return;
+      }
+
       setBooks(books.filter(b => b.id !== id));
       addToast('success', '🗑️ PDF supprimé');
     } catch (err: any) {
@@ -725,7 +748,7 @@ const AdminDashboard = () => {
                     {(editingBook || formData.pdf_url) && (
                       <div className="mt-3">
                         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                          Ou lien PDF direct (si vous ne ré-uploadez pas)
+                          Ou lien PDF Cloudinary direct (si vous ne ré-uploadez pas)
                         </label>
                         <input
                           type="url"
@@ -821,7 +844,7 @@ const AdminDashboard = () => {
                           value={coverFile ? '' : formData.cover_image}
                           onChange={(e) => { setFormData({ ...formData, cover_image: e.target.value }); setCoverPreview(e.target.value); }}
                           className="mt-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
-                          placeholder="Ou entrez une URL d'image..."
+                          placeholder="Ou entrez une URL Cloudinary..."
                           disabled={!!coverFile}
                         />
                       </div>
