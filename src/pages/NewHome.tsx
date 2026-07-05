@@ -1,9 +1,10 @@
 import {
   ArrowRight, TrendingUp, Shield, Sparkles, Users, Award,
   CheckCircle, Building2, Heart, Lightbulb, HandHeart, Globe, ChevronLeft, ChevronRight, ChevronUp,
-  BookOpen, Download, BadgeCheck, ExternalLink
+  BookOpen, Download, BadgeCheck, ExternalLink, Play
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import PopupDisplay from '../components/PopupDisplay';
 import NewsletterSignup from '../components/NewsletterSignup';
@@ -489,6 +490,16 @@ const NewHome = () => {
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    {weeklyPDF.id && (
+                      <Link
+                        to={`/library/${weeklyPDF.id}`}
+                        className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-[#191970] hover:bg-[#0f0f43] text-white font-bold rounded-lg transition-all shadow-lg text-xs sm:text-base"
+                      >
+                        <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
+                        <span className="hidden sm:inline">Lire le PDF</span>
+                        <span className="sm:hidden">PDF</span>
+                      </Link>
+                    )}
                     {weeklyPDF.article_url && (
                       <a
                         href={weeklyPDF.article_url}

@@ -263,7 +263,7 @@ const Offres = () => {
                   Chaque pack est pensé pour une étape de croissance. Progressez à votre rythme.
                 </p>
                 {/* Pack progression pill */}
-                <div className="inline-flex items-center gap-1 bg-white rounded-xl px-3 py-2 shadow-sm border border-[var(--border)] mt-4 flex-wrap justify-center">
+                <div className="inline-flex items-center gap-1 bg-[var(--bg-card)] rounded-xl px-3 py-2 shadow-sm border border-[var(--border)] mt-4 flex-wrap justify-center">
                   {[{ name: 'KPÈVI', color: 'text-gray-500' }, { name: 'EYA', color: 'text-[var(--brand-midnight)]' }, { name: 'JAGO', color: 'text-gold' }].map((item, i) => (
                     <span key={i} className={`text-[10px] sm:text-xs font-bold flex items-center gap-1 ${item.color}`}>
                       {i > 0 && <ChevronRight className="w-3 h-3 text-gold" />}
@@ -286,10 +286,10 @@ const Offres = () => {
                       </div>
                     )}
 
-                    <div className={`relative bg-white rounded-[20px] sm:rounded-[24px] overflow-hidden flex flex-col flex-grow transition-all duration-300 ${
+                    <div className={`relative bg-[var(--bg-card)] rounded-[20px] sm:rounded-[24px] overflow-hidden flex flex-col flex-grow transition-all duration-300 border border-[var(--border)] ${
                       offre.badge
                         ? 'ring-2 ring-gold shadow-[0_8px_40px_rgba(255,215,0,0.12)] hover:shadow-[0_16px_60px_rgba(255,215,0,0.2)] hover:-translate-y-1'
-                        : 'shadow-sm hover:shadow-xl border border-gray-100 hover:border-gray-200 hover:-translate-y-1'
+                        : 'shadow-sm hover:shadow-xl hover:border-[var(--brand-gold)]/30 hover:-translate-y-1'
                     }`}>
 
                       {/* Image / Prix */}
@@ -377,13 +377,13 @@ const Offres = () => {
                           <div className="grid grid-cols-2 gap-2">
                             <button
                               onClick={() => handleWhatsAppDevis(offre.nom)}
-                              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-white hover:bg-gray-50 border border-gray-200 text-[var(--brand-midnight)] transition-colors active:scale-[0.98]"
+                              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-[var(--bg-surface)] hover:bg-[var(--bg-page)] border border-[var(--border)] text-[var(--text-primaryr)] text-[var(--text-primary)] transition-colors active:scale-[0.98]"
                             >
                               <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
                             </button>
                             <button
                               onClick={() => window.location.assign(`/clients/submit-dossier?offerSlug=${offre.slug}&offerName=${encodeURIComponent(offre.nom)}&offerType=presence`)}
-                              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-white hover:bg-gray-50 border border-gray-200 text-[var(--brand-midnight)] transition-colors active:scale-[0.98]"
+                              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-[var(--bg-surface)] hover:bg-[var(--bg-page)] border border-[var(--border)] text-[var(--text-primaryr)] text-[var(--text-primary)] transition-colors active:scale-[0.98]"
                             >
                               <FileText className="w-3.5 h-3.5 text-gold" /> Dossier
                             </button>
@@ -396,7 +396,7 @@ const Offres = () => {
               </div>
 
               {/* Tableau de comparaison rapide */}
-              <div className="mt-10 md:mt-14 bg-white rounded-[20px] border border-[var(--border)] shadow-sm overflow-hidden">
+              <div className="mt-10 md:mt-14 bg-[var(--bg-card)] rounded-[20px] border border-[var(--border)] shadow-sm overflow-hidden">
                 <div className="px-4 sm:px-6 py-4 border-b border-[var(--border)] flex items-center gap-2">
                   <Layers className="w-5 h-5 text-gold" />
                   <h3 className="font-bold text-[var(--brand-midnight)]">Comparaison rapide des packs</h3>
@@ -464,7 +464,7 @@ const Offres = () => {
                 {devServices.map((service) => (
                   <div
                     key={service.id}
-                    className="group relative bg-white rounded-[20px] sm:rounded-[24px] overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 hover:border-gray-200 transition-all duration-300 flex flex-col hover:-translate-y-1"
+                    className="group relative bg-[var(--bg-card)] rounded-[20px] sm:rounded-[24px] overflow-hidden shadow-sm hover:shadow-xl border border-[var(--border)] hover:border-[var(--brand-gold)]/30 transition-all duration-300 flex flex-col hover:-translate-y-1"
                   >
                     {/* Image */}
                     <div className="relative h-36 sm:h-44 overflow-hidden bg-[var(--brand-midnight)]">
@@ -531,7 +531,7 @@ const Offres = () => {
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => handleWhatsAppDevis(service.nom)}
-                            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-white hover:bg-gray-50 border border-gray-200 text-[var(--brand-midnight)] transition-colors active:scale-[0.98]"
+                            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-[var(--bg-surface)] hover:bg-[var(--bg-page)] border border-[var(--border)] text-[var(--text-primaryr)] text-[var(--text-primary)] transition-colors active:scale-[0.98]"
                           >
                             <MessageCircle className="w-3.5 h-3.5" /> Devis
                           </button>
@@ -632,13 +632,13 @@ const Offres = () => {
               <div key={i} className="bg-[var(--bg-surface)] rounded-[16px] border border-[var(--border)] overflow-hidden">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-white transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-[var(--bg-surface)] transition-colors"
                 >
                   <span className="text-sm font-bold text-[var(--brand-midnight)] pr-3 leading-snug">{faq.q}</span>
                   <ChevronDown className={`w-4 h-4 text-gold flex-shrink-0 transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openFaq === i ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="px-4 pb-4 text-sm text-gray-600 leading-relaxed border-t border-[var(--border)] pt-3">
+                  <div className="px-4 pb-4 text-sm text-[var(--text-secondary)] leading-relaxed border-t border-[var(--border)] pt-3">
                     {faq.a}
                   </div>
                 </div>

@@ -563,7 +563,7 @@ export default function BookDetail() {
               {topReaders.length > 0 && (
                 <div className="bg-gradient-to-br from-[var(--brand-midnight)] to-blue-950 rounded-2xl p-5 border border-gold/20 shadow-xl text-white">
                   <h3 className="font-bold text-sm mb-4 flex items-center gap-2 text-white">
-                    <Award className="w-5 h-5 text-gold animate-bounce" /> Top Lecteurs
+                    <Award className="w-5 h-5 text-gold" /> Top Lecteurs
                   </h3>
                   <div className="space-y-3">
                     {topReaders.map((reader, index) => {
