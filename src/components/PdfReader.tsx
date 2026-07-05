@@ -81,6 +81,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [pageInput, setPageInput] = useState('1');
   const [rendering, setRendering] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   // Nouvelles fonctionnalités & immersion
   const [readerMode, setReaderMode] = useState<ReaderMode>('page');
@@ -470,6 +471,10 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     const children = container.children[0]?.children;
     if (!children) return;
 
+    const scrollHeight = container.scrollHeight - container.clientHeight;
+    const progressPercent = scrollHeight > 0 ? Math.min(100, Math.max(0, (container.scrollTop / scrollHeight) * 100)) : 0;
+    setScrollProgress(progressPercent);
+
     let currentPage = 1;
     let minDistance = Infinity;
 
@@ -492,6 +497,14 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       setQuizTriggered(true); // Tentative initiale, effect ci-dessous validera si on doit vraiment afficher
     }
   }, [readerMode, pageCount, pageNum, saveProgress]);
+
+  useEffect(() => {
+    if (readerMode !== 'scroll' || !scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+    const scrollHeight = container.scrollHeight - container.clientHeight;
+    const progressPercent = scrollHeight > 0 ? Math.min(100, Math.max(0, (container.scrollTop / scrollHeight) * 100)) : 0;
+    setScrollProgress(progressPercent);
+  }, [readerMode, pageCount]);
 
   // Navigation
   const prev = useCallback(() => {
@@ -672,7 +685,11 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   };
 
   const theme = getThemeClasses();
-  const progress = pageCount > 0 ? (pageNum / pageCount) * 100 : 0;
+  const progress = readerMode === 'scroll'
+    ? scrollProgress
+    : pageCount > 0
+      ? (pageNum / pageCount) * 100
+      : 0;
 
   useEffect(() => {
     const safePage = pageCount > 0 ? Math.min(Math.max(pageNum, 1), pageCount) : Math.max(1, pageNum);
