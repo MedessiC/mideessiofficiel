@@ -681,7 +681,7 @@ export default function AdminPdfs() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-black text-white truncate">{formData.title || '— Titre —'}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">{formData.category} · {formData.level} · {formData.pages}p · {formData.price} FCFA</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{formData.category} · {formData.level} · {formData.pages}p · {formData.price === 0 ? 'Gratuit' : `${formData.price} FCFA`}</p>
               <div className="flex items-center gap-2 mt-1">
                 {(pdfFile || formData.pdf_url) && <span className="text-[9px] text-emerald-400 font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> PDF prêt</span>}
                 {quizzes.length > 0 && <span className="text-[9px] text-[var(--brand-gold)] font-bold flex items-center gap-1"><HelpCircle className="w-3 h-3" /> {quizzes.length} quiz</span>}
@@ -722,6 +722,17 @@ export default function AdminPdfs() {
               </FormSection>
 
               <FormSection title="📊 Statistiques & Prix">
+                <FormField label="Publier gratuitement">
+                  <label className="flex items-center gap-3 text-sm text-gray-200">
+                    <input
+                      type="checkbox"
+                      checked={formData.price === 0}
+                      onChange={e => setFormData({ ...formData, price: e.target.checked ? 0 : formData.price || 1000 })}
+                      className="w-4 h-4 accent-[var(--brand-gold)] rounded"
+                    />
+                    <span>Le livre sera distribué gratuitement (0 FCFA).</span>
+                  </label>
+                </FormField>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { label: 'Prix (FCFA)', key: 'price', type: 'number', min: 0 },
@@ -733,6 +744,7 @@ export default function AdminPdfs() {
                       <input type={f.type} value={(formData as any)[f.key]} step={(f as any).step}
                         min={(f as any).min} max={(f as any).max}
                         onChange={e => setFormData({ ...formData, [f.key]: f.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value })}
+                        disabled={f.key === 'price' && formData.price === 0}
                         className={INPUT_CLS} />
                     </FormField>
                   ))}
@@ -903,7 +915,7 @@ export default function AdminPdfs() {
                   <div className="min-w-0 flex-1 space-y-1">
                     <p className="font-black text-white">{formData.title}</p>
                     <p className="text-xs text-gray-400">{formData.author} · {formData.category} · {formData.level}</p>
-                    <p className="text-xs text-[var(--brand-gold)] font-bold">{formData.price} FCFA</p>
+                    <p className="text-xs text-[var(--brand-gold)] font-bold">{formData.price === 0 ? 'Gratuit' : `${formData.price} FCFA`}</p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {[
                         pdfFile ? '✅ Nouveau PDF sélectionné' : formData.pdf_url ? '✅ PDF existant' : '❌ PDF manquant',

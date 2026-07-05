@@ -365,7 +365,7 @@ const Library = () => {
             {/* Price / CTA */}
             <div className="flex items-center justify-between gap-2">
               <div className="bg-gold/10 dark:bg-gold/5 px-2 py-1 rounded">
-                <span className="text-sm font-black text-gold">{book.price || '1000'} F</span>
+                <span className="text-sm font-black text-gold">{book.price === 0 ? 'Gratuit' : `${book.price || '1000'} F`}</span>
               </div>
               <span className="flex-grow inline-flex items-center justify-center gap-1 bg-[var(--brand-midnight)] hover:bg-[var(--brand-midnight-dark)] text-[var(--brand-gold)] font-bold py-1.5 px-3 rounded-lg transition-all text-[10px]">
                 <Play className="w-3 h-3 fill-current" /> Voir le livre

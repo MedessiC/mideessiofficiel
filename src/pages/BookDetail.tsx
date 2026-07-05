@@ -386,7 +386,7 @@ export default function BookDetail() {
                     >
                       <Download className="w-4 h-4" />
                       Acheter
-                      {book.price && <span className="ml-1 text-[var(--brand-gold)]">{Number(book.price).toLocaleString()} F</span>}
+                      <span className="ml-1 text-[var(--brand-gold)]">{book.price === 0 ? 'Gratuit' : `${Number(book.price).toLocaleString()} F`}</span>
                     </a>
                   )}
                   {/* Save button */}
@@ -484,12 +484,12 @@ export default function BookDetail() {
                 </ul>
 
                 {/* Price */}
-                {book.price && (
+                {book.price !== undefined && book.price !== null && (
                   <div className="mt-5 pt-4 border-t border-gray-100 dark:border-slate-700 text-center">
                     <p className="text-xs text-gray-400 mb-1">Prix</p>
                     <p className="text-3xl font-black text-[var(--brand-midnight)] dark:text-[var(--brand-gold)]">
-                      {Number(book.price).toLocaleString()}
-                      <span className="text-lg font-bold ml-1">FCFA</span>
+                      {book.price === 0 ? 'Gratuit' : Number(book.price).toLocaleString()}
+                      {book.price !== 0 && <span className="text-lg font-bold ml-1">FCFA</span>}
                     </p>
                   </div>
                 )}

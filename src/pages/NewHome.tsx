@@ -679,7 +679,7 @@ const NewHome = () => {
                         className="w-full inline-flex items-center justify-center gap-2 px-3 py-3 bg-[#ffd700] hover:bg-[#ffed4e] text-[#191970] font-bold rounded-xl transition-all shadow-lg text-sm"
                       >
                         <Download className="w-4 h-4" />
-                        <span>{weeklyPDF.price || 1000} FCFA - Acheter</span>
+                        <span>{weeklyPDF.price === 0 ? 'Gratuit' : `${weeklyPDF.price || 1000} FCFA - Acheter`}</span>
                       </a>
                     )}
                   </div>

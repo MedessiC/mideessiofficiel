@@ -260,9 +260,9 @@ const Learn = () => {
                     <div className="mb-4">
                       <div className="inline-flex items-baseline gap-1 bg-[#ffd700]/10 px-3 py-2 rounded-lg">
                         <span className="text-xl sm:text-2xl font-bold text-[#ffd700]">
-                          {book.price || '1000'}
+                          {book.price === 0 ? 'Gratuit' : book.price || '1000'}
                         </span>
-                        <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">FCFA</span>
+                        {book.price !== 0 && <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">FCFA</span>}
                       </div>
                     </div>
 
