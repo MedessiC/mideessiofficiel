@@ -763,6 +763,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         <BookQuizModal
           bookId={currentBookId}
           currentPage={pageNum}
+          isFinalQuiz={pageCount > 0 && pageNum === pageCount}
           onClose={() => setQuizTriggered(false)}
         />
       )}

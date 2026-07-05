@@ -1,35 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { getInitials, hasValidAvatarUrl } from './avatarUtils';
 
 interface AvatarProps {
   name: string;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   src?: string | null;
+  onClick?: () => void;
 }
 
-export function Avatar({ name, className = '', size = 'md', src }: AvatarProps) {
-  const initials = getInitials(name);
-  const sizes = {
-    sm: 'h-10 w-10 text-sm',
-    md: 'h-12 w-12 text-base',
-    lg: 'h-16 w-16 text-xl',
-  };
+const sizes = {
+  xs: 'h-7 w-7 text-[10px]',
+  sm: 'h-9 w-9 text-xs',
+  md: 'h-12 w-12 text-sm',
+  lg: 'h-16 w-16 text-lg',
+  xl: 'h-24 w-24 text-2xl',
+};
 
-  if (hasValidAvatarUrl(src)) {
+export function Avatar({ name, className = '', size = 'md', src, onClick }: AvatarProps) {
+  const initials = getInitials(name);
+  const [imgError, setImgError] = useState(false);
+
+  const sizeClass = sizes[size];
+  const baseClass = `rounded-full flex-shrink-0 ${sizeClass} ${className} ${onClick ? 'cursor-pointer' : ''}`;
+
+  if (hasValidAvatarUrl(src) && !imgError) {
     return (
       <img
         src={src!}
         alt={name}
-        className={`rounded-full object-cover ${sizes[size]} ${className}`}
+        onClick={onClick}
+        onError={() => setImgError(true)}
+        className={`${baseClass} object-cover ring-2 ring-[var(--brand-gold)]/20`}
       />
     );
   }
 
   return (
     <div
-      className={`flex items-center justify-center rounded-full bg-[var(--brand-midnight)] text-[var(--brand-gold)] font-semibold ${sizes[size]} ${className}`}
-      aria-hidden="true"
+      onClick={onClick}
+      className={`${baseClass} flex items-center justify-center bg-gradient-to-br from-[var(--brand-midnight)] to-[#1e2a4a] text-[var(--brand-gold)] font-bold ring-2 ring-[var(--brand-gold)]/20 select-none`}
+      aria-label={`Avatar de ${name}`}
     >
       {initials}
     </div>

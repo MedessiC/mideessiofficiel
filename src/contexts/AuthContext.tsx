@@ -6,11 +6,20 @@ import { getProviderAvatarUrl } from '../utils/providerProfile';
 
 export type UserRole = 'user' | 'admin' | 'client';
 
+export interface UserProfile {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   userRole: UserRole | null;
+  currentUserProfile: UserProfile | null;
+  refreshUserProfile: () => Promise<void>;
   signUp: (email: string, password: string, username: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signInWithProvider: (provider: 'google' | 'github' | 'facebook') => Promise<{ error: string | null }>;
@@ -25,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
 
   // Detect user role (admin, client, or regular user)
   const detectRole = async (userId: string): Promise<UserRole> => {
@@ -55,6 +65,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loadUserProfile = async (authUser: User) => {
+    try {
+      const { data } = await supabase
+        .from('users')
+        .select('id, username, avatar_url, bio')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      if (data) {
+        setCurrentUserProfile({
+          id: data.id,
+          username: data.username,
+          avatar_url: data.avatar_url,
+          bio: data.bio,
+        });
+      }
+    } catch (err) {
+      console.error('Error loading user profile:', err);
+    }
+  };
+
+  const refreshUserProfile = async () => {
+    if (user) await loadUserProfile(user);
+  };
+
   const ensureUserProfile = async (authUser: User | null) => {
     if (!authUser) return;
 
@@ -71,12 +106,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (existingProfile) {
+        // Update avatar from provider if missing or changed
         if (avatarUrl && (!existingProfile.avatar_url || existingProfile.avatar_url !== avatarUrl)) {
           await supabase
             .from('users')
             .update({ avatar_url: avatarUrl })
             .eq('id', authUser.id);
         }
+        // Always refresh local profile after ensuring
+        await loadUserProfile(authUser);
         return;
       }
 
@@ -94,6 +132,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else if (!error.message.toLowerCase().includes('permission') && !error.message.toLowerCase().includes('policy')) {
         console.error('Error creating user profile:', error);
       }
+
+      await loadUserProfile(authUser);
     } catch (error) {
       console.error('Error ensuring user profile:', error);
     }
@@ -138,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           void ensureUserProfile(session.user);
         } else {
           setUserRole(null);
+          setCurrentUserProfile(null);
         }
       } catch (error) {
         console.error('Error handling auth state change:', error);
@@ -259,6 +300,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         loading,
         userRole,
+        currentUserProfile,
+        refreshUserProfile,
         signUp,
         signIn,
         signInWithProvider,

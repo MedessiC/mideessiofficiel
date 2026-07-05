@@ -5,13 +5,14 @@ import SideDrawer from './SideDrawer';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '../contexts/NavigationContext';
 import { Link } from 'react-router-dom';
+import { Avatar } from './ui/Avatar';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, signOut, currentUserProfile } = useAuth();
   const { showDrawer, setShowDrawer } = useNavigation();
 
   const links = [
@@ -272,11 +273,19 @@ const Navbar = () => {
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="p-2 rounded-lg bg-gold/10 hover:bg-gold/20 dark:bg-gold/20 dark:hover:bg-gold/30 transition-all duration-300 hover:scale-110 active:scale-95"
+                  className="p-1.5 rounded-xl bg-gold/10 hover:bg-gold/20 dark:bg-gold/20 dark:hover:bg-gold/30 transition-all duration-300 active:scale-95 overflow-hidden"
                   aria-label="User menu / Connexion"
-                  title={user ? user.email : "Connexion / S'inscrire"}
+                  title={user ? (currentUserProfile?.username || user.email) : "Connexion / S'inscrire"}
                 >
-                  <UserCircle className="w-5 h-5 text-gold" />
+                  {user && currentUserProfile?.avatar_url ? (
+                    <Avatar
+                      name={currentUserProfile.username || user.email?.split('@')[0] || 'M'}
+                      src={currentUserProfile.avatar_url}
+                      size="xs"
+                    />
+                  ) : (
+                    <UserCircle className="w-5 h-5 text-gold" />
+                  )}
                 </button>
 
                 {/* User Menu Dropdown */}
@@ -284,13 +293,25 @@ const Navbar = () => {
                   <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-midnight rounded-xl shadow-2xl border-2 border-gold/30 z-50 overflow-hidden">
                     {user ? (
                       <>
-                        <div className="px-4 py-4 bg-gradient-to-r from-gold/10 to-yellow-100/10 dark:from-gold/20 dark:to-blue-900/20 border-b-2 border-gold/20">
-                          <p className="text-sm font-semibold text-midnight dark:text-gold truncate">
-                            {user.email}
-                          </p>
+                        <div className="px-4 py-4 bg-gradient-to-r from-gold/10 to-yellow-100/10 dark:from-gold/20 dark:to-blue-900/20 border-b-2 border-gold/20 flex items-center gap-3">
+                          <Avatar
+                            name={currentUserProfile?.username || user.email?.split('@')[0] || 'M'}
+                            src={currentUserProfile?.avatar_url || null}
+                            size="sm"
+                          />
+                          <div className="min-w-0">
+                            {currentUserProfile?.username && (
+                              <p className="text-xs font-black text-midnight dark:text-gold truncate">
+                                @{currentUserProfile.username}
+                              </p>
+                            )}
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                              {user.email}
+                            </p>
+                          </div>
                         </div>
                         <Link
-                          to={`/profile/${user.user_metadata?.username || user.email?.split('@')[0]}`}
+                          to={`/profile/${currentUserProfile?.username || user.user_metadata?.username || user.email?.split('@')[0]}`}
                           className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-2 text-sm font-medium"
                           onClick={() => setShowUserMenu(false)}
                         >

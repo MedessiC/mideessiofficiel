@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { uploadFileToCloudinary } from '../lib/cloudinary';
 import SEO from '../components/SEO';
 import { validateProfileData } from '../utils/authProfile';
+import { Avatar } from '../components/ui/Avatar';
+import { Camera, Check, X, ArrowLeft, User, FileText, Link2, Loader2 } from 'lucide-react';
 
 interface ProfileForm {
   username: string;
@@ -13,7 +16,8 @@ interface ProfileForm {
 
 export default function UserProfileEdit() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUserProfile } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<ProfileForm>({
     username: '',
     avatar_url: '',
@@ -21,6 +25,7 @@ export default function UserProfileEdit() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -36,30 +41,49 @@ export default function UserProfileEdit() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('users')
         .select('username, avatar_url, bio')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
-      if (data) {
-        setFormData({
-          username: data.username || '',
-          avatar_url: data.avatar_url || '',
-          bio: data.bio || '',
-        });
-      } else {
-        setFormData({
-          username: (user.user_metadata?.username as string | undefined)?.trim() || user.email?.split('@')[0] || '',
-          avatar_url: '',
-          bio: '',
-        });
-      }
+      setFormData({
+        username: data?.username || (user.user_metadata?.username as string | undefined)?.trim() || user.email?.split('@')[0] || '',
+        avatar_url: data?.avatar_url || (user.user_metadata?.avatar_url as string | undefined) || '',
+        bio: data?.bio || '',
+      });
     } catch (err: any) {
       setError(err.message || 'Impossible de charger le profil');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      setError('Veuillez sélectionner une image (JPG, PNG, WebP, etc.)');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('L\'image doit faire moins de 5 Mo');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setError('');
+    try {
+      const url = await uploadFileToCloudinary(file, 'mideessi/avatars', 'auto');
+      setFormData(prev => ({ ...prev, avatar_url: url }));
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de l\'upload de l\'avatar');
+    } finally {
+      setUploadingAvatar(false);
+      // Reset input so same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -83,7 +107,7 @@ export default function UserProfileEdit() {
         return;
       }
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('users')
         .upsert({
           id: user.id,
@@ -93,8 +117,11 @@ export default function UserProfileEdit() {
           bio: formData.bio?.trim() || null,
         }, { onConflict: 'id' });
 
-      if (error) throw error;
-      setSuccess('Profil mis à jour avec succès.');
+      if (updateError) throw updateError;
+
+      // Refresh the global profile context so Navbar & comments update immediately
+      await refreshUserProfile();
+      setSuccess('Profil mis à jour avec succès !');
     } catch (err: any) {
       setError(err.message || 'Impossible de mettre à jour le profil');
     } finally {
@@ -104,98 +131,173 @@ export default function UserProfileEdit() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-gold to-yellow-500 animate-spin mx-auto mb-4" />
-          <p className="text-slate-600 dark:text-slate-400 font-poppins">Chargement du profil...</p>
+      <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="w-10 h-10 rounded-full border-2 border-[var(--brand-gold)] border-t-transparent animate-spin" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Chargement du profil...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.08),_transparent_30%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] pt-20 pb-12 dark:bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.1),_transparent_30%),linear-gradient(180deg,_#020617_0%,_#0f172a_100%)]">
+    <div className="min-h-screen bg-[var(--bg-page)] pt-24 pb-16 px-4">
       <SEO title="Modifier mon profil | MIDEESSI" description="Personnalisez votre profil utilisateur MIDEESSI." />
 
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">Profil</p>
-            <h1 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">Personnaliser votre profil</h1>
-          </div>
-          <button onClick={() => navigate(-1)} className="text-sm font-semibold text-slate-600 transition hover:text-gold dark:text-slate-300">
-            ← Retour
-          </button>
+      <div className="max-w-2xl mx-auto">
+        {/* Back */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-[var(--brand-gold)] transition-colors mb-6"
+        >
+          <ArrowLeft size={16} /> Retour
+        </button>
+
+        {/* Header */}
+        <div className="mb-8">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--brand-gold)]">Mon compte</p>
+          <h1 className="mt-1 text-2xl sm:text-3xl font-black text-[var(--brand-midnight)] dark:text-white">
+            Modifier mon profil
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+            Personnalisez votre identité sur MIDEESSI. Votre avatar apparaîtra sur tous vos commentaires et likes.
+          </p>
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.25)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 sm:p-8">
-          <p className="mb-6 text-sm leading-6 text-slate-600 dark:text-slate-400">Rendez votre profil plus vivant avec une photo, une bio et des informations qui reflètent votre identité.</p>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Avatar Upload Section */}
+          <div className="bg-white dark:bg-gray-900 rounded-3xl border border-[var(--border)] p-6 shadow-sm">
+            <h2 className="text-sm font-black text-[var(--brand-midnight)] dark:text-white mb-4 flex items-center gap-2">
+              <Camera size={16} className="text-[var(--brand-gold)]" />
+              Photo de profil
+            </h2>
 
+            <div className="flex items-center gap-5">
+              {/* Avatar preview */}
+              <div className="relative flex-shrink-0">
+                <Avatar
+                  name={formData.username || 'M'}
+                  src={formData.avatar_url || null}
+                  size="xl"
+                  className="ring-4 ring-[var(--brand-gold)]/20"
+                />
+                {uploadingAvatar && (
+                  <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
+                    <Loader2 size={20} className="text-white animate-spin" />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 space-y-2.5">
+                {/* Upload button */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarFileChange}
+                  id="avatar-upload-input"
+                />
+                <label
+                  htmlFor="avatar-upload-input"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--brand-midnight)] text-[var(--brand-gold)] text-xs font-black cursor-pointer hover:opacity-90 transition-opacity"
+                >
+                  <Camera size={13} />
+                  {uploadingAvatar ? 'Upload en cours...' : 'Choisir une photo'}
+                </label>
+                <p className="text-[10px] text-gray-400 leading-relaxed">
+                  JPG, PNG ou WebP · Max 5 Mo<br />
+                  Si vous êtes connecté avec Google, votre avatar Google est chargé automatiquement.
+                </p>
+
+                {/* Manual URL input */}
+                <div className="relative">
+                  <Link2 size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="url"
+                    value={formData.avatar_url}
+                    onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+                    className="w-full pl-8 pr-3 py-2 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl focus:outline-none focus:border-[var(--brand-gold)] dark:text-white transition-colors placeholder:text-gray-400"
+                    placeholder="Ou coller un lien d'image..."
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Username */}
+          <div className="bg-white dark:bg-gray-900 rounded-3xl border border-[var(--border)] p-6 shadow-sm">
+            <h2 className="text-sm font-black text-[var(--brand-midnight)] dark:text-white mb-4 flex items-center gap-2">
+              <User size={16} className="text-[var(--brand-gold)]" />
+              Nom d'utilisateur
+            </h2>
+            <input
+              type="text"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              className="w-full px-4 py-3 text-sm bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl focus:outline-none focus:border-[var(--brand-gold)] dark:text-white transition-colors"
+              required
+              minLength={3}
+              placeholder="Ex: mideessi_user"
+            />
+            <p className="mt-1.5 text-[10px] text-gray-400">Minimum 3 caractères. Visible sur vos commentaires.</p>
+          </div>
+
+          {/* Bio */}
+          <div className="bg-white dark:bg-gray-900 rounded-3xl border border-[var(--border)] p-6 shadow-sm">
+            <h2 className="text-sm font-black text-[var(--brand-midnight)] dark:text-white mb-4 flex items-center gap-2">
+              <FileText size={16} className="text-[var(--brand-gold)]" />
+              Biographie
+            </h2>
+            <textarea
+              value={formData.bio}
+              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+              rows={4}
+              className="w-full px-4 py-3 text-sm bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl focus:outline-none focus:border-[var(--brand-gold)] dark:text-white resize-none transition-colors"
+              placeholder="Parlez-nous de vous, de votre activité ou de vos centres d'intérêt..."
+            />
+          </div>
+
+          {/* Messages */}
           {error && (
-            <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-700/30 dark:bg-red-900/20 dark:text-red-200">
+            <div className="flex items-start gap-2 p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-sm text-red-700 dark:text-red-400">
+              <X size={16} className="flex-shrink-0 mt-0.5" />
               {error}
             </div>
           )}
-
           {success && (
-            <div className="mb-4 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 dark:border-green-700/30 dark:bg-green-900/20 dark:text-green-200">
+            <div className="flex items-start gap-2 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 text-sm text-emerald-700 dark:text-emerald-400">
+              <Check size={16} className="flex-shrink-0 mt-0.5" />
               {success}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/70">
-              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Nom d’utilisateur</label>
-              <input
-                type="text"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                required
-                minLength={3}
-              />
-            </div>
-
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/70">
-              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">URL d’avatar</label>
-              <input
-                type="url"
-                value={formData.avatar_url}
-                onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                placeholder="https://..."
-              />
-            </div>
-
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/70">
-              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Bio</label>
-              <textarea
-                value={formData.bio}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                rows={5}
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                placeholder="Parlez-nous de vous, de votre activité ou de votre style..."
-              />
-            </div>
-
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                Email associé : <span className="font-semibold text-slate-800 dark:text-white">{user?.email}</span>
-              </div>
+          {/* Footer */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+            <p className="text-xs text-gray-400">
+              Email : <span className="font-semibold text-[var(--brand-midnight)] dark:text-white">{user?.email}</span>
+            </p>
+            <div className="flex items-center gap-3">
+              <Link
+                to={`/profile/${formData.username}`}
+                className="text-xs font-semibold text-[var(--brand-gold)] hover:text-yellow-500 transition-colors"
+              >
+                Voir le profil →
+              </Link>
               <button
                 type="submit"
-                disabled={saving}
-                className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gold to-yellow-400 px-5 py-3 text-sm font-semibold text-slate-900 transition hover:opacity-90 disabled:opacity-70"
+                disabled={saving || uploadingAvatar}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[var(--brand-midnight)] text-[var(--brand-gold)] text-sm font-black hover:opacity-90 disabled:opacity-60 transition-all shadow-lg"
               >
-                {saving ? 'Enregistrement...' : 'Enregistrer le profil'}
+                {saving ? (
+                  <><Loader2 size={14} className="animate-spin" /> Enregistrement...</>
+                ) : (
+                  <><Check size={14} /> Enregistrer</>
+                )}
               </button>
             </div>
-          </form>
-
-          <div className="mt-6 text-sm text-slate-500 dark:text-slate-400">
-            <Link to={`/profile/${formData.username}`} className="font-semibold text-gold hover:text-yellow-400">Voir le profil final</Link>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

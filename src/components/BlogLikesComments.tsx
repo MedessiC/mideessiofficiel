@@ -22,7 +22,7 @@ interface BlogLikesCommentsProps {
 }
 
 export default function BlogLikesComments({ blogId, blogTitle }: BlogLikesCommentsProps) {
-  const { user } = useAuth();
+  const { user, currentUserProfile } = useAuth();
   const navigate = useNavigate();
   const [likes, setLikes] = useState<number>(0);
   const [isLiked, setIsLiked] = useState<boolean>(false);
@@ -219,14 +219,22 @@ export default function BlogLikesComments({ blogId, blogTitle }: BlogLikesCommen
               </div>
             )}
 
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Écrivez votre commentaire..."
-              className="w-full px-4 py-3 rounded-lg border bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-gold/50 resize-none font-poppins"
-              rows={4}
-              disabled={submitting}
-            />
+            <div className="flex items-start gap-3">
+              <Avatar
+                name={currentUserProfile?.username || user?.email?.split('@')[0] || 'M'}
+                src={currentUserProfile?.avatar_url || null}
+                size="sm"
+                className="flex-shrink-0 mt-0.5"
+              />
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Écrivez votre commentaire..."
+                className="flex-1 px-4 py-3 rounded-lg border bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-gold/50 resize-none font-poppins"
+                rows={4}
+                disabled={submitting}
+              />
+            </div>
 
             <button
               type="submit"

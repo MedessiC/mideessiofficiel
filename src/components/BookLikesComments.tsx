@@ -3,6 +3,7 @@ import { Heart, MessageCircle, BadgeCheck, Trash2, AlertCircle, Loader } from 'l
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { Avatar } from './ui/Avatar';
 
 interface BookComment {
   id: string;
@@ -24,6 +25,7 @@ interface BookLikesCommentsProps {
 export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommentsProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { currentUserProfile } = useAuth();
   const [likes, setLikes] = useState<number>(0);
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [comments, setComments] = useState<BookComment[]>([]);
@@ -274,21 +276,31 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-bold mb-2 text-slate-700 dark:text-slate-200 font-poppins">
-                Note
-              </label>
-              {renderStars(rating, true)}
+            {/* Current user avatar + textarea */}
+            <div className="flex items-start gap-3">
+              <Avatar
+                name={currentUserProfile?.username || user.email?.split('@')[0] || 'M'}
+                src={currentUserProfile?.avatar_url || null}
+                size="sm"
+                className="mt-0.5 flex-shrink-0"
+              />
+              <div className="flex-1">
+                <div>
+                  <label className="block text-sm font-bold mb-2 text-slate-700 dark:text-slate-200 font-poppins">
+                    Note
+                  </label>
+                  {renderStars(rating, true)}
+                </div>
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Partagez votre avis sur ce livre..."
+                  className="w-full mt-3 px-4 py-3 rounded-lg border bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-gold/50 resize-none font-poppins"
+                  rows={4}
+                  disabled={submitting}
+                />
+              </div>
             </div>
-
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Partagez votre avis sur ce livre..."
-              className="w-full px-4 py-3 rounded-lg border bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-gold/50 resize-none font-poppins"
-              rows={4}
-              disabled={submitting}
-            />
 
             <button
               type="submit"
@@ -321,14 +333,21 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
           ) : (
             comments.map((comment) => (
               <div key={comment.id} className="p-4 rounded-lg bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600/50 space-y-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="font-semibold text-slate-900 dark:text-white font-poppins">
+                <div className="flex items-start justify-between gap-3">
+                  {/* Avatar */}
+                  <Avatar
+                    name={comment.users?.username || 'Utilisateur'}
+                    src={comment.users?.avatar_url || null}
+                    size="sm"
+                    className="flex-shrink-0"
+                  />
+                  <div className="flex-1 space-y-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <p className="font-semibold text-slate-900 dark:text-white font-poppins text-sm">
                         {comment.users?.username || 'Utilisateur'}
                       </p>
                       {comment.rating && (
-                        <div className="flex gap-1">
+                        <div className="flex gap-0.5">
                           {renderStars(comment.rating, false)}
                         </div>
                       )}
@@ -347,11 +366,11 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
                       className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition text-red-600 dark:text-red-400 flex-shrink-0"
                       title="Supprimer"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={16} />
                     </button>
                   )}
                 </div>
-                <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap font-poppins">
+                <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap font-poppins pl-12">
                   {comment.content}
                 </p>
               </div>

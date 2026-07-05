@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { CheckCircle, XCircle, ArrowRight, HelpCircle, X, Award } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowRight, HelpCircle, X, Award, Timer } from 'lucide-react';
 
 interface Question {
   id: string;
@@ -21,9 +21,10 @@ interface BookQuizModalProps {
   bookId: string;
   currentPage: number;
   onClose: () => void;
+  isFinalQuiz?: boolean;
 }
 
-export default function BookQuizModal({ bookId, currentPage, onClose }: BookQuizModalProps) {
+export default function BookQuizModal({ bookId, currentPage, onClose, isFinalQuiz = false }: BookQuizModalProps) {
   const { user } = useAuth();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,23 +37,41 @@ export default function BookQuizModal({ bookId, currentPage, onClose }: BookQuiz
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Charger le quiz disponible pour cette page spécifique
+  // Timer state (10 seconds)
+  const [timeLeft, setTimeLeft] = useState(10);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Charger le quiz disponible pour cette page ou le grand quiz final
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
         setLoading(true);
-        // 1. Récupérer le quiz associé au livre et à la page courante
-        const { data: quizData, error: quizError } = await supabase
-          .from('book_quizzes')
-          .select('id, title, trigger_page')
-          .eq('book_id', bookId)
-          .eq('trigger_page', currentPage)
-          .maybeSingle();
+        let quizData = null;
 
-        if (quizError) throw quizError;
+        if (isFinalQuiz) {
+          // Charger le grand quiz final (généralement trigger_page élevé ou flag spécifique)
+          // Par défaut, on cherche le quiz avec la page de déclenchement la plus haute
+          const { data } = await supabase
+            .from('book_quizzes')
+            .select('id, title, trigger_page')
+            .eq('book_id', bookId)
+            .order('trigger_page', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          quizData = data;
+        } else {
+          // Charger le quiz de progression régulier
+          const { data } = await supabase
+            .from('book_quizzes')
+            .select('id, title, trigger_page')
+            .eq('book_id', bookId)
+            .eq('trigger_page', currentPage)
+            .maybeSingle();
+          quizData = data;
+        }
 
         if (quizData) {
-          // Vérifier si l'utilisateur connecté a déjà complété ce quiz
+          // Vérifier si déjà complété
           if (user) {
             const { data: attempt } = await supabase
               .from('user_quiz_attempts')
@@ -61,25 +80,22 @@ export default function BookQuizModal({ bookId, currentPage, onClose }: BookQuiz
               .eq('quiz_id', quizData.id)
               .maybeSingle();
             
-            // Si déjà fait, on ne le redéclenche pas automatiquement
-            if (attempt) {
+            if (attempt && !isFinalQuiz) {
               setLoading(false);
-              return;
+              return; // Ne pas redéclencher automatiquement
             }
           }
 
-          // 2. Charger les questions du quiz
-          const { data: questionsData, error: questionsError } = await supabase
+          // Charger les questions
+          const { data: questionsData } = await supabase
             .from('quiz_questions')
             .select('id, question_text, options, correct_option_index')
             .eq('quiz_id', quizData.id);
 
-          if (questionsError) throw questionsError;
-
           if (questionsData && questionsData.length > 0) {
             setQuiz({
               id: quizData.id,
-              title: quizData.title,
+              title: isFinalQuiz ? `🏆 GRAND QUIZ FINAL : ${quizData.title}` : quizData.title,
               trigger_page: quizData.trigger_page,
               questions: questionsData.map((q: any) => ({
                 id: q.id,
@@ -88,6 +104,7 @@ export default function BookQuizModal({ bookId, currentPage, onClose }: BookQuiz
                 correct_option_index: q.correct_option_index
               }))
             });
+            setTimeLeft(10); // Reset timer
           }
         }
       } catch (err) {
@@ -98,7 +115,33 @@ export default function BookQuizModal({ bookId, currentPage, onClose }: BookQuiz
     };
 
     fetchQuiz();
-  }, [bookId, currentPage, user]);
+  }, [bookId, currentPage, user, isFinalQuiz]);
+
+  // Effect pour gérer le timer de 10 secondes
+  useEffect(() => {
+    if (quizCompleted || loading || !quiz || isAnswerSubmitted) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    setTimeLeft(10); // Réinitialiser le timer à chaque nouvelle question
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          // Temps écoulé : Soumettre automatiquement comme incorrect
+          setIsAnswerSubmitted(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [currentQuestionIndex, quiz, quizCompleted, loading, isAnswerSubmitted]);
 
   if (loading || !quiz) return null;
 
@@ -112,6 +155,7 @@ export default function BookQuizModal({ bookId, currentPage, onClose }: BookQuiz
 
   const handleSubmitAnswer = () => {
     if (selectedOption === null || isAnswerSubmitted) return;
+    if (timerRef.current) clearInterval(timerRef.current);
     setIsAnswerSubmitted(true);
     if (isCorrect) {
       setScore(prev => prev + 1);
@@ -125,7 +169,6 @@ export default function BookQuizModal({ bookId, currentPage, onClose }: BookQuiz
     if (currentQuestionIndex + 1 < quiz.questions.length) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
-      // Fin du quiz
       setQuizCompleted(true);
       if (user) {
         setSaving(true);
@@ -146,58 +189,57 @@ export default function BookQuizModal({ bookId, currentPage, onClose }: BookQuiz
   };
 
   return (
-    <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in font-poppins">
+    <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in font-poppins text-white">
       <div className="relative w-full max-w-lg bg-[#0f172a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col">
-        {/* Decorative Top Background */}
         <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400" />
         
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/5 bg-slate-900/50">
+        <div className="flex items-center justify-between p-5 border-b border-white/5 bg-slate-900/50">
           <div className="flex items-center gap-2">
-            <HelpCircle className="w-5 h-5 text-[var(--brand-gold)] animate-pulse" />
+            <HelpCircle className="w-5 h-5 text-[var(--brand-gold)]" />
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--brand-gold)]">
-                Quizz de Progression
+              <span className="text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)] block">
+                {isFinalQuiz ? '🏆 Épreuve finale' : 'Quiz de progression'}
               </span>
-              <h3 className="text-sm font-bold text-white leading-tight">
+              <h3 className="text-xs font-bold leading-tight">
                 {quiz.title}
               </h3>
             </div>
           </div>
-          <button 
-            onClick={onClose}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all"
-            title="Passer pour l'instant"
-          >
-            <X size={16} />
+          <button onClick={onClose} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all">
+            <X size={15} />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="p-6 flex-1 overflow-y-auto">
+        <div className="p-5 flex-1 overflow-y-auto space-y-4">
           {!quizCompleted ? (
-            <div className="space-y-6">
-              {/* Progress Indicator */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs text-slate-400">
-                  <span className="font-semibold">Question {currentQuestionIndex + 1} sur {quiz.questions.length}</span>
-                  <span className="font-bold text-[var(--brand-gold)]">{Math.round(((currentQuestionIndex) / quiz.questions.length) * 100)}%</span>
-                </div>
-                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400 transition-all duration-300"
-                    style={{ width: `${((currentQuestionIndex + 1) / quiz.questions.length) * 100}%` }}
-                  />
+            <div className="space-y-4">
+              {/* Question progress and timer */}
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span className="font-semibold">Question {currentQuestionIndex + 1} / {quiz.questions.length}</span>
+                
+                {/* Timer indicator */}
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg">
+                  <Timer className={`w-3.5 h-3.5 ${timeLeft <= 3 ? 'text-red-500 animate-pulse' : 'text-[var(--brand-gold)]'}`} />
+                  <span className={`font-black ${timeLeft <= 3 ? 'text-red-500' : 'text-white'}`}>{timeLeft}s</span>
                 </div>
               </div>
 
-              {/* Question Text */}
-              <h4 className="text-base sm:text-lg font-bold text-white leading-snug">
+              {/* Progress bar */}
+              <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400 transition-all duration-300"
+                  style={{ width: `${((currentQuestionIndex + 1) / quiz.questions.length) * 100}%` }}
+                />
+              </div>
+
+              <h4 className="text-sm sm:text-base font-black leading-snug">
                 {currentQuestion.question_text}
               </h4>
 
-              {/* Options Grid */}
-              <div className="space-y-3">
+              {/* Options */}
+              <div className="space-y-2">
                 {currentQuestion.options.map((option, idx) => {
                   let optionStyle = "border-white/10 bg-white/5 text-slate-200 hover:bg-white/10";
                   if (selectedOption === idx) {
@@ -218,68 +260,67 @@ export default function BookQuizModal({ bookId, currentPage, onClose }: BookQuiz
                       key={idx}
                       onClick={() => handleOptionSelect(idx)}
                       disabled={isAnswerSubmitted}
-                      className={`w-full text-left p-4 rounded-2xl border text-xs sm:text-sm transition-all duration-200 flex items-center justify-between ${optionStyle}`}
+                      className={`w-full text-left p-3.5 rounded-2xl border text-xs transition-all duration-200 flex items-center justify-between ${optionStyle}`}
                     >
                       <span>{option}</span>
                       {isAnswerSubmitted && idx === currentQuestion.correct_option_index && (
-                        <CheckCircle size={16} className="text-emerald-500" />
+                        <CheckCircle size={15} className="text-emerald-500" />
                       )}
                       {isAnswerSubmitted && selectedOption === idx && idx !== currentQuestion.correct_option_index && (
-                        <XCircle size={16} className="text-red-500" />
+                        <XCircle size={15} className="text-red-500" />
                       )}
                     </button>
                   );
                 })}
               </div>
+
+              {isAnswerSubmitted && timeLeft === 0 && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] text-red-400 text-center">
+                  ⏳ Temps écoulé pour cette question !
+                </div>
+              )}
             </div>
           ) : (
             /* Result Screen */
-            <div className="text-center py-6 space-y-6 flex flex-col items-center">
-              <div className="w-20 h-20 rounded-full bg-[var(--brand-gold)]/10 border-2 border-[var(--brand-gold)]/30 flex items-center justify-center text-[var(--brand-gold)] animate-bounce">
-                <Award size={36} />
+            <div className="text-center py-4 space-y-4 flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full bg-[var(--brand-gold)]/10 border-2 border-[var(--brand-gold)]/30 flex items-center justify-center text-[var(--brand-gold)] animate-bounce">
+                <Award size={30} />
               </div>
-              <div className="space-y-2">
-                <h4 className="text-xl font-black text-white">Quizz Terminé !</h4>
-                <p className="text-xs text-slate-400 px-4">
-                  Votre score a été enregistré. Vos points se rajoutent à votre progression générale sur MIDEESSI.
+              <div className="space-y-1">
+                <h4 className="text-base font-black">Évaluation complétée !</h4>
+                <p className="text-[10px] text-slate-400 px-4">
+                  Votre score a été enregistré avec succès et s'affiche sur votre profil MIDEESSI.
                 </p>
               </div>
               
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4 w-full max-w-xs">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Votre Score</span>
-                <span className="text-4xl font-black text-[var(--brand-gold)] tabular-nums">{score}</span>
-                <span className="text-xs text-slate-400 block mt-1">sur {quiz.questions.length} correct</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Votre Score</span>
+                <span className="text-3xl font-black text-[var(--brand-gold)] tabular-nums">{score}</span>
+                <span className="text-[10px] text-slate-400 block mt-1">sur {quiz.questions.length} correct{score > 1 ? 's' : ''}</span>
               </div>
             </div>
           )}
         </div>
 
         {/* Footer Actions */}
-        <div className="p-6 border-t border-white/5 bg-slate-900/30 flex gap-3">
+        <div className="p-5 border-t border-white/5 bg-slate-900/30 flex gap-3">
           {!quizCompleted ? (
             <>
-              <button
-                onClick={onClose}
-                className="flex-1 rounded-xl border border-white/10 hover:bg-white/5 text-white py-3 text-xs font-bold transition-all"
-              >
-                Passer le quizz
+              <button onClick={onClose} className="flex-1 rounded-xl border border-white/10 hover:bg-white/5 py-2.5 text-xs font-bold transition-all">
+                Passer
               </button>
               <button
                 onClick={isAnswerSubmitted ? handleNext : handleSubmitAnswer}
-                disabled={selectedOption === null}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gold text-midnight hover:bg-yellow-400 disabled:opacity-30 disabled:cursor-not-allowed py-3 text-xs font-black transition-all shadow-lg active:scale-95"
+                disabled={selectedOption === null && !isAnswerSubmitted}
+                className="flex-1 inline-flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl bg-gold text-midnight hover:bg-yellow-400 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-black transition-all shadow-lg"
               >
                 <span>{isAnswerSubmitted ? 'Suivant' : 'Valider'}</span>
-                <ArrowRight size={14} />
+                <ArrowRight size={13} />
               </button>
             </>
           ) : (
-            <button
-              onClick={onClose}
-              disabled={saving}
-              className="w-full inline-flex items-center justify-center rounded-xl bg-gold text-midnight hover:bg-yellow-400 py-3 text-xs font-black transition-all shadow-lg active:scale-95"
-            >
-              Retour au livre
+            <button onClick={onClose} disabled={saving} className="w-full inline-flex items-center justify-center rounded-xl bg-gold text-midnight hover:bg-yellow-400 py-3 text-xs font-black transition-all shadow-lg">
+              Terminer
             </button>
           )}
         </div>

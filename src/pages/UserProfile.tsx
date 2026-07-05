@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Mail, Calendar, ArrowLeft, Edit2, MessageSquare, Heart, BookOpen, FileText } from 'lucide-react';
+import { Mail, Calendar, ArrowLeft, Edit2, MessageSquare, Heart, BookOpen, FileText, Sparkles } from 'lucide-react';
 import SEO from '../components/SEO';
+import { Avatar } from '../components/ui/Avatar';
 
 interface UserData {
   id: string;
@@ -45,7 +46,7 @@ export default function UserProfile() {
       const lookupUsername = username?.trim();
       if (!lookupUsername) {
         setUserData(null);
-        setError('Nom d’utilisateur introuvable');
+        setError('Nom d\'utilisateur introuvable');
         return;
       }
 
@@ -60,25 +61,17 @@ export default function UserProfile() {
       if (data) {
         setUserData(data);
 
-        const { data: blogComments } = await supabase
-          .from('blog_comments')
-          .select('id')
-          .eq('user_id', data.id);
-
-        const { data: blogLikes } = await supabase
-          .from('blog_likes')
-          .select('id')
-          .eq('user_id', data.id);
-
-        const { data: bookComments } = await supabase
-          .from('book_comments')
-          .select('id')
-          .eq('user_id', data.id);
-
-        const { data: bookLikes } = await supabase
-          .from('book_likes')
-          .select('id')
-          .eq('user_id', data.id);
+        const [
+          { data: blogComments },
+          { data: blogLikes },
+          { data: bookComments },
+          { data: bookLikes },
+        ] = await Promise.all([
+          supabase.from('blog_comments').select('id').eq('user_id', data.id),
+          supabase.from('blog_likes').select('id').eq('user_id', data.id),
+          supabase.from('book_comments').select('id').eq('user_id', data.id),
+          supabase.from('book_likes').select('id').eq('user_id', data.id),
+        ]);
 
         setStats({
           totalComments: (blogComments?.length || 0) + (bookComments?.length || 0),
@@ -89,6 +82,7 @@ export default function UserProfile() {
         return;
       }
 
+      // Fallback for current user if not yet in DB
       const metadataUsername = currentUser?.user_metadata?.username?.toString().trim();
       const emailPrefix = currentUser?.email?.split('@')[0]?.toLowerCase();
       const isCurrentUserProfile = Boolean(
@@ -103,7 +97,7 @@ export default function UserProfile() {
           id: currentUser.id,
           email: currentUser.email || '',
           username: lookupUsername || metadataUsername || emailPrefix || 'utilisateur',
-          avatar_url: null,
+          avatar_url: (currentUser.user_metadata?.avatar_url as string | null) || null,
           bio: null,
           created_at: currentUser.created_at || new Date().toISOString(),
         });
@@ -123,10 +117,10 @@ export default function UserProfile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-gold to-yellow-500 animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400 font-poppins">Chargement du profil...</p>
+      <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-2 border-[var(--brand-gold)] border-t-transparent animate-spin" />
+          <p className="text-sm text-gray-500 dark:text-gray-400 font-poppins">Chargement du profil...</p>
         </div>
       </div>
     );
@@ -134,18 +128,19 @@ export default function UserProfile() {
 
   if (error || !userData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900 pt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[var(--bg-page)] pt-24 px-4">
+        <div className="max-w-2xl mx-auto text-center">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gold hover:text-yellow-400 font-semibold mb-8 transition font-poppins"
+            className="flex items-center gap-2 text-[var(--brand-gold)] hover:text-yellow-400 font-semibold mb-8 transition font-poppins text-sm"
           >
-            <ArrowLeft size={20} /> Retour
+            <ArrowLeft size={18} /> Retour
           </button>
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 font-poppins">Profil non trouvé</h1>
-            <p className="text-slate-600 dark:text-slate-400 font-poppins">Cet utilisateur n'existe pas</p>
+          <div className="w-16 h-16 rounded-full bg-[var(--brand-midnight)] flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">😕</span>
           </div>
+          <h1 className="text-2xl font-bold text-[var(--brand-midnight)] dark:text-white mb-2">Profil non trouvé</h1>
+          <p className="text-gray-500 dark:text-gray-400">Cet utilisateur n'existe pas sur MIDEESSI.</p>
         </div>
       </div>
     );
@@ -155,8 +150,14 @@ export default function UserProfile() {
   const joinDate = new Date(userData.created_at).toLocaleDateString('fr-FR', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
   });
+
+  const statCards = [
+    { label: 'Commentaires', value: stats.totalComments, icon: MessageSquare, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/50' },
+    { label: 'Likes donnés', value: stats.totalLikes, icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-950/30 border-rose-100 dark:border-rose-900/50' },
+    { label: 'Articles', value: stats.articlesCommented, icon: FileText, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-950/30 border-purple-100 dark:border-purple-900/50' },
+    { label: 'Livres critiqués', value: stats.booksReviewed, icon: BookOpen, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/50' },
+  ];
 
   return (
     <>
@@ -166,130 +167,127 @@ export default function UserProfile() {
         keywords={['profil', 'utilisateur', userData.username]}
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900 pt-20 pb-12">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Back Button */}
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gold hover:text-yellow-400 font-semibold mb-8 transition font-poppins"
-          >
-            <ArrowLeft size={20} /> Retour
-          </button>
+      <div className="min-h-screen bg-[var(--bg-page)] pb-16">
+        {/* Hero header */}
+        <div className="relative bg-[var(--brand-midnight)] pt-24 pb-32 overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-32 right-0 w-[500px] h-[500px] bg-[var(--brand-gold)]/8 rounded-full blur-[120px]" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-blue-900/15 rounded-full blur-[80px]" />
+          </div>
 
-          {/* Profile Card */}
-          <div className="rounded-2xl shadow-2xl overflow-hidden border bg-white/95 dark:bg-slate-800/90 border-slate-200 dark:border-slate-700/50 backdrop-blur-sm">
-            {/* Header Background */}
-            <div className="h-40 bg-gradient-to-r from-midnight via-blue-900 to-midnight"></div>
+          <div className="relative max-w-4xl mx-auto px-4 sm:px-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-white/60 hover:text-[var(--brand-gold)] transition-colors mb-6"
+            >
+              <ArrowLeft size={14} /> Retour
+            </button>
 
-            {/* Profile Content */}
-            <div className="px-6 sm:px-8 pb-8">
-              <div className="flex flex-col sm:flex-row gap-6 -mt-20 mb-8">
-                {/* Avatar */}
-                <div className="flex-shrink-0">
-                  <div className="w-40 h-40 rounded-2xl bg-gradient-to-br from-gold to-yellow-500 border-4 border-white dark:border-slate-800 shadow-xl flex items-center justify-center">
-                    <span className="text-6xl font-bold text-slate-900 font-poppins">
-                      {userData.username.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
+              {/* Avatar */}
+              <div className="relative flex-shrink-0">
+                <Avatar
+                  name={userData.username}
+                  src={userData.avatar_url}
+                  size="xl"
+                  className="ring-4 ring-white/20 shadow-2xl"
+                />
+                {isOwnProfile && (
+                  <Link
+                    to="/profile/edit"
+                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[var(--brand-gold)] flex items-center justify-center shadow-lg hover:bg-yellow-400 transition-colors"
+                    title="Modifier mon avatar"
+                  >
+                    <Edit2 size={12} className="text-[var(--brand-midnight)]" />
+                  </Link>
+                )}
+              </div>
 
-                {/* Info */}
-                <div className="flex-grow mt-4">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div>
-                      <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2 font-poppins">
-                        @{userData.username}
-                      </h1>
-                      {userData.bio && (
-                        <p className="text-slate-600 dark:text-slate-300 text-lg max-w-2xl font-poppins">{userData.bio}</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)]">
+                        <Sparkles size={8} className="inline mr-0.5" /> Membre MIDEESSI
+                      </span>
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-black text-white">@{userData.username}</h1>
+                    {userData.bio && (
+                      <p className="mt-1 text-sm text-gray-300/80 max-w-xl leading-relaxed">{userData.bio}</p>
+                    )}
+                    <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <Calendar size={12} className="text-[var(--brand-gold)]" />
+                        Membre depuis {joinDate}
+                      </span>
+                      {isOwnProfile && (
+                        <span className="flex items-center gap-1">
+                          <Mail size={12} className="text-[var(--brand-gold)]" />
+                          {userData.email}
+                        </span>
                       )}
                     </div>
-                    {isOwnProfile && (
-                      <Link
-                        to="/profile/edit"
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gold to-yellow-400 text-slate-900 rounded-lg font-bold hover:shadow-lg transition font-poppins whitespace-nowrap"
-                      >
-                        <Edit2 size={18} /> Modifier
-                      </Link>
-                    )}
                   </div>
 
-                  {/* Meta Info */}
-                  <div className="flex flex-wrap gap-6 mt-6 text-sm text-slate-600 dark:text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <Mail size={18} className="text-gold" />
-                      <span className="font-poppins">{userData.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar size={18} className="text-gold" />
-                      <span className="font-poppins">Membre depuis {joinDate}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8 pt-8 border-t border-slate-200 dark:border-slate-700/50">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-6 border border-blue-200 dark:border-blue-700/50">
-                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2 font-poppins">
-                    {stats.totalComments}
-                  </div>
-                  <p className="text-slate-700 dark:text-slate-300 font-bold text-sm flex items-center gap-2 font-poppins">
-                    <MessageSquare size={16} /> Commentaires
-                  </p>
-                </div>
-
-                <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-6 border border-red-200 dark:border-red-700/50">
-                  <div className="text-3xl font-bold text-red-600 dark:text-red-400 mb-2 font-poppins">
-                    {stats.totalLikes}
-                  </div>
-                  <p className="text-slate-700 dark:text-slate-300 font-bold text-sm flex items-center gap-2 font-poppins">
-                    <Heart size={16} /> Likes donnés
-                  </p>
-                </div>
-
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-6 border border-purple-200 dark:border-purple-700/50">
-                  <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2 font-poppins">
-                    {stats.articlesCommented}
-                  </div>
-                  <p className="text-slate-700 dark:text-slate-300 font-bold text-sm flex items-center gap-2 font-poppins">
-                    <FileText size={16} /> Articles commentés
-                  </p>
-                </div>
-
-                <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-lg p-6 border border-amber-200 dark:border-amber-700/50">
-                  <div className="text-3xl font-bold text-amber-600 dark:text-amber-400 mb-2 font-poppins">
-                    {stats.booksReviewed}
-                  </div>
-                  <p className="text-slate-700 dark:text-slate-300 font-bold text-sm flex items-center gap-2 font-poppins">
-                    <BookOpen size={16} /> Livres examinés
-                  </p>
-                </div>
-              </div>
-
-              {/* CTA Section */}
-              {!isOwnProfile && (
-                <div className="mt-8 p-6 bg-gold/5 dark:bg-gold/10 border border-gold/30 rounded-lg">
-                  <p className="text-slate-700 dark:text-slate-300 font-poppins">
-                    Intéressé par les contributions de @{userData.username}?{' '}
-                    <Link to="/login" className="font-bold text-gold hover:text-yellow-400 transition">
-                      Consultez l'article complet
+                  {isOwnProfile && (
+                    <Link
+                      to="/profile/edit"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-[var(--brand-gold)] text-[var(--brand-midnight)] rounded-xl font-black text-xs hover:bg-yellow-400 transition-colors shadow-lg"
+                    >
+                      <Edit2 size={12} /> Modifier mon profil
                     </Link>
-                  </p>
+                  )}
                 </div>
-              )}
-
-              {isOwnProfile && (
-                <div className="mt-8 p-6 bg-slate-100 dark:bg-slate-700/30 border border-slate-300 dark:border-slate-600/50 rounded-lg">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 font-poppins flex items-center gap-2">
-                    <FileText size={20} /> Vos contributions
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm font-poppins">
-                    Vous avez écrit {stats.totalComments} commentaire{stats.totalComments !== 1 ? 's' : ''} et donné {stats.totalLikes} like{stats.totalLikes !== 1 ? 's' : ''} à la communauté MIDEESSI. Continuez comme ça! 🎉
-                  </p>
-                </div>
-              )}
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-16 relative z-10">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {statCards.map(card => (
+              <div
+                key={card.label}
+                className={`rounded-2xl border p-4 sm:p-5 shadow-sm ${card.bg} bg-white dark:bg-gray-900`}
+              >
+                <div className={`flex items-center gap-1.5 mb-2 ${card.color}`}>
+                  <card.icon size={14} />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">{card.label}</span>
+                </div>
+                <p className={`text-2xl sm:text-3xl font-black ${card.color}`}>{card.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Contributions message */}
+          <div className="mt-6 p-5 rounded-2xl bg-white dark:bg-gray-900 border border-[var(--border)] shadow-sm">
+            {isOwnProfile ? (
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-[var(--brand-gold)]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Sparkles size={14} className="text-[var(--brand-gold)]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-[var(--brand-midnight)] dark:text-white mb-1">Vos contributions</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                    Vous avez écrit <strong className="text-[var(--brand-midnight)] dark:text-white">{stats.totalComments}</strong> commentaire{stats.totalComments !== 1 ? 's' : ''} et donné{' '}
+                    <strong className="text-[var(--brand-midnight)] dark:text-white">{stats.totalLikes}</strong> like{stats.totalLikes !== 1 ? 's' : ''} à la communauté. Continuez comme ça ! 🎉
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start gap-3">
+                <Avatar name={userData.username} src={userData.avatar_url} size="sm" />
+                <div>
+                  <h3 className="text-sm font-black text-[var(--brand-midnight)] dark:text-white mb-1">
+                    À propos de @{userData.username}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                    {userData.bio || `Membre actif de la communauté MIDEESSI avec ${stats.totalComments} contribution${stats.totalComments !== 1 ? 's' : ''}.`}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
