@@ -633,30 +633,29 @@ const NewHome = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     <button
                       onClick={(e) => toggleLike(e)}
-                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold ${likedSet.has(weeklyPDF.id) ? 'bg-red-600 text-white' : 'bg-white/10 text-gray-800 dark:text-white'}`}
+                      className={`w-full inline-flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-sm font-semibold ${likedSet.has(weeklyPDF.id) ? 'bg-red-600 text-white' : 'bg-white/10 text-gray-800 dark:text-white'}`}
                     >
                       <Heart className="w-4 h-4" />
-                      <span className="hidden sm:inline">{likedSet.has(weeklyPDF.id) ? 'Liked' : 'Like'}</span>
+                      <span>{likedSet.has(weeklyPDF.id) ? 'Liked' : 'Like'}</span>
                     </button>
                     <button
                       onClick={(e) => toggleSave(e)}
-                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold ${savedSet.has(weeklyPDF.id) ? 'bg-emerald-600 text-white' : 'bg-white/10 text-gray-800 dark:text-white'}`}
+                      className={`w-full inline-flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-sm font-semibold ${savedSet.has(weeklyPDF.id) ? 'bg-emerald-600 text-white' : 'bg-white/10 text-gray-800 dark:text-white'}`}
                     >
                       <Bookmark className="w-4 h-4" />
-                      <span className="hidden sm:inline">{savedSet.has(weeklyPDF.id) ? 'Enregistré' : 'Enregistrer'}</span>
+                      <span>{savedSet.has(weeklyPDF.id) ? 'Enregistré' : 'Enregistrer'}</span>
                     </button>
                     {weeklyPDF.id && (
                       <Link
                         to={`/library/${weeklyPDF.id}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-[#191970] hover:bg-[#0f0f43] text-white font-bold rounded-lg transition-all shadow-lg text-xs sm:text-base"
+                        className="w-full inline-flex items-center justify-center gap-2 px-3 py-3 bg-[#191970] hover:bg-[#0f0f43] text-white font-bold rounded-xl transition-all shadow-lg text-sm"
                       >
-                        <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
-                        <span className="hidden sm:inline">Lire le PDF</span>
-                        <span className="sm:hidden">PDF</span>
+                        <Play className="w-4 h-4 fill-current" />
+                        <span>Lire le PDF</span>
                       </Link>
                     )}
                     {weeklyPDF.article_url && (
@@ -665,11 +664,10 @@ const NewHome = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold rounded-lg transition-all text-xs sm:text-base"
+                        className="w-full inline-flex items-center justify-center gap-2 px-3 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold rounded-xl transition-all text-sm"
                       >
-                        <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Lire l'article</span>
-                        <span className="sm:hidden">Article</span>
+                        <ExternalLink className="w-4 h-4" />
+                        <span>Lire l'article</span>
                       </a>
                     )}
                     {weeklyPDF.buy_url && (
@@ -678,11 +676,10 @@ const NewHome = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-[#ffd700] hover:bg-[#ffed4e] text-[#191970] font-bold rounded-lg transition-all shadow-lg text-xs sm:text-base"
+                        className="w-full inline-flex items-center justify-center gap-2 px-3 py-3 bg-[#ffd700] hover:bg-[#ffed4e] text-[#191970] font-bold rounded-xl transition-all shadow-lg text-sm"
                       >
-                        <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">{weeklyPDF.price || 1000} FCFA - Acheter</span>
-                        <span className="sm:hidden">Acheter</span>
+                        <Download className="w-4 h-4" />
+                        <span>{weeklyPDF.price || 1000} FCFA - Acheter</span>
                       </a>
                     )}
                   </div>
