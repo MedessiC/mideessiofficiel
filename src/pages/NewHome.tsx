@@ -4,7 +4,7 @@ import {
   BookOpen, Download, BadgeCheck, ExternalLink, Play
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import PopupDisplay from '../components/PopupDisplay';
 import NewsletterSignup from '../components/NewsletterSignup';
@@ -107,6 +107,7 @@ const NewHome = () => {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [weeklyPDF, setWeeklyPDF] = useState(null);
   const [loadingPDF, setLoadingPDF] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchHeroSlides();
@@ -189,7 +190,23 @@ const NewHome = () => {
       if (error) {
         console.error('Erreur lors du chargement du PDF:', error);
       } else if (weekly) {
-        setWeeklyPDF(weekly);
+        // Fetch real metrics: likes, readers, average rating
+        try {
+          const [{ count: likeCount }, { count: readerCount }, { data: ratings }] = await Promise.all([
+            supabase.from('book_likes').select('id', { count: 'exact', head: true }).eq('book_id', weekly.id),
+            supabase.from('book_progress').select('user_id', { count: 'exact', head: true }).eq('book_id', weekly.id).gte('progress_percent', 1),
+            supabase.from('book_ratings').select('rating').eq('book_id', weekly.id),
+          ]);
+
+          const avgRating = (ratings && ratings.length)
+            ? (ratings.reduce((s: any, r: any) => s + Number(r.rating || 0), 0) / ratings.length).toFixed(1)
+            : (weekly.rating || 0);
+
+          setWeeklyPDF({ ...weekly, likes: likeCount || 0, readers: readerCount || 0, avgRating });
+        } catch (err) {
+          console.error('Erreur lors du chargement des métriques du PDF:', err);
+          setWeeklyPDF(weekly);
+        }
       }
     } catch (error) {
       console.error('Erreur lors du chargement du PDF:', error);
@@ -221,10 +238,57 @@ const NewHome = () => {
     }
   };
 
+  const [siteStats, setSiteStats] = useState({ readers: 0, avgRating: 0, books: 0 });
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchSiteStats = async () => {
+      try {
+        // Total distinct readers with progress >= 1
+        const { count: readersCount } = await supabase
+          .from('book_progress')
+          .select('user_id', { count: 'exact', head: true })
+          .gte('progress_percent', 1);
+
+        // Fetch all book ratings and compute average locally
+        const { data: booksData } = await supabase
+          .from('books')
+          .select('rating')
+          .is('rating', null);
+
+        // Fallback: if above returned empty because of `.is('rating', null)` usage,
+        // we fetch ratings without the filter
+        let ratings: number[] = [];
+        if (booksData && booksData.length > 0) {
+          ratings = booksData.map((b: any) => Number(b.rating || 0)).filter((r: number) => r > 0);
+        } else {
+          const { data: allBooks } = await supabase.from('books').select('rating');
+          if (allBooks) ratings = allBooks.map((b: any) => Number(b.rating || 0)).filter((r: number) => r > 0);
+        }
+
+        const avgRating = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length) : 0;
+
+        // Total books
+        const { count: booksCount } = await supabase
+          .from('books')
+          .select('id', { count: 'exact', head: true });
+
+        if (!cancelled) {
+          setSiteStats({ readers: readersCount || 0, avgRating: Number(avgRating.toFixed(1)), books: booksCount || 0 });
+        }
+      } catch (err) {
+        console.error('Error fetching site stats:', err);
+      }
+    };
+
+    void fetchSiteStats();
+    return () => { cancelled = true; };
+  }, []);
+
   const stats = [
-    { value: 1, label: 'Secteur par trimestre', icon: TrendingUp },
-    { value: 100, label: 'Béninois', suffix: '%', icon: Award },
-    { value: 5, label: 'Étapes terrain', icon: Shield },
+    { value: siteStats.readers, label: 'Lecteurs actifs', icon: Users },
+    { value: siteStats.avgRating, label: 'Note moyenne', suffix: '/5', icon: BadgeCheck },
+    { value: siteStats.books, label: 'Livres publiés', icon: BookOpen },
     { value: 2025, label: 'Année de fondation', icon: Building2 },
   ];
 
@@ -436,7 +500,7 @@ const NewHome = () => {
           {loadingPDF ? (
             <PDFSkeleton />
           ) : weeklyPDF ? (
-            <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl overflow-hidden border-2 border-[#ffd700] shadow-xl">
+            <div onClick={() => navigate(`/library/${weeklyPDF.id}`)} className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl overflow-hidden border-2 border-[#ffd700] shadow-xl cursor-pointer">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 p-6 sm:p-8 md:p-12">
                 <div className="md:col-span-1 flex items-center justify-center">
                   <div className="w-full aspect-square bg-gradient-to-br from-[#191970] to-[#ffd700] rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
@@ -469,14 +533,14 @@ const NewHome = () => {
                       <div className="bg-gray-50 dark:bg-gray-800 p-2 sm:p-3 md:p-4 rounded-lg">
                         <div className="flex items-center gap-1 mb-1 justify-center sm:justify-start">
                           <BadgeCheck className="w-3 h-3 sm:w-4 sm:h-4 text-[#ffd700]" />
-                          <span className="font-bold text-xs sm:text-sm">{weeklyPDF.rating || 0}</span>
+                          <span className="font-bold text-xs sm:text-sm">{weeklyPDF.avgRating ?? weeklyPDF.rating ?? 0}</span>
                         </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400">Note</p>
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-800 p-2 sm:p-3 md:p-4 rounded-lg">
                         <div className="flex items-center gap-1 mb-1 justify-center sm:justify-start">
                           <Users className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
-                          <span className="font-bold text-xs sm:text-sm">{weeklyPDF.students || 0}</span>
+                          <span className="font-bold text-xs sm:text-sm">{weeklyPDF.readers ?? weeklyPDF.students ?? 0}</span>
                         </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400">Étudiants</p>
                       </div>
@@ -493,6 +557,7 @@ const NewHome = () => {
                     {weeklyPDF.id && (
                       <Link
                         to={`/library/${weeklyPDF.id}`}
+                        onClick={(e) => e.stopPropagation()}
                         className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-[#191970] hover:bg-[#0f0f43] text-white font-bold rounded-lg transition-all shadow-lg text-xs sm:text-base"
                       >
                         <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
@@ -505,6 +570,7 @@ const NewHome = () => {
                         href={weeklyPDF.article_url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold rounded-lg transition-all text-xs sm:text-base"
                       >
                         <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -517,6 +583,7 @@ const NewHome = () => {
                         href={weeklyPDF.buy_url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-[#ffd700] hover:bg-[#ffed4e] text-[#191970] font-bold rounded-lg transition-all shadow-lg text-xs sm:text-base"
                       >
                         <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />

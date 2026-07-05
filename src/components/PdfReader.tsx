@@ -8,6 +8,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import BookQuizModal from './BookQuizModal';
+import { getPdfGuestAccessState, MAX_FREE_PDF_PAGES } from '../utils/pdfAccess';
 import { persistRedirectTarget } from '../utils/authRedirect';
 
 interface PdfReaderProps {
@@ -94,6 +95,8 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const isCloudinary = pdfUrl.includes('cloudinary.com');
   const effectiveUrl = isCloudinary ? `/api/proxy-pdf?url=${encodeURIComponent(pdfUrl)}` : pdfUrl;
   const requiresAuth = !user;
+  const guestAccess = getPdfGuestAccessState({ pageNum, isAuthenticated: !!user, maxFreePages: MAX_FREE_PDF_PAGES });
+  const isGuestLocked = requiresAuth && guestAccess.isLocked;
 
   useEffect(() => {
     if (typeof window !== 'undefined' && location.pathname) {
@@ -241,17 +244,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   useEffect(() => {
     let cancelled = false;
 
-    if (requiresAuth) {
-      setPdfDoc(null);
-      setPageCount(0);
-      setLoading(false);
-      setDownloadProgress(0);
-      setError(null);
-      return () => {
-        cancelled = true;
-      };
-    }
-
     setLoading(true);
     setDownloadProgress(0);
     setError(null);
@@ -334,6 +326,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   // Rendu de page(s) et prefetching en arrière-plan
   const renderSinglePage = useCallback(async (num: number, canvas: HTMLCanvasElement) => {
     if (!pdfDoc) return;
+    if (isGuestLocked && num > guestAccess.effectivePage) return;
     try {
       const page = await pdfDoc.getPage(num);
       const viewport = page.getViewport({ scale, rotation });
@@ -351,11 +344,21 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     } catch (err) {
       console.error(`Render page ${num} error`, err);
     }
-  }, [pdfDoc, scale, rotation]);
+  }, [pdfDoc, scale, rotation, isGuestLocked, guestAccess.effectivePage]);
+
+  // Do not clamp the page number for guests — allow them to navigate past
+  // the free limit so we can display the login overlay when they do.
+  // The actual rendering of pages is blocked in `renderSinglePage` when the
+  // guest limit is reached.
 
   // Gérer le rendu et le prefetching en tâche de fond (instant-switching cache)
   useEffect(() => {
     if (!pdfDoc) return;
+
+    if (isGuestLocked) {
+      setLoading(false);
+      return;
+    }
 
     if (readerMode === 'page') {
       const canvas = canvasRefs.current[pageNum];
@@ -403,7 +406,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       };
       renderAll();
     }
-  }, [pdfDoc, pageNum, readerMode, scale, rotation, pageCount, renderSinglePage]);
+  }, [pdfDoc, pageNum, readerMode, scale, rotation, pageCount, renderSinglePage, isGuestLocked]);
 
   // Gestion de l'affichage de la barre d'outils (inactivité)
   const resetHideTimeout = useCallback(() => {
@@ -492,7 +495,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     if (!isNaN(num) && num >= 1 && num <= pageCount) {
       setPageNum(num);
       saveProgress(num);
-      setQuizTriggered(true); // Tentative initiale, effect ci-dessous validera si on doit vraiment afficher
+      setQuizTriggered(true);
       if (readerMode === 'scroll') {
         const canvas = canvasRefs.current[num];
         if (canvas) {
@@ -850,14 +853,14 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         isFullscreen ? 'p-0 pt-16' : 'p-4 sm:p-6'
       } ${theme.contentBg} transition-colors duration-300 select-none relative flex justify-center`}
     >
-      {requiresAuth && (
+      {isGuestLocked && (
         <div className="absolute inset-0 z-10 flex items-center justify-center p-4 sm:p-6">
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-amber-400/30 bg-slate-900/85 px-5 py-4 text-center shadow-2xl backdrop-blur-sm">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-gold)]/15">
               <Lock className="h-6 w-6 text-[var(--brand-gold)]" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-white">Connexion requise pour lire ce PDF.</p>
+              <p className="text-sm font-semibold text-white">Vous avez atteint la limite de lecture gratuite. Connectez-vous pour continuer.</p>
               <Link to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} className="inline-flex font-semibold text-[var(--brand-gold)] hover:underline">
                 Se connecter
               </Link>
