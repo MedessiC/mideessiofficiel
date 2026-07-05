@@ -24,6 +24,9 @@ type ReaderTheme = 'midnight' | 'light' | 'sepia';
 const getPdfCacheKey = (url: string) => `pdf-cache:${encodeURIComponent(url)}`;
 const getPdfStateKey = (url: string) => `pdf-reader-state:${encodeURIComponent(url)}`;
 
+const pdfDocumentCache = new Map<string, { doc: any; pageCount: number }>();
+const pdfLoadingPromises = new Map<string, Promise<{ doc: any; pageCount: number }>>();
+
 const encodePdfBytes = (bytes: Uint8Array) => {
   const chunks: string[] = [];
   for (let i = 0; i < bytes.length; i += 0x8000) {
@@ -380,75 +383,105 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     startProgressLoop();
 
     const loadPdf = async (urlToFetch: string, isFallback: boolean = false) => {
-      try {
-        const pdfjs = await import('pdfjs-dist/legacy/build/pdf');
-        // @ts-ignore
-        pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.js', import.meta.url).toString();
+      const cachedDocument = pdfDocumentCache.get(urlToFetch);
+      if (cachedDocument && !cancelled) {
+        setPdfDoc(cachedDocument.doc);
+        setPageCount(cachedDocument.pageCount);
+        setDownloadProgress(100);
+        await loadSavedProgress(cachedDocument.doc);
+        return;
+      }
 
-        const cachedBytes = loadPdfFromSessionCache(urlToFetch);
-        if (cachedBytes) {
-          const doc = await pdfjs.getDocument({ data: cachedBytes }).promise;
-          if (cancelled) return;
-          setPdfDoc(doc);
-          setPageCount(doc.numPages);
-          setDownloadProgress(95);
-          await loadSavedProgress(doc);
-          return;
+      const pending = pdfLoadingPromises.get(urlToFetch);
+      if (pending) {
+        const cached = await pending;
+        if (!cancelled) {
+          setPdfDoc(cached.doc);
+          setPageCount(cached.pageCount);
+          setDownloadProgress(100);
+          await loadSavedProgress(cached.doc);
         }
+        return;
+      }
 
-        const response = await fetch(urlToFetch, { cache: 'force-cache' });
-        if (!response.ok) throw new Error(`PDF download failed: ${response.status}`);
-
-        const contentLength = Number(response.headers.get('content-length') || '0');
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error('Impossible de lire le fichier PDF');
-
-        const chunks: Uint8Array[] = [];
-        let received = 0;
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          chunks.push(value);
-          received += value.length;
-
-          if (contentLength > 0) {
-            const percent = Math.min(90, Math.round((received / contentLength) * 90));
-            setDownloadProgress(percent);
-          } else {
-            setDownloadProgress(prev => Math.min(90, prev + 2));
-          }
-        }
-
-        const arrayBuffer = new Uint8Array(received);
-        let position = 0;
-        for (const chunk of chunks) {
-          arrayBuffer.set(chunk, position);
-          position += chunk.length;
-        }
-
-        savePdfToSessionCache(urlToFetch, arrayBuffer.buffer);
-
-        const loadingTask: any = pdfjs.getDocument({ data: arrayBuffer });
-        loadingTask.onProgress = (progressData: { loaded?: number; total?: number }) => {
-          if (cancelled) return;
-          if (progressData?.total) {
-            const percent = Math.min(95, 75 + Math.round((progressData.loaded || 0) / progressData.total * 20));
-            setDownloadProgress(percent);
-          }
-        };
-
-        const doc = await loadingTask.promise;
-        if (cancelled) return;
-        setPdfDoc(doc);
-        setPageCount(doc.numPages);
-        setDownloadProgress(95);
-
-        await loadSavedProgress(doc);
-
-        // Auto-fit
+      const loadPromise = (async () => {
         try {
-          const firstPage = await doc.getPage(1);
+          const pdfjs = await import('pdfjs-dist/legacy/build/pdf');
+          // @ts-ignore
+          pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.js', import.meta.url).toString();
+
+          const cachedBytes = loadPdfFromSessionCache(urlToFetch);
+          if (cachedBytes) {
+            const doc = await pdfjs.getDocument({ data: cachedBytes }).promise;
+            if (cancelled) return { doc, pageCount: doc.numPages };
+            pdfDocumentCache.set(urlToFetch, { doc, pageCount: doc.numPages });
+            return { doc, pageCount: doc.numPages };
+          }
+
+          const response = await fetch(urlToFetch, { cache: 'force-cache' });
+          if (!response.ok) throw new Error(`PDF download failed: ${response.status}`);
+
+          const contentLength = Number(response.headers.get('content-length') || '0');
+          const reader = response.body?.getReader();
+          if (!reader) throw new Error('Impossible de lire le fichier PDF');
+
+          const chunks: Uint8Array[] = [];
+          let received = 0;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            received += value.length;
+
+            if (contentLength > 0) {
+              const percent = Math.min(90, Math.round((received / contentLength) * 90));
+              setDownloadProgress(percent);
+            } else {
+              setDownloadProgress(prev => Math.min(90, prev + 2));
+            }
+          }
+
+          const arrayBuffer = new Uint8Array(received);
+          let position = 0;
+          for (const chunk of chunks) {
+            arrayBuffer.set(chunk, position);
+            position += chunk.length;
+          }
+
+          savePdfToSessionCache(urlToFetch, arrayBuffer.buffer);
+
+          const loadingTask: any = pdfjs.getDocument({ data: arrayBuffer });
+          loadingTask.onProgress = (progressData: { loaded?: number; total?: number }) => {
+            if (cancelled) return;
+            if (progressData?.total) {
+              const percent = Math.min(95, 75 + Math.round((progressData.loaded || 0) / progressData.total * 20));
+              setDownloadProgress(percent);
+            }
+          };
+
+          const doc = await loadingTask.promise;
+          if (cancelled) return { doc, pageCount: doc.numPages };
+          pdfDocumentCache.set(urlToFetch, { doc, pageCount: doc.numPages });
+          return { doc, pageCount: doc.numPages };
+        } catch (err) {
+          console.error(`PDF load error (url: ${urlToFetch})`, err);
+          throw err;
+        }
+      })();
+
+      pdfLoadingPromises.set(urlToFetch, loadPromise);
+
+      try {
+        const result = await loadPromise;
+        if (cancelled) return;
+        setPdfDoc(result.doc);
+        setPageCount(result.pageCount);
+        setDownloadProgress(95);
+        await loadSavedProgress(result.doc);
+
+        try {
+          const firstPage = await result.doc.getPage(1);
           const viewport = firstPage.getViewport({ scale: 1.0 });
           const container = scrollContainerRef.current;
           if (container) {
@@ -462,11 +495,8 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           setScale(1.0);
         }
       } catch (err: any) {
-        console.error(`PDF load error (url: ${urlToFetch})`, err);
-        if (cancelled) return;
-
         if (!isFallback && isCloudinary && urlToFetch !== pdfUrl) {
-          loadPdf(pdfUrl, true);
+          await loadPdf(pdfUrl, true);
         } else {
           setError(err?.message || 'Erreur lors du chargement du PDF');
           setDownloadProgress(0);
@@ -474,6 +504,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         }
       } finally {
         stopProgressLoop();
+        pdfLoadingPromises.delete(urlToFetch);
       }
     };
 

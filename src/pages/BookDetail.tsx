@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft, BookOpen, Download, ExternalLink, Star, Users, FileText,
   Award, Bookmark, BookMarked, Share2, Eye, ChevronRight, Play, X,
@@ -7,10 +7,20 @@ import {
 } from 'lucide-react';
 import SEO from '../components/SEO';
 import BookLikesComments from '../components/BookLikesComments';
-import PdfReader from '../components/PdfReader';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Avatar } from '../components/ui/Avatar';
+
+const LazyPdfReader = lazy(() => import('../components/PdfReader'));
+
+const PdfReaderFallback = () => (
+  <div className="fixed inset-0 z-[200] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center">
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/90 px-6 py-5 text-white shadow-2xl">
+      <Loader2 className="w-7 h-7 animate-spin text-[var(--brand-gold)]" />
+      <p className="text-sm font-semibold">Préparation du lecteur PDF…</p>
+    </div>
+  </div>
+);
 
 interface TopReader {
   username: string;
@@ -349,12 +359,14 @@ export default function BookDetail() {
 
       {/* ── PDF Reader Modal ── */}
       {showPdfModal && book.pdf_url && (
-        <PdfReader
-          pdfUrl={book.pdf_url}
-          title={book.title}
-          modal
-          onClose={() => setShowPdfModal(false)}
-        />
+        <Suspense fallback={<PdfReaderFallback />}>
+          <LazyPdfReader
+            pdfUrl={book.pdf_url}
+            title={book.title}
+            modal
+            onClose={() => setShowPdfModal(false)}
+          />
+        </Suspense>
       )}
 
       {/* ── Share toast ── */}
@@ -594,7 +606,9 @@ export default function BookDetail() {
                       Plein écran <Zap className="w-3 h-3" />
                     </button>
                   </div>
-                  <PdfReader pdfUrl={book.pdf_url} title={book.title} />
+                  <Suspense fallback={<PdfReaderFallback />}>
+                    <LazyPdfReader pdfUrl={book.pdf_url} title={book.title} />
+                  </Suspense>
                 </div>
               )}
 

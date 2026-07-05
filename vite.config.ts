@@ -5,21 +5,28 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['lucide-react'],
+    include: ['react', 'react-dom', 'react-router-dom'],
   },
   build: {
-    // Génère des hash pour tous les assets pour éviter le cache
+    target: 'es2020',
+    cssCodeSplit: true,
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]'
-      }
+      },
+      treeshake: true,
     },
-    // Force le build avec hash
-    cssCodeSplit: true,
-    minify: 'terser',
-    sourcemap: false,
+    chunkSizeWarningLimit: 800,
   },
   server: {
     // En développement, désactive le cache

@@ -37,8 +37,8 @@ export default function BookQuizModal({ bookId, currentPage, onClose, isFinalQui
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Timer state (10 seconds)
-  const [timeLeft, setTimeLeft] = useState(10);
+  // Timer state (25 seconds)
+  const [timeLeft, setTimeLeft] = useState(25);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Charger le quiz disponible pour cette page ou le grand quiz final
@@ -114,7 +114,7 @@ export default function BookQuizModal({ bookId, currentPage, onClose, isFinalQui
                 correct_option_index: q.correct_option_index
               }))
             });
-            setTimeLeft(10); // Reset timer
+            setTimeLeft(25); // Reset timer
           }
         }
       } catch (err) {
@@ -127,14 +127,14 @@ export default function BookQuizModal({ bookId, currentPage, onClose, isFinalQui
     fetchQuiz();
   }, [bookId, currentPage, user, isFinalQuiz]);
 
-  // Effect pour gérer le timer de 10 secondes
+  // Effect pour gérer le timer de 25 secondes
   useEffect(() => {
     if (quizCompleted || loading || !quiz || isAnswerSubmitted) {
       if (timerRef.current) clearInterval(timerRef.current);
       return;
     }
 
-    setTimeLeft(10); // Réinitialiser le timer à chaque nouvelle question
+    setTimeLeft(25); // Réinitialiser le timer à chaque nouvelle question
 
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {

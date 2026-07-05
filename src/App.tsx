@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { NavigationProvider } from './contexts/NavigationContext';
@@ -11,6 +12,7 @@ import BottomNavigation from './components/BottomNavigation';
 import Footer from './components/Footer';
 import PageLoader from './components/PageLoader';
 import CookieConsent from './components/CookieConsent';
+import LoadingSpinner from './components/LoadingSpinner';
 import NewHome from './pages/NewHome';
 import About from './pages/About';
 import Learn from './pages/Learn';
@@ -62,8 +64,23 @@ import ClientQuoteRequests from './pages/ClientQuoteRequests';
 import ClientDossiers from './pages/ClientDossiers';
 import SubmitDossier from './pages/SubmitDossier';
 import { ClientShell } from './components/layout/ClientShell';
-import { Navigate } from 'react-router-dom';
 import AdminQuoteRequests from './pages/AdminQuoteRequests';
+
+const LazyClientShell = lazy(() => import('./components/layout/ClientShell'));
+const LazyAdminPdfs = lazy(() => import('./pages/AdminPdfs'));
+const LazyAdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const LazyAdminSolutions = lazy(() => import('./pages/AdminSolutions'));
+const LazyAdminClientManagement = lazy(() => import('./pages/AdminClientManagement'));
+const LazyAdminQuoteRequests = lazy(() => import('./pages/AdminQuoteRequests'));
+const LazyAdminPostEditor = lazy(() => import('./pages/AdminPostEditor'));
+const LazyBookDetail = lazy(() => import('./pages/BookDetail'));
+const LazyNewBlogPost = lazy(() => import('./pages/NewBlogPost'));
+
+const RouteFallback = () => (
+  <div className="min-h-[50vh] flex items-center justify-center py-16">
+    <LoadingSpinner size="lg" />
+  </div>
+);
 function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -90,10 +107,10 @@ function AppContent() {
           <Route path="/offres/:slug" element={<DetailOffre />} />
           <Route path="/dev-services/:slug" element={<DetailDevService />} />
           <Route path="/blog" element={<ModernBlog />} />
-          <Route path="/blog/:slug" element={<NewBlogPost />} />
+          <Route path="/blog/:slug" element={<Suspense fallback={<RouteFallback />}><LazyNewBlogPost /></Suspense>} />
           <Route path ="/learn" element={<Learn />} />
           <Route path="/library" element={<Library />} />
-          <Route path="/library/:id" element={<BookDetail />} />
+          <Route path="/library/:id" element={<Suspense fallback={<RouteFallback />}><LazyBookDetail /></Suspense>} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/careers/apply/:offerId" element={<OfferApplication />} />
@@ -110,7 +127,7 @@ function AppContent() {
           <Route path="/search-profiles" element={<SearchProfiles />} />
           
           {/* Client Routes */}
-          <Route path="/clients/*" element={<ClientShell />}>
+          <Route path="/clients/*" element={<Suspense fallback={<RouteFallback />}><LazyClientShell /></Suspense>}>
             <Route path="onboarding" element={<ClientProtectedRoute><ClientOnboarding /></ClientProtectedRoute>} />
             <Route path="dashboard" element={<ClientProtectedRoute><ClientDashboard /></ClientProtectedRoute>} />
             <Route path="livrables" element={<ClientProtectedRoute><ClientLivrables /></ClientProtectedRoute>} />
@@ -127,13 +144,13 @@ function AppContent() {
             <Route path="compte" element={<ClientProtectedRoute><ClientCompte /></ClientProtectedRoute>} />
           </Route>
           
-          <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/solutions" element={<ProtectedRoute requiredRole="admin"><AdminSolutions /></ProtectedRoute>} />
-          <Route path="/admin/clients" element={<ProtectedRoute requiredRole="admin"><AdminClientManagement /></ProtectedRoute>} />
-          <Route path="/admin/pdfeditor" element={<ProtectedRoute requiredRole="admin"><AdminPdfs /></ProtectedRoute>} />
-          <Route path="/admin/quotes" element={<ProtectedRoute requiredRole="admin"><AdminQuoteRequests /></ProtectedRoute>} />
+          <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<RouteFallback />}><LazyAdminDashboard /></Suspense></ProtectedRoute>} />
+          <Route path="/admin/solutions" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<RouteFallback />}><LazyAdminSolutions /></Suspense></ProtectedRoute>} />
+          <Route path="/admin/clients" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<RouteFallback />}><LazyAdminClientManagement /></Suspense></ProtectedRoute>} />
+          <Route path="/admin/pdfeditor" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<RouteFallback />}><LazyAdminPdfs /></Suspense></ProtectedRoute>} />
+          <Route path="/admin/quotes" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<RouteFallback />}><LazyAdminQuoteRequests /></Suspense></ProtectedRoute>} />
           <Route path="/share/:slug" element={<ShareRedirect />} />
-          <Route path="/admin/post/:id" element={<ProtectedRoute requiredRole="admin"><AdminPostEditor /></ProtectedRoute>} />
+          <Route path="/admin/post/:id" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<RouteFallback />}><LazyAdminPostEditor /></Suspense></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
