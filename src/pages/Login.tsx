@@ -145,11 +145,19 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Password */}
+            {/* Password avec lien "Mot de passe oublié" */}
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-[#191970] dark:text-[#ffd700] mb-2">
-                Mot de passe
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="password" className="block text-sm font-semibold text-[#191970] dark:text-[#ffd700]">
+                  Mot de passe
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-[#ffd700] hover:text-[#ffed4e] font-semibold transition"
+                >
+                  Oublié ?
+                </Link>
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-3.5 text-[#ffd700]" size={20} />
                 <input

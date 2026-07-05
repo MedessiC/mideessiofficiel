@@ -41,6 +41,8 @@ import AdminSolutions from './pages/AdminSolutions';
 import ShareRedirect from './pages/ShareRedirect';
 import TeamMemberProfile from './pages/TeamMemberProfile';
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import MyLibrary from './pages/MyLibrary';
 import ProfileOverview from './pages/ProfileOverview';
 import SearchProfiles from './pages/SearchProfiles';
@@ -67,7 +69,7 @@ function AppContent() {
   const isAdminRoute = location.pathname.startsWith('/admin');
   // Keep global header/footer visible for admin pages to match site styling.
   // Only hide global nav for public auth flows (non-admin) like unified login and signup.
-  const isAuthRoute = location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/clients';
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/clients' || location.pathname === '/forgot-password' || location.pathname === '/reset-password';
   const isClientRoute = location.pathname.startsWith('/clients/');
 
   return (
@@ -97,6 +99,8 @@ function AppContent() {
           <Route path="/careers/apply/:offerId" element={<OfferApplication />} />
           <Route path="/legal" element={<Legal />} />
           <Route path="/login" element={<UnifiedLogin />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/clients" element={<UnifiedLogin />} />
           <Route path="/signup" element={<Signup />} />
