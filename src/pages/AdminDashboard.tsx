@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, CreditCard as Edit, Trash2, Eye, LogOut, TrendingUp, FileText, Bell, PenTool, Tag, Film, Users, Sparkles, HelpCircle } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Eye, LogOut, TrendingUp, FileText, Bell, PenTool, Tag, Film, Users, Sparkles, HelpCircle, Loader } from 'lucide-react';
 import { supabase, BlogPost } from '../lib/supabase';
 import HeroManager from '../components/admin/HeroManager';
 import PopupManager from '../components/admin/PopupManager';
