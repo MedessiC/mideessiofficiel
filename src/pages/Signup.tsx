@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Github, Facebook, Globe } from 'lucide-react';
 import SEO from '../components/SEO';
 import { normalizeEmail, sanitizeUsername, validatePassword } from '../utils/authProfile';
+import { getRedirectTargetFromLocation, persistRedirectTarget } from '../utils/authRedirect';
 
 export default function Signup() {
   const [email, setEmail] = useState('');
@@ -16,6 +17,7 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { signUp, signInWithProvider } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,8 +64,12 @@ export default function Signup() {
         return;
       }
 
+      const redirectTarget = getRedirectTargetFromLocation(location);
+      if (redirectTarget) {
+        persistRedirectTarget(redirectTarget);
+      }
+
       setSuccess(true);
-      // Redirect après 3 secondes
       setTimeout(() => {
         navigate('/login');
       }, 3000);

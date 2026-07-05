@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, AlertCircle, LogIn, Github, Facebook, Globe, ChevronLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useClientAuth } from '../contexts/ClientContext';
 import SEO from '../components/SEO';
+import { clearStoredRedirectTarget, getStoredRedirectTarget, getRedirectTargetFromLocation, persistRedirectTarget } from '../utils/authRedirect';
 
 type UserType = 'user' | 'client';
 
 const UnifiedLogin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, signInWithProvider, loading: authLoading, user, userRole } = useAuth();
   const { signIn: signInClient, loading: clientLoading, user: clientUser, error: clientError } = useClientAuth();
   
@@ -32,15 +34,25 @@ const UnifiedLogin = () => {
     return baseUsername;
   };
 
+  useEffect(() => {
+    const redirectFromLocation = getRedirectTargetFromLocation(location);
+    if (redirectFromLocation) {
+      persistRedirectTarget(redirectFromLocation);
+    } else {
+      clearStoredRedirectTarget();
+    }
+  }, [location]);
+
   // Redirect if already logged in
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const redirect = params.get('redirect');
     if (user && userRole && userType !== 'client') {
-      if (redirect) {
-        navigate(redirect, { replace: true });
+      const storedRedirect = getStoredRedirectTarget();
+      if (storedRedirect && storedRedirect !== '/login' && storedRedirect !== '/signup') {
+        navigate(storedRedirect, { replace: true });
+        clearStoredRedirectTarget();
         return;
       }
+
       if (userRole === 'admin') {
         navigate('/admin/dashboard', { replace: true });
       } else if (userRole === 'user') {
@@ -49,13 +61,15 @@ const UnifiedLogin = () => {
     }
     
     if (clientUser && userType === 'client') {
-      if (redirect) {
-        navigate(redirect, { replace: true });
+      const storedRedirect = getStoredRedirectTarget();
+      if (storedRedirect && storedRedirect !== '/login' && storedRedirect !== '/signup') {
+        navigate(storedRedirect, { replace: true });
+        clearStoredRedirectTarget();
       } else {
         navigate('/clients/dashboard', { replace: true });
       }
     }
-  }, [user, userRole, clientUser, userType, navigate]);
+  }, [user, userRole, clientUser, userType, navigate, location]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

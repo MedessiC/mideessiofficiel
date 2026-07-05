@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { clearStoredRedirectTarget, getStoredRedirectTarget, getRedirectTargetFromLocation, persistRedirectTarget } from '../utils/authRedirect';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Home, Moon, Sun } from 'lucide-react';
 
 export default function Login() {
@@ -12,6 +13,7 @@ export default function Login() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isDark, setIsDark] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { signIn } = useAuth();
 
@@ -25,7 +27,14 @@ export default function Login() {
       setSuccessMessage('Compte créé avec succès ! Connectez-vous maintenant.');
       setTimeout(() => setSuccessMessage(''), 5000);
     }
-  }, [searchParams]);
+
+    const redirectTarget = getRedirectTargetFromLocation(location);
+    if (redirectTarget) {
+      persistRedirectTarget(redirectTarget);
+    } else {
+      clearStoredRedirectTarget();
+    }
+  }, [searchParams, location]);
 
   const toggleTheme = () => {
     const newTheme = !isDark;
@@ -59,7 +68,8 @@ export default function Login() {
       return;
     }
 
-    navigate('/my-library');
+    const redirectTarget = getStoredRedirectTarget('/my-library');
+    navigate(redirectTarget, { replace: true });
   };
 
   return (

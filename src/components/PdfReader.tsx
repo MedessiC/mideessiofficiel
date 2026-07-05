@@ -4,10 +4,11 @@ import {
   ZoomIn, ZoomOut, Maximize2, Minimize2, RotateCw, BookOpen, Loader2,
   BookOpenCheck, Layers, Eye, Sun, Moon, Lock, LogIn
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import BookQuizModal from './BookQuizModal';
+import { persistRedirectTarget } from '../utils/authRedirect';
 
 interface PdfReaderProps {
   pdfUrl: string;
@@ -63,6 +64,7 @@ const loadPdfFromSessionCache = (url: string) => {
 
 export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = false, onClose }: PdfReaderProps) {
   const { user } = useAuth();
+  const location = useLocation();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const canvasRefs = useRef<Record<number, HTMLCanvasElement | null>>({});
@@ -92,6 +94,12 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const isCloudinary = pdfUrl.includes('cloudinary.com');
   const effectiveUrl = isCloudinary ? `/api/proxy-pdf?url=${encodeURIComponent(pdfUrl)}` : pdfUrl;
   const requiresAuth = !user;
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && location.pathname) {
+      persistRedirectTarget(location.pathname + location.search);
+    }
+  }, [location.pathname, location.search]);
 
   const getBookIdentifier = useCallback(() => {
     return pdfUrl.split('/').pop()?.split('?')[0] || title;
@@ -843,12 +851,18 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       } ${theme.contentBg} transition-colors duration-300 select-none relative flex justify-center`}
     >
       {requiresAuth && (
-        <div className="mb-3 flex items-center gap-2 text-xs font-medium text-slate-400">
-          <Lock className="h-3.5 w-3.5 text-[var(--brand-gold)]" />
-          <span>Connexion requise pour lire ce PDF.</span>
-          <Link to="/login" className="font-semibold text-[var(--brand-gold)] hover:underline">
-            Se connecter
-          </Link>
+        <div className="absolute inset-0 z-10 flex items-center justify-center p-4 sm:p-6">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-amber-400/30 bg-slate-900/85 px-5 py-4 text-center shadow-2xl backdrop-blur-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-gold)]/15">
+              <Lock className="h-6 w-6 text-[var(--brand-gold)]" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-white">Connexion requise pour lire ce PDF.</p>
+              <Link to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} className="inline-flex font-semibold text-[var(--brand-gold)] hover:underline">
+                Se connecter
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 
