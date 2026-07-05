@@ -1187,22 +1187,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           <div className="flex flex-col items-center w-full h-fit">
             {readerMode === 'page' ? (
               <div className="relative my-auto flex flex-col items-center justify-center w-full">
-                {/* Book Header - Indication titre et "à lire" */}
-                {!isFullscreen && (
-                  <div className="w-full mb-6 text-center">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <BookOpen className="w-5 h-5 text-[var(--brand-gold)]" />
-                      <span className="text-xs font-bold text-[var(--brand-gold)] uppercase tracking-widest">Livre à lire</span>
-                    </div>
-                    {title && (
-                      <h1 className="text-xl sm:text-2xl font-black text-white dark:text-white mb-2">
-                        {title}
-                      </h1>
-                    )}
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Cliquez ou utilisez les flèches pour continuer votre lecture</p>
-                  </div>
-                )}
-
+              
                 {rendering && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-gray-900/40 z-10 rounded-lg backdrop-blur-xs">
                     <Loader2 className="w-6 h-6 text-[var(--brand-gold)] animate-spin" />
