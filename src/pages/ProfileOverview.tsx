@@ -12,6 +12,7 @@ import { Avatar } from '../components/ui/Avatar';
 import { validateProfileData } from '../utils/authProfile';
 import { uploadFileToCloudinary } from '../lib/cloudinary';
 import { getProfileSavePayloadAttempts } from '../utils/profilePersistence';
+import ReauthenticationModal from '../components/ReauthenticationModal';
 
 interface ProfileData {
   id: string;
@@ -59,6 +60,7 @@ export default function ProfileOverview() {
   
   const [activeTab, setActiveTab] = useState<'activity' | 'about' | 'settings'>('activity');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showReauthModal, setShowReauthModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [isLibraryPublic, setIsLibraryPublic] = useState(true);
   const [readBooks, setReadBooks] = useState<{ id: string; title: string; cover_url: string | null; progress_percent: number; is_completed?: boolean }[]>([]);
@@ -287,7 +289,18 @@ export default function ProfileOverview() {
     } finally {
       setDeletingAccount(false);
       setShowDeleteConfirm(false);
+      setShowReauthModal(false);
     }
+  };
+
+  const handleDeleteAccountClick = () => {
+    setShowDeleteConfirm(false);
+    setShowReauthModal(true);
+  };
+
+  const handleReauthSuccess = () => {
+    setShowReauthModal(false);
+    handleDeleteAccount();
   };
 
   const joinDate = profile ? new Date(profile.created_at).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long' }) : '';
@@ -797,7 +810,7 @@ export default function ProfileOverview() {
                 Annuler
               </button>
               <button
-                onClick={handleDeleteAccount}
+                onClick={handleDeleteAccountClick}
                 disabled={deletingAccount}
                 className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black py-2.5 transition-all shadow-md flex items-center justify-center gap-1.5"
               >
@@ -807,6 +820,13 @@ export default function ProfileOverview() {
           </div>
         </div>
       )}
+      <ReauthenticationModal
+        isOpen={showReauthModal}
+        email={currentUser?.email || ''}
+        onClose={() => setShowReauthModal(false)}
+        onSuccess={handleReauthSuccess}
+        action="la suppression définitive de votre compte"
+      />
     </div>
   );
 }
