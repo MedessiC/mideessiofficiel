@@ -103,6 +103,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const downloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<number | null>(null);
 
   const isCloudinary = pdfUrl.includes('cloudinary.com');
   const effectiveUrl = isCloudinary ? `/api/proxy-pdf?url=${encodeURIComponent(pdfUrl)}` : pdfUrl;
@@ -355,9 +356,28 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   useEffect(() => {
     let cancelled = false;
 
+    const stopProgressLoop = () => {
+      if (progressIntervalRef.current !== null) {
+        window.clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    };
+
+    const startProgressLoop = () => {
+      stopProgressLoop();
+      progressIntervalRef.current = window.setInterval(() => {
+        setDownloadProgress(prev => {
+          if (prev >= 90) return prev;
+          const step = prev < 20 ? 7 : prev < 60 ? 4 : 2;
+          return Math.min(90, prev + step + Math.floor(Math.random() * 3));
+        });
+      }, 350);
+    };
+
     setLoading(true);
-    setDownloadProgress(0);
+    setDownloadProgress(5);
     setError(null);
+    startProgressLoop();
 
     const loadPdf = async (urlToFetch: string, isFallback: boolean = false) => {
       try {
@@ -371,8 +391,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           if (cancelled) return;
           setPdfDoc(doc);
           setPageCount(doc.numPages);
-          setDownloadProgress(100);
-          setLoading(false);
+          setDownloadProgress(95);
           await loadSavedProgress(doc);
           return;
         }
@@ -380,14 +399,41 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         const response = await fetch(urlToFetch, { cache: 'force-cache' });
         if (!response.ok) throw new Error(`PDF download failed: ${response.status}`);
 
-        const arrayBuffer = await response.arrayBuffer();
-        savePdfToSessionCache(urlToFetch, arrayBuffer);
+        const contentLength = Number(response.headers.get('content-length') || '0');
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error('Impossible de lire le fichier PDF');
 
-        const loadingTask: any = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) });
+        const chunks: Uint8Array[] = [];
+        let received = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.length;
+
+          if (contentLength > 0) {
+            const percent = Math.min(90, Math.round((received / contentLength) * 90));
+            setDownloadProgress(percent);
+          } else {
+            setDownloadProgress(prev => Math.min(90, prev + 2));
+          }
+        }
+
+        const arrayBuffer = new Uint8Array(received);
+        let position = 0;
+        for (const chunk of chunks) {
+          arrayBuffer.set(chunk, position);
+          position += chunk.length;
+        }
+
+        savePdfToSessionCache(urlToFetch, arrayBuffer.buffer);
+
+        const loadingTask: any = pdfjs.getDocument({ data: arrayBuffer });
         loadingTask.onProgress = (progressData: { loaded?: number; total?: number }) => {
           if (cancelled) return;
           if (progressData?.total) {
-            const percent = Math.min(100, Math.round((progressData.loaded || 0) / progressData.total * 100));
+            const percent = Math.min(95, 75 + Math.round((progressData.loaded || 0) / progressData.total * 20));
             setDownloadProgress(percent);
           }
         };
@@ -396,8 +442,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         if (cancelled) return;
         setPdfDoc(doc);
         setPageCount(doc.numPages);
-        setDownloadProgress(100);
-        setLoading(false);
+        setDownloadProgress(95);
 
         await loadSavedProgress(doc);
 
@@ -424,14 +469,20 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           loadPdf(pdfUrl, true);
         } else {
           setError(err?.message || 'Erreur lors du chargement du PDF');
+          setDownloadProgress(0);
           setLoading(false);
         }
+      } finally {
+        stopProgressLoop();
       }
     };
 
     loadPdf(effectiveUrl);
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      stopProgressLoop();
+    };
   }, [effectiveUrl, pdfUrl, isCloudinary, loadSavedProgress, isFullscreen, requiresAuth, user]);
 
   // Rendu de page(s) et prefetching en arrière-plan
@@ -478,6 +529,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         renderSinglePage(pageNum, canvas)
           .then(() => {
             setRendering(false);
+            setDownloadProgress(100);
             setLoading(false);
             // Prefetch / Pré-rendu en arrière-plan des pages adjacentes
             // Page suivante
@@ -512,6 +564,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           }
         } finally {
           setRendering(false);
+          setDownloadProgress(100);
           setLoading(false);
         }
       };

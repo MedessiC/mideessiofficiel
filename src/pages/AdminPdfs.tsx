@@ -299,17 +299,28 @@ export default function AdminPdfs() {
     }));
 
     if (quizManagerBook?.id) {
-      setQuizManagerData(prev => [...prev, ...converted]);
-      addToast('success', `Importé ${converted.length} quiz pour "${quizManagerBook.title}"`);
-      setShowQuizImportModal(false);
+      const merged = [...quizManagerData, ...converted];
+      try {
+        setQuizManagerLoading(true);
+        await saveQuizzesForBook(quizManagerBook.id, merged);
+        setQuizManagerData(merged);
+        addToast('success', `Importé ${converted.length} quiz pour "${quizManagerBook.title}"`);
+      } catch (err) {
+        addToast('error', err instanceof Error ? err.message : 'Erreur lors de l\'import');
+      } finally {
+        setQuizManagerLoading(false);
+        setShowQuizImportModal(false);
+      }
       return;
     }
 
     // If editing an existing book, persist immediately
     if (editingBook && editingBook.id) {
+      const merged = [...quizzes, ...converted];
       try {
         setLoading(true);
-        await saveQuizzesForBook(editingBook.id, converted);
+        await saveQuizzesForBook(editingBook.id, merged);
+        setQuizzes(merged);
         addToast('success', `Importé ${converted.length} quiz pour "${editingBook.title}"`);
         // refresh quiz manager if open
         if (quizManagerBook && quizManagerBook.id === editingBook.id) {
