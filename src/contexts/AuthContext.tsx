@@ -142,7 +142,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        let session = null;
+
+        if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+          const { data, error } = await supabase.auth.getSessionFromUrl();
+          if (error) {
+            console.warn('Supabase OAuth redirect error:', error);
+          }
+          session = data?.session ?? null;
+
+          if (window.location.hash) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+        }
+
+        if (!session) {
+          const { data } = await supabase.auth.getSession();
+          session = data.session;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
 
