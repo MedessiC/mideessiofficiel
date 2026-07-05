@@ -64,6 +64,7 @@ export default function BookDetail() {
   const [likeCount, setLikeCount] = useState(0);
   const [shareToast, setShareToast] = useState(false);
   const [topReaders, setTopReaders] = useState<TopReader[]>([]);
+  const [readerCount, setReaderCount] = useState(0);
 
   const readerRef = useRef<HTMLDivElement>(null);
 
@@ -137,6 +138,14 @@ export default function BookDetail() {
         .select('id', { count: 'exact', head: true })
         .eq('book_id', id);
       setLikeCount(count || 0);
+
+      // Real reader count from book_progress
+      const { count: progressCount } = await supabase
+        .from('book_progress')
+        .select('user_id', { count: 'exact', head: true })
+        .eq('book_id', id)
+        .gte('progress_percent', 1);
+      setReaderCount(progressCount || 0);
 
       // Récupérer le Top 3 des meilleurs lecteurs pour ce livre
       try {
@@ -364,12 +373,10 @@ export default function BookDetail() {
                       <span className="font-bold text-white">{book.rating}</span>/5
                     </div>
                   )}
-                  {book.students ? (
-                    <div className="flex items-center gap-1.5 text-white/80 text-sm">
-                      <Users className="w-4 h-4 text-blue-300" />
-                      <span>{book.students.toLocaleString()} lecteurs</span>
-                    </div>
-                  ) : null}
+                  <div className="flex items-center gap-1.5 text-white/80 text-sm">
+                    <Users className="w-4 h-4 text-blue-300" />
+                    <span>{readerCount.toLocaleString()} lecteur{readerCount !== 1 ? 's' : ''}</span>
+                  </div>
                   {book.pages ? (
                     <div className="flex items-center gap-1.5 text-white/80 text-sm">
                       <FileText className="w-4 h-4 text-emerald-300" />
@@ -488,7 +495,7 @@ export default function BookDetail() {
                   {[
                     { icon: Star, label: 'Note', value: book.rating ? `${book.rating} / 5` : '—', color: 'text-yellow-500' },
                     { icon: FileText, label: 'Pages', value: book.pages ? `${book.pages} pages` : '—', color: 'text-blue-500' },
-                    { icon: Users, label: 'Lecteurs', value: book.students ? book.students.toLocaleString() : '0', color: 'text-emerald-500' },
+                    { icon: Users, label: 'Lecteurs', value: readerCount.toLocaleString(), color: 'text-emerald-500' },
                     { icon: BookOpen, label: 'Niveau', value: book.level || '—', color: 'text-purple-500' },
                     { icon: Clock, label: 'Ajouté', value: book.week_added || '—', color: 'text-gray-400' },
                   ].map(({ icon: Icon, label, value, color }) => (

@@ -30,6 +30,7 @@ const Library = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [likedBooks, setLikedBooks] = useState<Set<string>>(new Set());
   const [shareToast, setShareToast] = useState(false);
+  const [readerCounts, setReaderCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchBooks();
@@ -50,6 +51,21 @@ const Library = () => {
         console.error('Erreur:', error);
       } else {
         setBooks(data || []);
+        // Fetch real reader counts from book_progress
+        if (data && data.length > 0) {
+          const { data: progressData } = await supabase
+            .from('book_progress')
+            .select('book_id')
+            .gte('progress_percent', 1);
+          
+          if (progressData) {
+            const counts: Record<string, number> = {};
+            progressData.forEach((row: { book_id: string }) => {
+              counts[row.book_id] = (counts[row.book_id] || 0) + 1;
+            });
+            setReaderCounts(counts);
+          }
+        }
       }
     } catch (err) {
       console.error('Erreur lors du chargement:', err);
@@ -205,7 +221,7 @@ const Library = () => {
                   </div>
                   <div className="flex items-center gap-1.5 text-gray-300 text-xs font-medium">
                     <Users className="w-4 h-4 text-blue-400" />
-                    <span>{book.students || 150} lecteurs</span>
+                    <span>{readerCounts[book.id] ?? 0} lecteur{(readerCounts[book.id] ?? 0) !== 1 ? 's' : ''}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-gray-300 text-xs font-medium">
                     <BookOpen className="w-4 h-4 text-emerald-400" />
@@ -335,9 +351,9 @@ const Library = () => {
                 <Star className="w-3 h-3 text-gold fill-gold" />
                 <span>{book.rating || 4.8}</span>
               </div>
-              <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1">
                 <Users className="w-3 h-3 text-blue-400" />
-                <span>{book.students || 150}</span>
+                <span>{readerCounts[book.id] ?? 0}</span>
               </div>
               <div className="flex items-center gap-1">
                 <BookOpen className="w-3 h-3 text-emerald-400" />
