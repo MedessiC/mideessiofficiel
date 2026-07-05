@@ -853,8 +853,22 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       return;
     }
     try {
-      const response = await fetch(effectiveUrl);
-      const blob = await response.blob();
+      // Pour Cloudinary, ajouter le paramètre fl_attachment pour forcer le téléchargement
+      const downloadUrl = isCloudinary ? `${pdfUrl}?fl_attachment` : pdfUrl;
+      
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/pdf',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Créer le blob avec le type MIME explicite
+      const blob = new Blob([await response.arrayBuffer()], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

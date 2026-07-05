@@ -211,10 +211,21 @@ export default function BookDetail() {
     if (!book?.pdf_url) return;
     
     try {
-      const response = await fetch(book.pdf_url);
+      // Pour Cloudinary, ajouter le paramètre fl_attachment pour forcer le téléchargement
+      const isCloudinary = book.pdf_url.includes('cloudinary.com');
+      const downloadUrl = isCloudinary ? `${book.pdf_url}?fl_attachment` : book.pdf_url;
+      
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/pdf',
+        }
+      });
+      
       if (!response.ok) throw new Error('Download failed');
       
-      const blob = await response.blob();
+      // Créer le blob avec le type MIME explicite
+      const blob = new Blob([await response.arrayBuffer()], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
