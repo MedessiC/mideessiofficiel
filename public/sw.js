@@ -37,6 +37,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
+  const isSameOrigin = requestUrl.origin === self.location.origin;
   const isPdf = requestUrl.pathname.includes('/api/proxy-pdf') || 
                 requestUrl.pathname.endsWith('.pdf') ||
                 (requestUrl.href.includes('cloudinary.com') && requestUrl.href.includes('pdf'));
@@ -70,8 +71,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  const isAsset = ASSETS_TO_CACHE.includes(requestUrl.pathname) || 
-                  requestUrl.pathname.startsWith('/assets/');
+  const isAsset = isSameOrigin && (ASSETS_TO_CACHE.includes(requestUrl.pathname) || requestUrl.pathname.startsWith('/assets/'));
 
   if (isAsset && event.request.method === 'GET') {
     event.respondWith(
@@ -87,6 +87,11 @@ self.addEventListener('fetch', (event) => {
         });
       })
     );
+    return;
+  }
+
+  if (!isSameOrigin) {
+    // Do not intercept cross-origin non-PDF requests; let the browser handle external resources directly.
     return;
   }
 
