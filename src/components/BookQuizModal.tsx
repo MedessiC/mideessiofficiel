@@ -71,7 +71,7 @@ export default function BookQuizModal({ bookId, currentPage, onClose, isFinalQui
         }
 
         if (quizData) {
-          // Vérifier si déjà complété
+          // Vérifier si déjà complété (priorité: DB si user connecté, sinon localStorage)
           if (user) {
             const { data: attempt } = await supabase
               .from('user_quiz_attempts')
@@ -79,10 +79,20 @@ export default function BookQuizModal({ bookId, currentPage, onClose, isFinalQui
               .eq('user_id', user.id)
               .eq('quiz_id', quizData.id)
               .maybeSingle();
-            
-            if (attempt && !isFinalQuiz) {
+
+            if (attempt) {
               setLoading(false);
               return; // Ne pas redéclencher automatiquement
+            }
+          } else {
+            try {
+              const key = `book_quiz_${quizData.id}_completed`;
+              if (typeof window !== 'undefined' && window.localStorage.getItem(key)) {
+                setLoading(false);
+                return; // Quiz déjà complété localement
+              }
+            } catch (e) {
+              // ignore localStorage errors
             }
           }
 
@@ -187,6 +197,18 @@ export default function BookQuizModal({ bookId, currentPage, onClose, isFinalQui
       }
     }
   };
+
+  // Mark as completed locally so anonymous users won't see it again after reload
+  useEffect(() => {
+    if (quizCompleted && quiz) {
+      try {
+        const key = `book_quiz_${quiz.id}_completed`;
+        if (typeof window !== 'undefined') window.localStorage.setItem(key, '1');
+      } catch (e) {
+        // ignore localStorage errors
+      }
+    }
+  }, [quizCompleted, quiz]);
 
   return (
     <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in font-poppins text-white">

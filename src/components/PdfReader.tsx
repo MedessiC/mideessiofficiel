@@ -42,7 +42,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const [bookmarks, setBookmarks] = useState<number[]>([]);
   const [showBookmarksList, setShowBookmarksList] = useState(false);
   const [currentBookId, setCurrentBookId] = useState<string | null>(null);
-  const [quizTriggered, setQuizTriggered] = useState(true);
+  const [quizTriggered, setQuizTriggered] = useState(false);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isCloudinary = pdfUrl.includes('cloudinary.com');
@@ -359,7 +359,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       setPageNum(currentPage);
       setPageInput(String(currentPage));
       saveProgress(currentPage);
-      setQuizTriggered(true); // Autoriser le déclenchement d'un nouveau quiz pour cette nouvelle page
+      setQuizTriggered(true); // Tentative initiale, effect ci-dessous validera si on doit vraiment afficher
     }
   }, [readerMode, pageCount, pageNum, saveProgress]);
 
@@ -389,7 +389,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     if (!isNaN(num) && num >= 1 && num <= pageCount) {
       setPageNum(num);
       saveProgress(num);
-      setQuizTriggered(true); // Réinitialiser le déclencheur de quiz
+      setQuizTriggered(true); // Tentative initiale, effect ci-dessous validera si on doit vraiment afficher
       if (readerMode === 'scroll') {
         const canvas = canvasRefs.current[num];
         if (canvas) {
@@ -400,6 +400,50 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       setPageInput(String(pageNum));
     }
   }, [pageCount, pageNum, readerMode, saveProgress]);
+
+  // For connected users, check DB to avoid re-showing quizzes they've already answered
+  useEffect(() => {
+    let cancelled = false;
+    const decideShowQuiz = async () => {
+      if (!currentBookId) return;
+
+      try {
+        // Find quiz for this book + page
+        const { data: quizData } = await supabase
+          .from('book_quizzes')
+          .select('id')
+          .eq('book_id', currentBookId)
+          .eq('trigger_page', pageNum)
+          .maybeSingle();
+
+        if (!quizData) {
+          if (!cancelled) setQuizTriggered(false);
+          return;
+        }
+
+        // If user not logged in, keep existing behavior (allow anon quizzes)
+        if (!user) {
+          if (!cancelled) setQuizTriggered(prev => prev); // leave as-is
+          return;
+        }
+
+        // Check if user already has an attempt
+        const { data: attempt } = await supabase
+          .from('user_quiz_attempts')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('quiz_id', quizData.id)
+          .maybeSingle();
+
+        if (!cancelled) setQuizTriggered(!attempt);
+      } catch (err) {
+        console.error('Error checking quiz attempt for user:', err);
+      }
+    };
+
+    decideShowQuiz();
+    return () => { cancelled = true; };
+  }, [currentBookId, pageNum, user]);
 
   // Raccourcis clavier
   useEffect(() => {
