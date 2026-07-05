@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft, BookOpen, Download, ExternalLink, Star, Users, FileText,
   Award, Bookmark, BookMarked, Share2, Eye, ChevronRight, Play, X,
-  BarChart2, Clock, Zap, Heart, MessageCircle, CheckCircle, BookmarkCheck
+  BarChart2, Clock, Zap, Heart, MessageCircle, CheckCircle, BookmarkCheck, Sparkles
 } from 'lucide-react';
 import SEO from '../components/SEO';
 import BookLikesComments from '../components/BookLikesComments';
@@ -203,6 +203,32 @@ export default function BookDetail() {
     }
   };
 
+  const handleDownload = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (!book?.pdf_url) return;
+    
+    try {
+      const response = await fetch(book.pdf_url);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${book.title || 'book'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Download error:', err);
+      alert('Erreur lors du téléchargement du PDF');
+    }
+  };
+
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -321,8 +347,8 @@ export default function BookDetail() {
                     </span>
                   )}
                   {book.is_new && (
-                    <span className="px-3 py-1 bg-emerald-400 text-white text-xs font-black rounded-full">
-                      ✨ NOUVEAU
+                    <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-full flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3" /> NOUVEAU
                     </span>
                   )}
                   {book.level && (
@@ -368,14 +394,26 @@ export default function BookDetail() {
                 {/* CTA Buttons */}
                 <div className="flex flex-wrap gap-3">
                   {book.pdf_url && (
-                    <button
-                      onClick={handleReadClick}
-                      id="btn-read-pdf"
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--brand-gold)] hover:bg-yellow-400 text-[var(--brand-midnight)] font-black rounded-xl transition-all shadow-lg shadow-black/30 active:scale-95 text-sm sm:text-base"
-                    >
-                      <Play className="w-4 h-4 fill-current" />
-                      Lire le PDF
-                    </button>
+                    <>
+                      <button
+                        onClick={handleReadClick}
+                        id="btn-read-pdf"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--brand-gold)] hover:bg-yellow-400 text-[var(--brand-midnight)] font-black rounded-xl transition-all shadow-lg shadow-black/30 active:scale-95 text-sm sm:text-base"
+                      >
+                        <Play className="w-4 h-4 fill-current" />
+                        Lire le PDF
+                      </button>
+                      {user && (
+                        <button
+                          onClick={handleDownload}
+                          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-all shadow-lg shadow-black/30 active:scale-95 text-sm sm:text-base"
+                          title="Télécharger le PDF"
+                        >
+                          <Download className="w-4 h-4" />
+                          Télécharger
+                        </button>
+                      )}
+                    </>
                   )}
                   {book.buy_url && (
                     <a
@@ -497,12 +535,23 @@ export default function BookDetail() {
                 {/* CTA */}
                 <div className="mt-5 space-y-2">
                   {book.pdf_url && (
-                    <button
-                      onClick={handleReadClick}
-                      className="w-full inline-flex items-center justify-center gap-2 py-3 bg-[var(--brand-midnight)] hover:bg-[var(--brand-midnight-dark)] text-[var(--brand-gold)] font-bold rounded-xl transition-all text-sm"
-                    >
-                      <Play className="w-4 h-4 fill-current" /> Lire le PDF
-                    </button>
+                    <>
+                      <button
+                        onClick={handleReadClick}
+                        className="w-full inline-flex items-center justify-center gap-2 py-3 bg-[var(--brand-midnight)] hover:bg-[var(--brand-midnight-dark)] text-[var(--brand-gold)] font-bold rounded-xl transition-all text-sm"
+                      >
+                        <Play className="w-4 h-4 fill-current" /> Lire le PDF
+                      </button>
+                      {user && (
+                        <button
+                          onClick={handleDownload}
+                          className="w-full inline-flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all text-sm"
+                          title="Télécharger le PDF"
+                        >
+                          <Download className="w-4 h-4" /> Télécharger
+                        </button>
+                      )}
+                    </>
                   )}
                   {book.buy_url && (
                     <a

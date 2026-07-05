@@ -1,7 +1,7 @@
 import {
   ArrowRight, TrendingUp, Shield, Sparkles, Users, Award,
   CheckCircle, Building2, Heart, Lightbulb, HandHeart, Globe, ChevronLeft, ChevronRight, ChevronUp,
-  BookOpen, Download, BadgeCheck, ExternalLink, Play, Bookmark
+  BookOpen, Download, BadgeCheck, ExternalLink, Play, Bookmark, RotateCw
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -601,7 +601,7 @@ const NewHome = () => {
                 <div className="md:col-span-2 flex flex-col justify-between">
                   <div>
                     <div className="inline-block mb-4 px-3 py-1 bg-[#ffd700] text-[#191970] text-xs sm:text-sm font-bold rounded-full">
-                      ✨ Nouvelle semaine
+                      <div className="flex items-center gap-1.5"><RotateCw className="w-4 h-4" /> Nouvelle semaine</div>
                     </div>
                     <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#191970] dark:text-white mb-3 sm:mb-4">
                       {weeklyPDF.title}

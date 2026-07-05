@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BookOpen, Plus, Edit2, Trash2, Save, X, Eye, Palette, Sparkles, Users, Loader, LogOut, TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle
+  BookOpen, Plus, Edit2, Trash2, Save, X, Eye, Palette, Sparkles, Users, Loader, LogOut, TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle, Flame, Star
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -406,7 +406,7 @@ const AdminDashboard = () => {
                     
                     {/* Badges */}
                     <div className="absolute top-2 right-2 flex flex-col gap-1">
-                      {book.is_new && <span className="px-2 py-1 bg-yellow-400 text-gray-900 text-xs font-bold rounded-full">✨ NEW</span>}
+                      {book.is_new && <span className="px-2 py-1 bg-yellow-400 text-gray-900 text-xs font-bold rounded-full flex items-center gap-1"><Flame className="w-3 h-3" /> NEW</span>}
                       {book.is_bestseller && <span className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">🔥 BEST</span>}
                     </div>
 
@@ -489,7 +489,7 @@ const AdminDashboard = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                {editingBook ? '✏️ Modifier' : '✨ Nouveau PDF'}
+                {editingBook ? <><Edit2 className="w-4 h-4" /> Modifier</> : <><Flame className="w-4 h-4" /> Nouveau PDF</>}
               </h2>
               <button
                 onClick={resetForm}
@@ -708,7 +708,7 @@ const AdminDashboard = () => {
                         className="w-5 h-5 rounded"
                       />
                       <div>
-                        <p className="font-bold text-gray-900 dark:text-white">✨ Nouveau</p>
+                        <p className="font-bold text-gray-900 dark:text-white flex items-center gap-1"><Star className="w-4 h-4 text-yellow-400" /> Nouveau</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Badge "NOUVEAU"</p>
                       </div>
                     </label>

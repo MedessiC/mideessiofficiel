@@ -96,6 +96,8 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const [completionError, setCompletionError] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [applauseAnim, setApplauseAnim] = useState(false);
+  const [isFirstPageView, setIsFirstPageView] = useState(true);
+  const [pageFlip, setPageFlip] = useState(false);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isCloudinary = pdfUrl.includes('cloudinary.com');
@@ -513,6 +515,32 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     }
   }, [pdfDoc, pageNum, readerMode, scale, rotation, pageCount, renderSinglePage, isGuestLocked]);
 
+  // Keyboard navigation & page flip animation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        next();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        prev();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [pageNum, pageCount]);
+
+  // Animation trigger on page change
+  useEffect(() => {
+    if (pageNum > 1) {
+      setIsFirstPageView(false);
+      setPageFlip(true);
+      const timer = setTimeout(() => setPageFlip(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [pageNum]);
+
   // Small Confetti component (inline, lightweight) and animations
   const Confetti = () => {
     const pieces = Array.from({ length: 30 }).map((_, i) => ({
@@ -530,7 +558,15 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         <style>{`
           @keyframes confetti-fall { to { transform: translateY(120vh) rotate(360deg); opacity: 0.9; } }
           @keyframes applaud { 0% { transform: scale(1); } 30% { transform: scale(1.45) rotate(-6deg);} 60% { transform: scale(0.95) rotate(4deg);} 100% { transform: scale(1); } }
+          @keyframes pulse-chevron { 0%, 100% { opacity: 0.4; transform: translateX(0); } 50% { opacity: 1; transform: translateX(8px); } }
+          @keyframes pulse-chevron-left { 0%, 100% { opacity: 0.4; transform: translateX(0); } 50% { opacity: 1; transform: translateX(-8px); } }
+          @keyframes page-flip { 0% { rotateY(0deg) rotateZ(0deg); opacity: 1; } 50% { rotateY(90deg); } 100% { rotateY(0deg) rotateZ(0deg); opacity: 1; } }
+          @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+          .animate-pulse-chevron { animation: pulse-chevron 1.5s ease-in-out infinite; }
+          .animate-pulse-chevron-left { animation: pulse-chevron-left 1.5s ease-in-out infinite; }
+          .animate-page-flip { animation: page-flip 600ms ease-in-out; perspective: 1000px; }
           .animate-applaud { animation: applaud 1200ms ease; display:inline-block }
+          .animate-shimmer { background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%); background-size: 1000px 100%; animation: shimmer 3s infinite; }
         `}</style>
         {pieces.map(p => (
           <span
@@ -809,6 +845,30 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     touchStartY.current = null;
   };
 
+  // Télécharger le PDF (utilisateurs connectés uniquement)
+  const handleDownload = async () => {
+    if (!user) {
+      persistRedirectTarget(location.pathname + location.search);
+      window.location.href = '/login';
+      return;
+    }
+    try {
+      const response = await fetch(effectiveUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title || 'book'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Download error:', err);
+      alert('Erreur lors du téléchargement du PDF');
+    }
+  };
+
   // Basculer l'API Plein écran du navigateur
   const toggleBrowserFullscreen = async () => {
     if (!containerRef.current) return;
@@ -1042,6 +1102,15 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
             <button onClick={() => setReaderTheme('light')} className={`p-1.5 rounded-md transition-all ${readerTheme === 'light' ? 'bg-white text-gray-900 shadow-sm' : 'opacity-60'}`}><Sun size={14} /></button>
             <button onClick={() => setReaderTheme('sepia')} className={`p-1.5 rounded-md transition-all ${readerTheme === 'sepia' ? 'bg-[#dfceaa] text-[#5b4636]' : 'opacity-60'}`}><Eye size={14} /></button>
           </div>
+          {user && (
+            <button
+              onClick={handleDownload}
+              title="Télécharger le PDF"
+              className={`min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center rounded-lg ${theme.btnBg} transition-all active:scale-95 hover:bg-blue-500/30 hover:text-blue-400`}
+            >
+              <Download size={16} />
+            </button>
+          )}
           <button
             onClick={toggleBrowserFullscreen}
             className={`min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center rounded-lg ${theme.btnBg} transition-all active:scale-95`}
@@ -1117,7 +1186,23 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         <div className="flex flex-col items-center w-full h-fit">
           <div className="flex flex-col items-center w-full h-fit">
             {readerMode === 'page' ? (
-              <div className="relative my-auto flex flex-col items-center justify-center">
+              <div className="relative my-auto flex flex-col items-center justify-center w-full">
+                {/* Book Header - Indication titre et "à lire" */}
+                {!isFullscreen && (
+                  <div className="w-full mb-6 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <BookOpen className="w-5 h-5 text-[var(--brand-gold)]" />
+                      <span className="text-xs font-bold text-[var(--brand-gold)] uppercase tracking-widest">Livre à lire</span>
+                    </div>
+                    {title && (
+                      <h1 className="text-xl sm:text-2xl font-black text-white dark:text-white mb-2">
+                        {title}
+                      </h1>
+                    )}
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Cliquez ou utilisez les flèches pour continuer votre lecture</p>
+                  </div>
+                )}
+
                 {rendering && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-gray-900/40 z-10 rounded-lg backdrop-blur-xs">
                     <Loader2 className="w-6 h-6 text-[var(--brand-gold)] animate-spin" />
@@ -1130,7 +1215,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
                     ref={el => { canvasRefs.current[num] = el; }}
                     className={`rounded-lg shadow-2xl max-w-full h-auto transition-transform ${
                       isFullscreen ? 'border border-white/5' : ''
-                    } ${num === pageNum ? 'block' : 'hidden'}`}
+                    } ${num === pageNum ? `block ${pageFlip ? 'animate-page-flip' : ''}` : 'hidden'}`}
                   />
                 ))}
                 {/* Completion full-page when in page mode and user moved past last page */}
@@ -1224,25 +1309,44 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       {/* Boutons de survol latéraux pour changer de page en plein écran page-par-page */}
       {readerMode === 'page' && !loading && !error && (
         <>
+          {/* Chevron gauche avec animation pulsante */}
           <button
             onClick={prev}
             disabled={pageNum <= 1}
-            className={`absolute left-4 top-1/2 -translate-y-1/2 p-3 sm:p-4 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all duration-300 disabled:opacity-0 disabled:pointer-events-none active:scale-95 ${
+            className={`absolute left-4 top-1/2 -translate-y-1/2 p-3 sm:p-4 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all duration-300 disabled:opacity-0 disabled:pointer-events-none active:scale-95 group ${
               isFullscreen && !showToolbar ? 'opacity-0 scale-90' : 'opacity-100 scale-100'
             }`}
-            title="Page précédente"
+            title="Page précédente (← ou Flèche Haut)"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={24} className={`${pageNum <= 1 ? '' : 'group-hover:animate-pulse-chevron-left'}`} />
           </button>
-            <button
+
+          {/* Hint for first page */}
+          {isFirstPageView && pageCount > 1 && (
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all duration-500 ${
+              isFirstPageView ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+            }`}>
+              <div className="flex items-center justify-center gap-4 text-white">
+                <ChevronLeft size={32} className="animate-pulse-chevron-left opacity-60" />
+                <div className="text-center">
+                  <p className="text-sm font-bold mb-1 opacity-80">Cliquez ou utilisez les flèches</p>
+                  <p className="text-xs opacity-60">pour tourner les pages</p>
+                </div>
+                <ChevronRight size={32} className="animate-pulse-chevron opacity-60" />
+              </div>
+            </div>
+          )}
+
+          {/* Chevron droit avec animation pulsante */}
+          <button
             onClick={next}
             disabled={pageNum >= completionPageIndex}
-            className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 sm:p-4 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all duration-300 disabled:opacity-0 disabled:pointer-events-none active:scale-95 ${
+            className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 sm:p-4 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all duration-300 disabled:opacity-0 disabled:pointer-events-none active:scale-95 group ${
               isFullscreen && !showToolbar ? 'opacity-0 scale-90' : 'opacity-100 scale-100'
             }`}
-            title="Page suivante"
+            title="Page suivante (→ ou Flèche Bas)"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={24} className={`${pageNum >= completionPageIndex ? '' : 'group-hover:animate-pulse-chevron'}`} />
           </button>
         </>
       )}

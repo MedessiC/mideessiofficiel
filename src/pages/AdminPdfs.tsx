@@ -4,7 +4,7 @@ import {
   BookOpen, Plus, Edit2, Trash2, Save, X, Palette, Sparkles, Users, Loader, LogOut,
   TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle, FileText, Upload,
   Image, ExternalLink, ChevronRight, ChevronLeft, HelpCircle, Zap, Eye, Search,
-  BookOpenCheck, GripVertical, Gift
+  BookOpenCheck, GripVertical, Gift, Flame, Star
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadFileToCloudinary } from '../lib/cloudinary';
@@ -562,7 +562,7 @@ export default function AdminPdfs() {
                       }
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute top-2 right-2 flex flex-col gap-1">
-                        {book.is_new && <span className="px-2 py-0.5 bg-yellow-400 text-gray-900 text-[9px] font-black rounded-full">✨ NEW</span>}
+                        {book.is_new && <span className="px-2 py-0.5 bg-yellow-400 text-gray-900 text-[9px] font-black rounded-full flex items-center gap-1"><Flame className="w-3 h-3" />NEW</span>}
                         {book.is_bestseller && <span className="px-2 py-0.5 bg-red-500 text-white text-[9px] font-black rounded-full">🔥 BEST</span>}
                       </div>
                       {book.pdf_url && (
@@ -786,7 +786,7 @@ export default function AdminPdfs() {
               <FormSection title="🏷️ Badges">
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { key: 'is_new', label: '✨ Nouveau', sub: 'Badge "NEW" sur la carte' },
+                    { key: 'is_new', label: <><Star className="w-4 h-4 text-yellow-400" /> Nouveau</>, sub: 'Badge "NEW" sur la carte' },
                     { key: 'is_bestseller', label: '🔥 Bestseller', sub: 'Badge "BEST" + mis en avant' },
                   ].map(badge => (
                     <label key={badge.key} className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${(formData as any)[badge.key] ? 'border-[var(--brand-gold)]/60 bg-[var(--brand-gold)]/5' : 'border-white/10 hover:border-white/20'}`}>
@@ -948,7 +948,7 @@ export default function AdminPdfs() {
                         pdfFile ? '✅ Nouveau PDF sélectionné' : formData.pdf_url ? '✅ PDF existant' : '❌ PDF manquant',
                         coverFile || formData.cover_image ? '✅ Couverture' : '⚠️ Pas d\'image',
                         quizzes.length > 0 ? `✅ ${quizzes.length} quiz configuré(s)` : '— Aucun quiz',
-                        formData.is_new ? '✨ Nouveau' : null,
+                        formData.is_new ? <><Flame className="w-3 h-3" /> Nouveau</> : null,
                         formData.is_bestseller ? '🔥 Bestseller' : null,
                       ].filter(Boolean).map((item, i) => (
                         <span key={i} className="text-[10px] text-gray-300 bg-white/5 px-2 py-0.5 rounded-lg">{item}</span>
