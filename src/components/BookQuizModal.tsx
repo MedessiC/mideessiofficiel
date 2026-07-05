@@ -153,6 +153,18 @@ export default function BookQuizModal({ bookId, currentPage, onClose, isFinalQui
     };
   }, [currentQuestionIndex, quiz, quizCompleted, loading, isAnswerSubmitted]);
 
+  // Mark as completed locally so anonymous users won't see it again after reload
+  useEffect(() => {
+    if (quizCompleted && quiz) {
+      try {
+        const key = `book_quiz_${quiz.id}_completed`;
+        if (typeof window !== 'undefined') window.localStorage.setItem(key, '1');
+      } catch (e) {
+        // ignore localStorage errors
+      }
+    }
+  }, [quizCompleted, quiz]);
+
   if (loading || !quiz) return null;
 
   const currentQuestion = quiz.questions[currentQuestionIndex];
@@ -197,18 +209,6 @@ export default function BookQuizModal({ bookId, currentPage, onClose, isFinalQui
       }
     }
   };
-
-  // Mark as completed locally so anonymous users won't see it again after reload
-  useEffect(() => {
-    if (quizCompleted && quiz) {
-      try {
-        const key = `book_quiz_${quiz.id}_completed`;
-        if (typeof window !== 'undefined') window.localStorage.setItem(key, '1');
-      } catch (e) {
-        // ignore localStorage errors
-      }
-    }
-  }, [quizCompleted, quiz]);
 
   return (
     <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in font-poppins text-white">

@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   X, Download, ExternalLink, ChevronLeft, ChevronRight,
   ZoomIn, ZoomOut, Maximize2, Minimize2, RotateCw, BookOpen, Loader2,
-  BookOpenCheck, Layers, Eye, Sun, Moon
+  BookOpenCheck, Layers, Eye, Sun, Moon, Lock, LogIn
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import BookQuizModal from './BookQuizModal';
@@ -18,6 +19,48 @@ interface PdfReaderProps {
 type ReaderMode = 'page' | 'scroll';
 type ReaderTheme = 'midnight' | 'light' | 'sepia';
 
+const getPdfCacheKey = (url: string) => `pdf-cache:${encodeURIComponent(url)}`;
+const getPdfStateKey = (url: string) => `pdf-reader-state:${encodeURIComponent(url)}`;
+
+const encodePdfBytes = (bytes: Uint8Array) => {
+  const chunks: string[] = [];
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    chunks.push(String.fromCharCode(...bytes.subarray(i, i + 0x8000)));
+  }
+  return btoa(chunks.join(''));
+};
+
+const decodePdfBytes = (base64: string) => {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+};
+
+const savePdfToSessionCache = (url: string, bytes: ArrayBuffer) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const encoded = encodePdfBytes(new Uint8Array(bytes));
+    window.sessionStorage.setItem(getPdfCacheKey(url), encoded);
+  } catch (err) {
+    console.warn('Unable to cache PDF in session storage:', err);
+  }
+};
+
+const loadPdfFromSessionCache = (url: string) => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const encoded = window.sessionStorage.getItem(getPdfCacheKey(url));
+    if (!encoded) return null;
+    return decodePdfBytes(encoded);
+  } catch (err) {
+    console.warn('Unable to read cached PDF from session storage:', err);
+    return null;
+  }
+};
+
 export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = false, onClose }: PdfReaderProps) {
   const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -30,6 +73,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const [scale, setScale] = useState(1.0);
   const [rotation, setRotation] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [pageInput, setPageInput] = useState('1');
@@ -47,6 +91,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
 
   const isCloudinary = pdfUrl.includes('cloudinary.com');
   const effectiveUrl = isCloudinary ? `/api/proxy-pdf?url=${encodeURIComponent(pdfUrl)}` : pdfUrl;
+  const requiresAuth = !user;
 
   const getBookIdentifier = useCallback(() => {
     return pdfUrl.split('/').pop()?.split('?')[0] || title;
@@ -187,7 +232,20 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   // Charger le document PDF
   useEffect(() => {
     let cancelled = false;
+
+    if (requiresAuth) {
+      setPdfDoc(null);
+      setPageCount(0);
+      setLoading(false);
+      setDownloadProgress(0);
+      setError(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     setLoading(true);
+    setDownloadProgress(0);
     setError(null);
 
     const loadPdf = async (urlToFetch: string, isFallback: boolean = false) => {
@@ -196,12 +254,40 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         // @ts-ignore
         pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.js', import.meta.url).toString();
 
-        const loadingTask = pdfjs.getDocument(urlToFetch);
+        const cachedBytes = loadPdfFromSessionCache(urlToFetch);
+        if (cachedBytes) {
+          const doc = await pdfjs.getDocument({ data: cachedBytes }).promise;
+          if (cancelled) return;
+          setPdfDoc(doc);
+          setPageCount(doc.numPages);
+          setDownloadProgress(100);
+          setLoading(false);
+          await loadSavedProgress(doc);
+          return;
+        }
+
+        const response = await fetch(urlToFetch, { cache: 'force-cache' });
+        if (!response.ok) throw new Error(`PDF download failed: ${response.status}`);
+
+        const arrayBuffer = await response.arrayBuffer();
+        savePdfToSessionCache(urlToFetch, arrayBuffer);
+
+        const loadingTask: any = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) });
+        loadingTask.onProgress = (progressData: { loaded?: number; total?: number }) => {
+          if (cancelled) return;
+          if (progressData?.total) {
+            const percent = Math.min(100, Math.round((progressData.loaded || 0) / progressData.total * 100));
+            setDownloadProgress(percent);
+          }
+        };
+
         const doc = await loadingTask.promise;
         if (cancelled) return;
         setPdfDoc(doc);
         setPageCount(doc.numPages);
-        
+        setDownloadProgress(100);
+        setLoading(false);
+
         await loadSavedProgress(doc);
 
         // Auto-fit
@@ -212,7 +298,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           if (container) {
             const availWidth = container.clientWidth - (isFullscreen ? 16 : 48);
             const fitScale = Math.min(availWidth / viewport.width, 2.0);
-            setScale(Math.max(0.5, +(fitScale).toFixed(2)));
+            setScale(Math.max(0.5, Number(fitScale.toFixed(2))));
           } else {
             setScale(1.0);
           }
@@ -229,17 +315,13 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           setError(err?.message || 'Erreur lors du chargement du PDF');
           setLoading(false);
         }
-      } finally {
-        if (!cancelled && (urlToFetch === pdfUrl || !isCloudinary)) {
-          setLoading(false);
-        }
       }
     };
 
     loadPdf(effectiveUrl);
 
     return () => { cancelled = true; };
-  }, [effectiveUrl, pdfUrl, isCloudinary, loadSavedProgress, isFullscreen]);
+  }, [effectiveUrl, pdfUrl, isCloudinary, loadSavedProgress, isFullscreen, requiresAuth, user]);
 
   // Rendu de page(s) et prefetching en arrière-plan
   const renderSinglePage = useCallback(async (num: number, canvas: HTMLCanvasElement) => {
@@ -271,32 +353,45 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       const canvas = canvasRefs.current[pageNum];
       if (canvas) {
         setRendering(true);
-        renderSinglePage(pageNum, canvas).then(() => {
-          setRendering(false);
-          // Prefetch / Pré-rendu en arrière-plan des pages adjacentes
-          // Page suivante
-          if (pageNum < pageCount) {
-            const nextCanvas = canvasRefs.current[pageNum + 1];
-            if (nextCanvas) renderSinglePage(pageNum + 1, nextCanvas);
-          }
-          // Page précédente
-          if (pageNum > 1) {
-            const prevCanvas = canvasRefs.current[pageNum - 1];
-            if (prevCanvas) renderSinglePage(pageNum - 1, prevCanvas);
-          }
-        });
+        renderSinglePage(pageNum, canvas)
+          .then(() => {
+            setRendering(false);
+            setLoading(false);
+            // Prefetch / Pré-rendu en arrière-plan des pages adjacentes
+            // Page suivante
+            if (pageNum < pageCount) {
+              const nextCanvas = canvasRefs.current[pageNum + 1];
+              if (nextCanvas) renderSinglePage(pageNum + 1, nextCanvas);
+            }
+            // Page précédente
+            if (pageNum > 1) {
+              const prevCanvas = canvasRefs.current[pageNum - 1];
+              if (prevCanvas) renderSinglePage(pageNum - 1, prevCanvas);
+            }
+          })
+          .catch(() => {
+            setRendering(false);
+            setLoading(false);
+          });
+      } else {
+        setRendering(false);
+        setLoading(false);
       }
     } else {
       // Mode défilement (scroll) - Rendre toutes les pages en arrière-plan
       const renderAll = async () => {
         setRendering(true);
-        for (let i = 1; i <= pageCount; i++) {
-          const canvas = canvasRefs.current[i];
-          if (canvas) {
-            await renderSinglePage(i, canvas);
+        try {
+          for (let i = 1; i <= pageCount; i++) {
+            const canvas = canvasRefs.current[i];
+            if (canvas) {
+              await renderSinglePage(i, canvas);
+            }
           }
+        } finally {
+          setRendering(false);
+          setLoading(false);
         }
-        setRendering(false);
       };
       renderAll();
     }
@@ -544,6 +639,52 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const theme = getThemeClasses();
   const progress = pageCount > 0 ? (pageNum / pageCount) * 100 : 0;
 
+  useEffect(() => {
+    const safePage = pageCount > 0 ? Math.min(Math.max(pageNum, 1), pageCount) : Math.max(1, pageNum);
+    if (safePage !== pageNum) {
+      setPageNum(safePage);
+    }
+    setPageInput(String(safePage));
+  }, [pageNum, pageCount]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.sessionStorage.getItem(getPdfStateKey(pdfUrl));
+      if (!raw) return;
+      const restoredState = JSON.parse(raw) as { pageNum?: number; scale?: number; rotation?: number; readerMode?: ReaderMode };
+      if (typeof restoredState.pageNum === 'number' && restoredState.pageNum > 0) {
+        setPageNum(restoredState.pageNum);
+        setPageInput(String(restoredState.pageNum));
+      }
+      if (typeof restoredState.scale === 'number' && restoredState.scale > 0) {
+        setScale(restoredState.scale);
+      }
+      if (typeof restoredState.rotation === 'number') {
+        setRotation(restoredState.rotation);
+      }
+      if (restoredState.readerMode === 'page' || restoredState.readerMode === 'scroll') {
+        setReaderMode(restoredState.readerMode);
+      }
+    } catch (err) {
+      console.warn('Unable to restore PDF reader state:', err);
+    }
+  }, [pdfUrl]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.sessionStorage.setItem(getPdfStateKey(pdfUrl), JSON.stringify({
+        pageNum,
+        scale,
+        rotation,
+        readerMode,
+      }));
+    } catch (err) {
+      console.warn('Unable to persist PDF reader state:', err);
+    }
+  }, [pageNum, scale, rotation, readerMode, pdfUrl]);
+
   // ── Toolbar ──
   const toolbar = (
     <div className={`flex flex-col gap-0 select-none transition-all duration-300 ${
@@ -552,6 +693,12 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       <div className={`flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2.5 ${theme.toolbarBg} border-b`}>
         {/* Left */}
         <div className="flex items-center gap-1.5">
+          {requiresAuth && (
+            <div className="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold text-amber-300">
+              <Lock className="h-3.5 w-3.5" />
+              Connexion requise
+            </div>
+          )}
           {readerMode === 'page' && (
             <>
               <button
@@ -695,10 +842,28 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         isFullscreen ? 'p-0 pt-16' : 'p-4 sm:p-6'
       } ${theme.contentBg} transition-colors duration-300 select-none relative flex justify-center`}
     >
+      {requiresAuth && (
+        <div className="mb-3 flex items-center gap-2 text-xs font-medium text-slate-400">
+          <Lock className="h-3.5 w-3.5 text-[var(--brand-gold)]" />
+          <span>Connexion requise pour lire ce PDF.</span>
+          <Link to="/login" className="font-semibold text-[var(--brand-gold)] hover:underline">
+            Se connecter
+          </Link>
+        </div>
+      )}
+
       {loading && (
-        <div className="flex flex-col items-center justify-center gap-3 py-24">
-          <Loader2 className="w-10 h-10 text-[var(--brand-gold)] animate-spin" />
-          <p className="text-xs font-bold opacity-60">Chargement du document…</p>
+        <div className="flex flex-col items-center justify-center gap-4 py-24 w-full max-w-md px-6">
+          <div className="w-full rounded-full bg-slate-200 dark:bg-slate-800 h-2.5 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400 transition-all duration-300 ease-out"
+              style={{ width: `${Math.max(5, downloadProgress)}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between w-full text-xs font-semibold text-[var(--text-secondary)]">
+            <span>{downloadProgress < 100 ? 'Téléchargement du PDF…' : 'Préparation de l’affichage…'}</span>
+            <span>{downloadProgress}%</span>
+          </div>
         </div>
       )}
       {error && (
