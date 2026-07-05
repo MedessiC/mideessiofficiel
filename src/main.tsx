@@ -22,10 +22,22 @@ if (rootElement.hasChildNodes()) {
 }
 
 // Enregistrement du Service Worker pour la PWA et le cache PDF
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('🚀 Service Worker enregistré avec succès:', reg.scope))
-      .catch((err) => console.error('❌ Échec de l\'enregistrement du Service Worker:', err));
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', async () => {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.update();
+      }
+
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      console.log('🚀 Service Worker enregistré avec succès:', reg.scope);
+
+      if (reg.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+    } catch (err) {
+      console.error('❌ Échec de l\'enregistrement du Service Worker:', err);
+    }
   });
 }
