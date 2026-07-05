@@ -2,12 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   BookOpen, Plus, Edit2, Trash2, Save, X, Palette, Sparkles, Users, Loader, LogOut,
-  TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle, FileText, Upload, Image, ExternalLink
+  TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle, FileText, Upload,
+  Image, ExternalLink, ChevronRight, ChevronLeft, HelpCircle, Zap, Eye, Search,
+  BookOpenCheck, GripVertical
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadFileToCloudinary } from '../lib/cloudinary';
 import { isCloudinaryUrl } from '../utils/cloudinaryImage';
 
+// ─── Types ───────────────────────────────────────────────────────────────────
 type Book = {
   id: string | null;
   title: string;
@@ -30,220 +33,267 @@ type Book = {
   created_at?: string;
 };
 
-type Toast = {
-  id: string;
-  type: 'success' | 'error';
-  message: string;
+type QuizQuestion = {
+  id?: string;
+  question_text: string;
+  options: string[];
+  correct_option_index: number;
 };
 
-const AdminDashboard = () => {
+type QuizDraft = {
+  id?: string;
+  title: string;
+  trigger_page: number;
+  questions: QuizQuestion[];
+};
+
+type Toast = { id: string; type: 'success' | 'error'; message: string };
+
+type FormStep = 'infos' | 'fichiers' | 'apparence' | 'quiz' | 'recap';
+
+const EMPTY_BOOK: Book = {
+  id: null, title: '', category: 'mobile', description: '',
+  price: 1000, author: 'MIDEESSI Team', cover_color: 'from-blue-500 to-blue-700',
+  cover_image: '', article_url: '', buy_url: '', pdf_url: '',
+  week_added: new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }),
+  is_new: true, is_bestseller: false, rating: 4.5, students: 0, pages: 50, level: 'Débutant'
+};
+
+const EMPTY_QUIZ: QuizDraft = {
+  title: '', trigger_page: 10,
+  questions: [{ question_text: '', options: ['', '', '', ''], correct_option_index: 0 }]
+};
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { id: 'mobile', name: 'Mobile' }, { id: 'cybersec', name: 'Cybersec' },
+  { id: 'webdev', name: 'Web Dev' }, { id: 'design', name: 'Design' },
+  { id: 'business', name: 'Business' }, { id: 'data', name: 'Data & IA' },
+];
+
+const COVER_COLORS = [
+  { id: 'from-blue-500 to-blue-700', name: 'Bleu', preview: 'bg-gradient-to-br from-blue-500 to-blue-700' },
+  { id: 'from-red-500 to-red-700', name: 'Rouge', preview: 'bg-gradient-to-br from-red-500 to-red-700' },
+  { id: 'from-green-500 to-green-700', name: 'Vert', preview: 'bg-gradient-to-br from-green-500 to-green-700' },
+  { id: 'from-purple-500 to-purple-700', name: 'Violet', preview: 'bg-gradient-to-br from-purple-500 to-purple-700' },
+  { id: 'from-yellow-500 to-yellow-700', name: 'Jaune', preview: 'bg-gradient-to-br from-yellow-500 to-yellow-700' },
+  { id: 'from-indigo-500 to-indigo-700', name: 'Indigo', preview: 'bg-gradient-to-br from-indigo-500 to-indigo-700' },
+  { id: 'from-pink-500 to-pink-700', name: 'Rose', preview: 'bg-gradient-to-br from-pink-500 to-pink-700' },
+  { id: 'from-teal-500 to-teal-700', name: 'Turquoise', preview: 'bg-gradient-to-br from-teal-500 to-teal-700' },
+  { id: 'from-[#191970] to-[#2d2daa]', name: 'Midnight', preview: 'bg-gradient-to-br from-[#191970] to-[#2d2daa]' },
+];
+
+const LEVELS = [
+  { id: 'Débutant', name: 'Débutant', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+  { id: 'Intermédiaire', name: 'Intermédiaire', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+  { id: 'Avancé', name: 'Avancé', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+];
+
+const STEPS: { key: FormStep; label: string; emoji: string }[] = [
+  { key: 'infos', label: 'Informations', emoji: '📚' },
+  { key: 'fichiers', label: 'Fichiers', emoji: '☁️' },
+  { key: 'apparence', label: 'Apparence', emoji: '🎨' },
+  { key: 'quiz', label: 'Quiz', emoji: '🧠' },
+  { key: 'recap', label: 'Publier', emoji: '🚀' },
+];
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function AdminPdfs() {
   const navigate = useNavigate();
   const [books, setBooks] = useState<Book[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // Form steps
+  const [currentStep, setCurrentStep] = useState<FormStep>('infos');
+  const [formData, setFormData] = useState<Book>({ ...EMPTY_BOOK });
 
   // Upload states
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string>('');
   const [uploadProgress, setUploadProgress] = useState<{ pdf: number; cover: number } | null>(null);
-  const [uploadHint, setUploadHint] = useState('');
+
+  // Quiz states (for the form)
+  const [quizzes, setQuizzes] = useState<QuizDraft[]>([]);
+  const [activeQuizIndex, setActiveQuizIndex] = useState(0);
+
+  // Quiz manager modal (for existing books)
+  const [quizManagerBook, setQuizManagerBook] = useState<Book | null>(null);
+  const [quizManagerData, setQuizManagerData] = useState<QuizDraft[]>([]);
+  const [quizManagerLoading, setQuizManagerLoading] = useState(false);
 
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<Book>({
-    id: null,
-    title: '',
-    category: 'mobile',
-    description: '',
-    price: 1000,
-    author: 'MIDEESSI Team',
-    cover_color: 'from-blue-500 to-blue-700',
-    cover_image: '',
-    article_url: '',
-    buy_url: '',
-    pdf_url: '',
-    week_added: new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }),
-    is_new: true,
-    is_bestseller: false,
-    rating: 4.5,
-    students: 0,
-    pages: 50,
-    level: 'Débutant'
-  });
+  // ── Auth ───────────────────────────────────────────────────────────────────
+  useEffect(() => { checkAuth(); }, []);
 
-  const categories = [
-    { id: 'mobile', name: 'Mobile', icon: <Download className="w-4 h-4" /> },
-    { id: 'cybersec', name: 'Cybersec', icon: <Award className="w-4 h-4" /> },
-    { id: 'webdev', name: 'Web Dev', icon: <TrendingUp className="w-4 h-4" /> },
-    { id: 'design', name: 'Design', icon: <Palette className="w-4 h-4" /> },
-    { id: 'business', name: 'Business', icon: <Users className="w-4 h-4" /> },
-    { id: 'data', name: 'Data & IA', icon: <Clock className="w-4 h-4" /> },
-  ];
+  const checkAuth = async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) { navigate('/admin/login'); return; }
+      const { data: adminData } = await supabase.from('admins').select('*').eq('id', user.id).maybeSingle();
+      if (!adminData) { await supabase.auth.signOut(); navigate('/admin/login'); return; }
+      await fetchBooks();
+    } catch { navigate('/admin/login'); }
+    finally { setIsAuthenticating(false); }
+  };
 
-  const coverColors = [
-    { id: 'from-blue-500 to-blue-700', name: 'Bleu', preview: 'bg-gradient-to-br from-blue-500 to-blue-700' },
-    { id: 'from-red-500 to-red-700', name: 'Rouge', preview: 'bg-gradient-to-br from-red-500 to-red-700' },
-    { id: 'from-green-500 to-green-700', name: 'Vert', preview: 'bg-gradient-to-br from-green-500 to-green-700' },
-    { id: 'from-purple-500 to-purple-700', name: 'Violet', preview: 'bg-gradient-to-br from-purple-500 to-purple-700' },
-    { id: 'from-yellow-500 to-yellow-700', name: 'Jaune', preview: 'bg-gradient-to-br from-yellow-500 to-yellow-700' },
-    { id: 'from-indigo-500 to-indigo-700', name: 'Indigo', preview: 'bg-gradient-to-br from-indigo-500 to-indigo-700' },
-    { id: 'from-pink-500 to-pink-700', name: 'Rose', preview: 'bg-gradient-to-br from-pink-500 to-pink-700' },
-    { id: 'from-teal-500 to-teal-700', name: 'Turquoise', preview: 'bg-gradient-to-br from-teal-500 to-teal-700' },
-    { id: 'from-[#191970] to-[#2d2daa]', name: 'Midnight', preview: 'bg-gradient-to-br from-[#191970] to-[#2d2daa]' },
-  ];
-
-  const levels = [
-    { id: 'Débutant', name: 'Débutant', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
-    { id: 'Intermédiaire', name: 'Intermédiaire', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
-    { id: 'Avancé', name: 'Avancé', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
-  ];
-
+  // ── Helpers ────────────────────────────────────────────────────────────────
   const addToast = (type: 'success' | 'error', message: string) => {
     const id = Date.now().toString();
     setToasts(prev => [...prev, { id, type, message }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
   };
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      setIsAuthenticating(true);
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        navigate('/admin/login');
-        return;
-      }
-
-      const { data: adminData, error: adminError } = await supabase
-        .from('admins')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (adminError || !adminData) {
-        await supabase.auth.signOut();
-        navigate('/admin/login');
-        return;
-      }
-
-      await fetchBooks();
-      setIsAuthenticating(false);
-    } catch (err) {
-      console.error('Erreur auth:', err);
-      navigate('/admin/login');
-    }
-  };
-
   const fetchBooks = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('books')
-        .select('*')
-        .order('created_at', { ascending: false });
+    const { data } = await supabase.from('books').select('*').order('created_at', { ascending: false });
+    if (data) setBooks(data);
+  };
 
-      if (error) throw error;
-      if (data) setBooks(data);
-    } catch (err) {
-      console.error('Erreur chargement:', err);
+  const handleLogout = async () => { await supabase.auth.signOut(); navigate('/admin/login'); };
+
+  const getLevelColor = (level: string) =>
+    LEVELS.find(l => l.id === level)?.color || 'bg-gray-100 text-gray-800';
+
+  // ── Quiz helpers ───────────────────────────────────────────────────────────
+  const addQuiz = () => {
+    setQuizzes(prev => [...prev, { ...EMPTY_QUIZ, title: `Quiz ${prev.length + 1}` }]);
+    setActiveQuizIndex(quizzes.length);
+  };
+
+  const removeQuiz = (idx: number) => {
+    setQuizzes(prev => prev.filter((_, i) => i !== idx));
+    setActiveQuizIndex(Math.max(0, activeQuizIndex - 1));
+  };
+
+  const updateQuiz = (idx: number, patch: Partial<QuizDraft>) => {
+    setQuizzes(prev => prev.map((q, i) => i === idx ? { ...q, ...patch } : q));
+  };
+
+  const addQuestion = (quizIdx: number) => {
+    const updated = [...quizzes];
+    updated[quizIdx].questions.push({ question_text: '', options: ['', '', '', ''], correct_option_index: 0 });
+    setQuizzes(updated);
+  };
+
+  const removeQuestion = (quizIdx: number, qIdx: number) => {
+    const updated = [...quizzes];
+    updated[quizIdx].questions = updated[quizIdx].questions.filter((_, i) => i !== qIdx);
+    setQuizzes(updated);
+  };
+
+  const updateQuestion = (quizIdx: number, qIdx: number, patch: Partial<QuizQuestion>) => {
+    const updated = [...quizzes];
+    updated[quizIdx].questions[qIdx] = { ...updated[quizIdx].questions[qIdx], ...patch };
+    setQuizzes(updated);
+  };
+
+  const updateOption = (quizIdx: number, qIdx: number, optIdx: number, value: string) => {
+    const updated = [...quizzes];
+    updated[quizIdx].questions[qIdx].options[optIdx] = value;
+    setQuizzes(updated);
+  };
+
+  // ── Save quizzes to Supabase ───────────────────────────────────────────────
+  const saveQuizzesForBook = async (bookId: string, quizzesToSave: QuizDraft[]) => {
+    // Delete existing quizzes for this book (cascade deletes questions + attempts)
+    // But only delete ones not in the current set (by id)
+    const existingIds = quizzesToSave.filter(q => q.id).map(q => q.id!);
+
+    // Get all existing quiz IDs for this book
+    const { data: existingQuizzes } = await supabase
+      .from('book_quizzes').select('id').eq('book_id', bookId);
+
+    const toDelete = (existingQuizzes || []).filter(q => !existingIds.includes(q.id)).map(q => q.id);
+    if (toDelete.length > 0) {
+      await supabase.from('book_quizzes').delete().in('id', toDelete);
+    }
+
+    // Upsert quizzes
+    for (const quiz of quizzesToSave) {
+      if (!quiz.title.trim()) continue;
+
+      let quizId = quiz.id;
+      if (quizId) {
+        // Update existing
+        await supabase.from('book_quizzes').update({
+          title: quiz.title,
+          trigger_page: quiz.trigger_page,
+        }).eq('id', quizId);
+        // Delete old questions and re-insert
+        await supabase.from('quiz_questions').delete().eq('quiz_id', quizId);
+      } else {
+        // Insert new
+        const { data: newQuiz } = await supabase.from('book_quizzes').insert({
+          book_id: bookId,
+          title: quiz.title,
+          trigger_page: quiz.trigger_page,
+        }).select('id').single();
+        quizId = newQuiz?.id;
+      }
+
+      if (!quizId) continue;
+
+      // Insert questions
+      const validQuestions = quiz.questions.filter(q => q.question_text.trim() && q.options.some(o => o.trim()));
+      if (validQuestions.length > 0) {
+        await supabase.from('quiz_questions').insert(
+          validQuestions.map(q => ({
+            quiz_id: quizId,
+            question_text: q.question_text,
+            options: q.options,
+            correct_option_index: q.correct_option_index,
+          }))
+        );
+      }
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/admin/login');
+  // ── Load quizzes for a book ───────────────────────────────────────────────
+  const loadQuizzesForBook = async (bookId: string): Promise<QuizDraft[]> => {
+    const { data: quizData } = await supabase
+      .from('book_quizzes').select('id, title, trigger_page').eq('book_id', bookId).order('trigger_page');
+
+    if (!quizData || quizData.length === 0) return [];
+
+    const result: QuizDraft[] = [];
+    for (const quiz of quizData) {
+      const { data: questions } = await supabase
+        .from('quiz_questions').select('id, question_text, options, correct_option_index').eq('quiz_id', quiz.id);
+
+      result.push({
+        id: quiz.id,
+        title: quiz.title,
+        trigger_page: quiz.trigger_page,
+        questions: (questions || []).map(q => ({
+          id: q.id,
+          question_text: q.question_text,
+          options: q.options as string[],
+          correct_option_index: q.correct_option_index,
+        })),
+      });
+    }
+    return result;
   };
 
-  // ── Cover image file picker ───────────────────────────────────────────────
-  const handleCoverFileChange = (file: File | null) => {
-    setCoverFile(file);
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => setCoverPreview(e.target?.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setCoverPreview('');
-    }
+  // ── Upload ────────────────────────────────────────────────────────────────
+  const uploadToCloudinary = async (file: File, folder: string, key: 'pdf' | 'cover', type: 'auto' | 'raw' = 'auto') => {
+    setUploadProgress(prev => ({ ...(prev ?? { pdf: 0, cover: 0 }), [key]: 10 }));
+    const url = await uploadFileToCloudinary(file, folder, type);
+    setUploadProgress(prev => ({ ...(prev ?? { pdf: 0, cover: 0 }), [key]: 100 }));
+    return url;
   };
 
-  // ── PDF file picker ───────────────────────────────────────────────────────
-  const handlePdfFileChange = (file: File | null) => {
-    setPdfFile(file);
-    setUploadHint(file ? `📄 ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} Mo)` : '');
-  };
-
-  // ── Upload to Cloudinary ──────────────────────────────────────────────────
-  const uploadToCloudinary = async (file: File, folder: string, progressKey: 'pdf' | 'cover', resourceType: 'auto' | 'raw' = 'auto') => {
-    setUploadProgress(prev => ({ ...(prev ?? { pdf: 0, cover: 0 }), [progressKey]: 10 }));
-    console.debug('[AdminPdfs] uploadToCloudinary', { fileName: file.name, fileType: file.type, fileSize: file.size, folder, progressKey, resourceType });
-    try {
-      const url = await uploadFileToCloudinary(file, folder, resourceType);
-      console.debug('[AdminPdfs] uploadToCloudinary succeeded', { url, folder, resourceType });
-      setUploadProgress(prev => ({ ...(prev ?? { pdf: 0, cover: 0 }), [progressKey]: 100 }));
-      return url;
-    } catch (err) {
-      console.error('[AdminPdfs] uploadToCloudinary failed', { err, folder, progressKey, resourceType, fileName: file.name });
-      setUploadProgress(null);
-      throw err;
-    }
-  };
-
-  // ── Submit ────────────────────────────────────────────────────────────────
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    console.debug('[AdminPdfs] handleSubmit start', {
-      editingBookId: editingBook?.id ?? null,
-      formData: {
-        title: formData.title,
-        category: formData.category,
-        description: formData.description,
-        price: formData.price,
-        author: formData.author,
-        cover_color: formData.cover_color,
-        cover_image: formData.cover_image,
-        article_url: formData.article_url,
-        buy_url: formData.buy_url,
-        pdf_url: formData.pdf_url,
-        week_added: formData.week_added,
-        is_new: formData.is_new,
-        is_bestseller: formData.is_bestseller,
-        rating: formData.rating,
-        students: formData.students,
-        pages: formData.pages,
-        level: formData.level,
-      },
-      pdfFile: pdfFile ? { name: pdfFile.name, type: pdfFile.type, size: pdfFile.size } : null,
-      coverFile: coverFile ? { name: coverFile.name, type: coverFile.type, size: coverFile.size } : null,
-    });
-
-    if (!formData.title || !formData.description) {
-      addToast('error', 'Le titre et la description sont obligatoires');
-      return;
-    }
-
-    if (!editingBook && !pdfFile && !formData.pdf_url) {
-      addToast('error', 'Ajoutez un fichier PDF ou un lien direct pour publier');
-      return;
-    }
-
-    if (formData.pdf_url && !isCloudinaryUrl(formData.pdf_url)) {
-      addToast('error', 'Le lien PDF doit être hébergé sur Cloudinary');
-      return;
-    }
-
-    if (formData.cover_image && !isCloudinaryUrl(formData.cover_image)) {
-      addToast('error', 'L’image de couverture doit être hébergée sur Cloudinary');
-      return;
-    }
+  // ── Submit book form ──────────────────────────────────────────────────────
+  const handleSubmit = async () => {
+    if (!formData.title || !formData.description) { addToast('error', 'Titre et description obligatoires'); return; }
+    if (!editingBook && !pdfFile && !formData.pdf_url) { addToast('error', 'Un fichier PDF est requis'); return; }
 
     setLoading(true);
     setUploadProgress({ pdf: 0, cover: 0 });
@@ -252,81 +302,48 @@ const AdminDashboard = () => {
       let pdfUrl = formData.pdf_url;
       let coverImageUrl = formData.cover_image;
 
-      // Upload PDF to Cloudinary as raw
       if (pdfFile) {
         addToast('success', '📤 Upload du PDF en cours...');
-        console.debug('[AdminPdfs] starting Cloudinary PDF upload', { fileName: pdfFile.name, fileType: pdfFile.type });
         pdfUrl = await uploadToCloudinary(pdfFile, 'mideessi/pdfs', 'pdf', 'raw');
-        console.debug('[AdminPdfs] Cloudinary PDF upload completed', { pdfUrl });
       }
-
-      // Upload cover image to Cloudinary as image
       if (coverFile) {
         addToast('success', '🖼️ Upload de la couverture en cours...');
-        console.debug('[AdminPdfs] starting Cloudinary cover upload', { fileName: coverFile.name, fileType: coverFile.type });
         coverImageUrl = await uploadToCloudinary(coverFile, 'mideessi/covers', 'cover', 'auto');
-        console.debug('[AdminPdfs] Cloudinary cover upload completed', { coverImageUrl });
-      }
-
-      if (!pdfUrl) {
-        addToast('error', 'Le lien PDF est requis');
-        return;
       }
 
       const payload = {
-        title: formData.title,
-        category: formData.category,
-        description: formData.description,
-        price: formData.price,
-        author: formData.author,
-        cover_color: formData.cover_color,
-        cover_image: coverImageUrl,
-        article_url: formData.article_url,
-        buy_url: formData.buy_url,
-        pdf_url: pdfUrl,
-        week_added: formData.week_added,
-        is_new: formData.is_new,
-        is_bestseller: formData.is_bestseller,
-        rating: formData.rating,
-        students: formData.students,
-        pages: formData.pages,
-        level: formData.level,
+        title: formData.title, category: formData.category, description: formData.description,
+        price: formData.price, author: formData.author, cover_color: formData.cover_color,
+        cover_image: coverImageUrl, article_url: formData.article_url, buy_url: formData.buy_url,
+        pdf_url: pdfUrl, week_added: formData.week_added, is_new: formData.is_new,
+        is_bestseller: formData.is_bestseller, rating: formData.rating,
+        students: formData.students, pages: formData.pages, level: formData.level,
       };
 
-      console.debug('[AdminPdfs] supabase payload ready', { payload, editing: Boolean(editingBook) });
+      let bookId: string;
 
       if (editingBook) {
-        const { error } = await supabase
-          .from('books')
-          .update(payload)
-          .eq('id', editingBook.id);
-
-        if (error) throw error;
-        setBooks(books.map(b => b.id === editingBook.id ? { ...formData, id: editingBook.id, pdf_url: pdfUrl, cover_image: coverImageUrl } : b));
-        addToast('success', '✅ PDF mis à jour avec succès');
+        await supabase.from('books').update(payload).eq('id', editingBook.id);
+        bookId = editingBook.id!;
+        addToast('success', '✅ Livre mis à jour avec succès');
       } else {
-        const { error } = await supabase
-          .from('books')
-          .insert([{ ...payload, created_at: new Date().toISOString() }]);
-
+        const { data: newBook, error } = await supabase.from('books')
+          .insert([{ ...payload, created_at: new Date().toISOString() }])
+          .select('id').single();
         if (error) throw error;
-        console.debug('[AdminPdfs] supabase insert succeeded');
-        await fetchBooks();
-        addToast('success', '🚀 PDF publié avec succès sur la bibliothèque');
+        bookId = newBook.id;
+        addToast('success', '🚀 Livre publié sur la bibliothèque !');
       }
 
+      // Save quizzes
+      if (quizzes.length > 0) {
+        await saveQuizzesForBook(bookId, quizzes);
+        addToast('success', `🧠 ${quizzes.length} quiz sauvegardé(s)`);
+      }
+
+      await fetchBooks();
       resetForm();
     } catch (err: any) {
-      console.error('Erreur publication:', err, {
-        editingBookId: editingBook?.id ?? null,
-        formData: {
-          title: formData.title,
-          pdf_url: formData.pdf_url,
-          cover_image: formData.cover_image,
-        },
-        pdfFile: pdfFile ? { name: pdfFile.name, type: pdfFile.type, size: pdfFile.size } : null,
-        coverFile: coverFile ? { name: coverFile.name, type: coverFile.type, size: coverFile.size } : null,
-      });
       addToast('error', err.message || 'Erreur lors de la publication');
     } finally {
       setLoading(false);
@@ -334,765 +351,805 @@ const AdminDashboard = () => {
     }
   };
 
+  // ── Delete book ───────────────────────────────────────────────────────────
   const handleDelete = async (id: string) => {
-    if (!id) {
-      addToast('error', 'ID du PDF invalide');
-      return;
-    }
-
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce PDF ?')) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('books')
-        .delete()
-        .eq('id', id)
-        .select('*');
-
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        addToast('error', 'Aucun PDF supprimé : vérifiez l’ID');
-        console.warn('Suppression réussie mais aucune ligne retournée pour id:', id);
-        return;
-      }
-
-      setBooks(books.filter(b => b.id !== id));
-      addToast('success', '🗑️ PDF supprimé');
-    } catch (err: any) {
-      console.error('Erreur suppression:', err);
-      addToast('error', err.message || 'Erreur lors de la suppression');
-    }
+    if (!confirm('Supprimer ce livre ? Cette action est irréversible.')) return;
+    const { error } = await supabase.from('books').delete().eq('id', id);
+    if (error) { addToast('error', error.message); return; }
+    setBooks(books.filter(b => b.id !== id));
+    addToast('success', '🗑️ Livre supprimé');
   };
 
-  const handleEdit = (book: Book) => {
+  // ── Edit book ──────────────────────────────────────────────────────────────
+  const handleEdit = async (book: Book) => {
     setEditingBook(book);
     setFormData(book);
     setCoverPreview(book.cover_image || '');
+    setCurrentStep('infos');
+    // Load existing quizzes
+    if (book.id) {
+      const existingQuizzes = await loadQuizzesForBook(book.id);
+      setQuizzes(existingQuizzes);
+    }
     setShowForm(true);
   };
 
+  // ── Open quiz manager for existing book ───────────────────────────────────
+  const openQuizManager = async (book: Book) => {
+    setQuizManagerBook(book);
+    setQuizManagerLoading(true);
+    if (book.id) {
+      const data = await loadQuizzesForBook(book.id);
+      setQuizManagerData(data);
+    }
+    setQuizManagerLoading(false);
+  };
+
+  // ── Save quiz manager ─────────────────────────────────────────────────────
+  const saveQuizManager = async () => {
+    if (!quizManagerBook?.id) return;
+    setQuizManagerLoading(true);
+    try {
+      await saveQuizzesForBook(quizManagerBook.id, quizManagerData);
+      addToast('success', '🧠 Quiz mis à jour avec succès');
+      setQuizManagerBook(null);
+    } catch (err: any) {
+      addToast('error', err.message || 'Erreur lors de la sauvegarde');
+    } finally {
+      setQuizManagerLoading(false);
+    }
+  };
+
+  // ── Reset form ────────────────────────────────────────────────────────────
   const resetForm = () => {
-    setFormData({
-      id: null,
-      title: '',
-      category: 'mobile',
-      description: '',
-      price: 1000,
-      author: 'MIDEESSI Team',
-      cover_color: 'from-blue-500 to-blue-700',
-      cover_image: '',
-      article_url: '',
-      buy_url: '',
-      pdf_url: '',
-      week_added: new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }),
-      is_new: true,
-      is_bestseller: false,
-      rating: 4.5,
-      students: 0,
-      pages: 50,
-      level: 'Débutant'
-    });
-    setPdfFile(null);
-    setCoverFile(null);
-    setCoverPreview('');
-    setUploadHint('');
-    setUploadProgress(null);
-    setEditingBook(null);
-    setShowForm(false);
+    setFormData({ ...EMPTY_BOOK });
+    setPdfFile(null); setCoverFile(null); setCoverPreview('');
+    setUploadProgress(null); setEditingBook(null);
+    setQuizzes([]); setActiveQuizIndex(0);
+    setCurrentStep('infos'); setShowForm(false);
   };
 
-  const getLevelColor = (level: string) => {
-    const levelObj = levels.find(l => l.id === level);
-    return levelObj?.color || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+  // ── Step validation ───────────────────────────────────────────────────────
+  const stepValid = (step: FormStep): boolean => {
+    if (step === 'infos') return !!(formData.title && formData.description);
+    if (step === 'fichiers') return !!(pdfFile || formData.pdf_url || editingBook);
+    return true;
   };
 
+  const stepIndex = STEPS.findIndex(s => s.key === currentStep);
+
+  // ── Filtered books ────────────────────────────────────────────────────────
+  const filteredBooks = books.filter(b =>
+    b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
   if (isAuthenticating) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader className="w-14 h-14 text-blue-600 dark:text-blue-400 animate-spin mx-auto" />
-          <p className="text-gray-600 dark:text-gray-300 font-semibold">Vérification...</p>
+      <div className="min-h-screen bg-[#0f1117] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-white">
+          <Loader className="w-10 h-10 text-[var(--brand-gold)] animate-spin" />
+          <p className="text-sm text-gray-400">Vérification admin...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 pb-20">
-      {/* Toast Notifications */}
-      <div className="fixed bottom-4 right-4 z-50 space-y-3 max-w-sm px-4 sm:px-0">
-        {toasts.map(toast => (
-          <div
-            key={toast.id}
-            className={`p-4 rounded-lg shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-right-4 ${
-              toast.type === 'success'
-                ? 'bg-green-50 dark:bg-green-900 text-green-800 dark:text-green-100 border border-green-200 dark:border-green-800'
-                : 'bg-red-50 dark:bg-red-900 text-red-800 dark:text-red-100 border border-red-200 dark:border-red-800'
-            }`}
-          >
-            {toast.type === 'success' ? (
-              <CheckCircle className="w-5 h-5 flex-shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            )}
-            <p className="text-sm font-medium">{toast.message}</p>
+    <div className="min-h-screen bg-[#0f1117] text-white pb-20">
+
+      {/* ── Toast ── */}
+      <div className="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm">
+        {toasts.map(t => (
+          <div key={t.id} className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-semibold border ${
+            t.type === 'success'
+              ? 'bg-emerald-900/90 border-emerald-700 text-emerald-200'
+              : 'bg-red-900/90 border-red-700 text-red-200'
+          } backdrop-blur-md`}>
+            {t.type === 'success' ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 flex-shrink-0" />}
+            {t.message}
           </div>
         ))}
       </div>
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex-shrink-0 p-2 bg-[var(--brand-midnight)] rounded-lg">
-                <BookOpen className="w-6 h-6 text-[var(--brand-gold)]" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">Admin PDFs</h1>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">Gestion des ebooks · Cloudinary</p>
-              </div>
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-40 bg-[#0f1117]/95 backdrop-blur-md border-b border-white/8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 p-2 bg-[var(--brand-midnight)] rounded-xl border border-[var(--brand-gold)]/20">
+              <BookOpen className="w-5 h-5 text-[var(--brand-gold)]" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <h1 className="text-base font-black text-white">Admin · PDF Editor</h1>
+              <p className="text-[10px] text-gray-400 hidden sm:block">Gestion des ebooks · Quiz interactifs</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {!showForm && (
               <button
-                onClick={() => setShowForm(true)}
-                className="inline-flex items-center justify-center gap-2 bg-[var(--brand-midnight)] hover:bg-[var(--brand-midnight-dark)] text-[var(--brand-gold)] font-semibold px-4 py-2 rounded-lg transition-colors min-h-10 text-sm sm:text-base"
+                onClick={() => { resetForm(); setShowForm(true); }}
+                className="inline-flex items-center gap-2 bg-[var(--brand-gold)] text-[var(--brand-midnight)] font-black px-4 py-2 rounded-xl text-sm hover:opacity-90 transition-opacity shadow-lg"
               >
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden sm:inline">Nouveau PDF</span>
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Nouveau livre</span>
                 <span className="sm:hidden">Nouveau</span>
               </button>
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center justify-center p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors min-h-10"
-                title="Déconnexion"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
+            )}
+            <button onClick={handleLogout} className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all" title="Déconnexion">
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 ${showForm ? 'hidden' : ''}`}>
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          {[
-            { label: 'Total', value: books.length, icon: BookOpen, color: 'blue' },
-            { label: 'Nouveaux', value: books.filter(b => b.is_new).length, icon: Sparkles, color: 'yellow' },
-            { label: 'Bestsellers', value: books.filter(b => b.is_bestseller).length, icon: Award, color: 'red' },
-            { label: 'Étudiants', value: books.reduce((sum, b) => sum + b.students, 0), icon: Users, color: 'green' },
-          ].map((stat) => {
-            const Icon = stat.icon;
-            const colorClass = {
-              blue: 'bg-blue-50 dark:bg-blue-900 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-200',
-              yellow: 'bg-yellow-50 dark:bg-yellow-900 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-200',
-              red: 'bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-800 text-red-700 dark:text-red-200',
-              green: 'bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-800 text-green-700 dark:text-green-200',
-            }[stat.color];
+      {/* ════════════════ LIBRARY LIST VIEW ════════════════ */}
+      {!showForm && !quizManagerBook && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
-            return (
-              <div key={stat.label} className={`p-4 rounded-lg border ${colorClass}`}>
+          {/* Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { label: 'Total livres', value: books.length, icon: BookOpen, color: 'text-blue-400' },
+              { label: 'Nouveaux', value: books.filter(b => b.is_new).length, icon: Sparkles, color: 'text-yellow-400' },
+              { label: 'Bestsellers', value: books.filter(b => b.is_bestseller).length, icon: Award, color: 'text-red-400' },
+              { label: 'Lecteurs', value: books.reduce((s, b) => s + b.students, 0), icon: Users, color: 'text-emerald-400' },
+            ].map(s => (
+              <div key={s.label} className="bg-white/5 border border-white/8 rounded-2xl p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium opacity-75">{stat.label}</p>
-                    <p className="text-2xl sm:text-3xl font-bold mt-1">{stat.value}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{s.label}</p>
+                    <p className="text-2xl font-black text-white mt-1">{s.value}</p>
                   </div>
-                  <Icon className="w-8 h-8 sm:w-10 sm:h-10 opacity-20" />
+                  <s.icon className={`w-8 h-8 ${s.color} opacity-40`} />
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Books Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Bibliothèque ({books.length})</h2>
-            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-              Stockage : Cloudinary
-            </span>
+            ))}
           </div>
 
-          {books.length === 0 ? (
-            <div className="p-8 sm:p-12 text-center space-y-4">
-              <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto" />
-              <div>
-                <p className="text-gray-500 dark:text-gray-400 font-medium">Aucun PDF publié</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Créez votre premier ebook pour commencer</p>
-              </div>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Rechercher un livre..."
+              className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[var(--brand-gold)]/50 transition-colors"
+            />
+          </div>
+
+          {/* Books grid */}
+          <div className="bg-white/5 border border-white/8 rounded-2xl overflow-hidden">
+            <div className="p-4 border-b border-white/8 flex items-center justify-between">
+              <h2 className="font-black text-white">Bibliothèque ({filteredBooks.length})</h2>
+              <span className="text-[10px] text-gray-400 bg-white/5 px-3 py-1 rounded-full">☁️ Cloudinary</span>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 sm:p-6">
-              {books.map((book) => (
-                <div
-                  key={book.id}
-                  className="group flex flex-col bg-gradient-to-br from-gray-50 to-white dark:from-gray-750 dark:to-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
-                >
-                  {/* Cover */}
-                  <div className={`relative h-40 bg-gradient-to-br ${book.cover_color} flex items-center justify-center overflow-hidden`}>
-                    {book.cover_image ? (
-                      <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                    ) : (
-                      <BookOpen className="w-12 h-12 text-white opacity-50" />
-                    )}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
 
-                    {/* Badges */}
-                    <div className="absolute top-2 right-2 flex flex-col gap-1">
-                      {book.is_new && <span className="px-2 py-1 bg-yellow-400 text-gray-900 text-xs font-bold rounded-full">✨ NEW</span>}
-                      {book.is_bestseller && <span className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">🔥 BEST</span>}
-                    </div>
-
-                    {/* Level */}
-                    <div className="absolute bottom-2 left-2">
-                      <span className={`px-2 py-1 text-xs font-bold rounded-full ${getLevelColor(book.level)}`}>
-                        {book.level}
-                      </span>
-                    </div>
-
-                    {/* PDF indicator */}
-                    {book.pdf_url && (
-                      <div className="absolute top-2 left-2">
-                        <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
-                          <FileText className="w-3 h-3" /> PDF
-                        </span>
+            {filteredBooks.length === 0 ? (
+              <div className="p-16 text-center space-y-3">
+                <BookOpen className="w-14 h-14 text-gray-600 mx-auto" />
+                <p className="text-gray-400 font-semibold">Aucun livre publié</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                {filteredBooks.map(book => (
+                  <div key={book.id!} className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
+                    {/* Cover */}
+                    <div className={`relative h-36 bg-gradient-to-br ${book.cover_color} overflow-hidden`}>
+                      {book.cover_image
+                        ? <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" loading="lazy" />
+                        : <BookOpen className="absolute inset-0 m-auto w-12 h-12 text-white opacity-30" />
+                      }
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute top-2 right-2 flex flex-col gap-1">
+                        {book.is_new && <span className="px-2 py-0.5 bg-yellow-400 text-gray-900 text-[9px] font-black rounded-full">✨ NEW</span>}
+                        {book.is_bestseller && <span className="px-2 py-0.5 bg-red-500 text-white text-[9px] font-black rounded-full">🔥 BEST</span>}
                       </div>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 p-4 flex flex-col">
-                    <h3 className="font-bold text-gray-900 dark:text-white line-clamp-2 text-sm mb-1">{book.title}</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{book.author} · {book.category}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">{book.description}</p>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-3 gap-2 py-3 border-t border-b border-gray-200 dark:border-gray-700 mb-3">
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Sparkles className="w-3 h-3 text-yellow-400" />
-                          <span className="font-bold text-xs text-gray-700 dark:text-gray-300">{book.rating}</span>
+                      {book.pdf_url && (
+                        <div className="absolute top-2 left-2">
+                          <span className="px-2 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-full flex items-center gap-1">
+                            <FileText className="w-2.5 h-2.5" /> PDF
+                          </span>
                         </div>
-                        <p className="text-xs text-gray-400 mt-0.5">Note</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Users className="w-3 h-3 text-blue-500" />
-                          <span className="font-bold text-xs text-gray-700 dark:text-gray-300">{book.students}</span>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-0.5">Lecteurs</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <BookOpen className="w-3 h-3 text-green-500" />
-                          <span className="font-bold text-xs text-gray-700 dark:text-gray-300">{book.pages}p</span>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-0.5">Pages</p>
+                      )}
+                      <div className="absolute bottom-2 left-2">
+                        <span className={`px-2 py-0.5 text-[9px] font-black rounded-full ${getLevelColor(book.level)}`}>{book.level}</span>
                       </div>
                     </div>
 
-                    <p className="text-base font-bold text-[var(--brand-midnight)] dark:text-[var(--brand-gold)] mb-3">{book.price} FCFA</p>
+                    {/* Info */}
+                    <div className="p-4 space-y-2">
+                      <h3 className="font-black text-sm text-white line-clamp-2">{book.title}</h3>
+                      <p className="text-[10px] text-gray-400">{book.author} · {book.category}</p>
+                      <div className="flex items-center gap-3 text-[10px] text-gray-400 pt-1">
+                        <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-yellow-400" />{book.rating}</span>
+                        <span className="flex items-center gap-1"><Users className="w-3 h-3 text-blue-400" />{book.students}</span>
+                        <span className="flex items-center gap-1"><BookOpen className="w-3 h-3 text-emerald-400" />{book.pages}p</span>
+                        <span className="ml-auto font-black text-[var(--brand-gold)]">{book.price} FCFA</span>
+                      </div>
+                    </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 mt-auto flex-wrap">
-                      {/* View public page */}
-                      <Link
-                        to={`/library/${book.id}`}
-                        target="_blank"
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-2 bg-[var(--brand-midnight)]/10 hover:bg-[var(--brand-midnight)]/20 text-[var(--brand-midnight)] dark:text-[var(--brand-gold)] rounded-lg font-medium text-xs transition-colors"
-                        title="Voir la page publique"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Voir</span>
+                    <div className="px-4 pb-4 grid grid-cols-2 gap-2">
+                      <Link to={`/library/${book.id}`} target="_blank"
+                        className="inline-flex items-center justify-center gap-1.5 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-semibold text-gray-300 transition-colors">
+                        <Eye className="w-3.5 h-3.5" /> Voir
                       </Link>
-                      <button
-                        onClick={() => handleEdit(book)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800/40 rounded-lg font-medium text-xs transition-colors"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Modifier</span>
+                      <button onClick={() => handleEdit(book)}
+                        className="inline-flex items-center justify-center gap-1.5 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-xl text-xs font-semibold transition-colors">
+                        <Edit2 className="w-3.5 h-3.5" /> Modifier
                       </button>
-                      <button
-                        onClick={() => handleDelete(book.id!)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/40 rounded-lg font-medium text-xs transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Suppr.</span>
+                      <button onClick={() => openQuizManager(book)}
+                        className="col-span-2 inline-flex items-center justify-center gap-1.5 py-2 bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 text-[var(--brand-gold)] rounded-xl text-xs font-black transition-colors">
+                        <HelpCircle className="w-3.5 h-3.5" /> Gérer les Quiz
+                      </button>
+                      <button onClick={() => handleDelete(book.id!)}
+                        className="col-span-2 inline-flex items-center justify-center gap-1.5 py-1.5 text-red-500/70 hover:text-red-500 rounded-xl text-xs font-semibold transition-colors hover:bg-red-500/5">
+                        <Trash2 className="w-3 h-3" /> Supprimer
                       </button>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════ QUIZ MANAGER MODAL ════════════════ */}
+      {quizManagerBook && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <button onClick={() => setQuizManagerBook(null)} className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors mb-2">
+                <ChevronLeft className="w-3.5 h-3.5" /> Retour à la bibliothèque
+              </button>
+              <h2 className="text-xl font-black text-white">🧠 Quiz — {quizManagerBook.title}</h2>
+              <p className="text-xs text-gray-400 mt-1">Créez et gérez les quiz interactifs pour ce livre.</p>
+            </div>
+            <button onClick={saveQuizManager} disabled={quizManagerLoading}
+              className="inline-flex items-center gap-2 bg-[var(--brand-gold)] text-[var(--brand-midnight)] font-black px-5 py-2.5 rounded-xl text-sm hover:opacity-90 disabled:opacity-50 transition-opacity shadow-lg flex-shrink-0">
+              {quizManagerLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Sauvegarder
+            </button>
+          </div>
+
+          <QuizEditor
+            quizzes={quizManagerData}
+            setQuizzes={setQuizManagerData}
+            activeIndex={activeQuizIndex}
+            setActiveIndex={setActiveQuizIndex}
+            onAdd={() => { setQuizManagerData(prev => [...prev, { ...EMPTY_QUIZ, title: `Quiz ${prev.length + 1}` }]); setActiveQuizIndex(quizManagerData.length); }}
+            onRemove={(idx) => { setQuizManagerData(prev => prev.filter((_, i) => i !== idx)); setActiveQuizIndex(Math.max(0, activeQuizIndex - 1)); }}
+            pages={quizManagerBook.pages}
+          />
+        </div>
+      )}
+
+      {/* ════════════════ PUBLISH FORM ════════════════ */}
+      {showForm && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+
+          {/* Form header */}
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <button onClick={resetForm} className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors mb-2">
+                <ChevronLeft className="w-3.5 h-3.5" /> Retour
+              </button>
+              <h2 className="text-xl font-black text-white">
+                {editingBook ? `✏️ Modifier — ${editingBook.title}` : '🚀 Publier un nouveau livre'}
+              </h2>
+            </div>
+            <button onClick={resetForm} className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Steps progress bar */}
+          <div className="flex items-center gap-1 mb-8 overflow-x-auto pb-1">
+            {STEPS.map((step, idx) => {
+              const isActive = step.key === currentStep;
+              const isDone = idx < stepIndex;
+              return (
+                <button
+                  key={step.key}
+                  onClick={() => setCurrentStep(step.key)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+                    isActive
+                      ? 'bg-[var(--brand-gold)] text-[var(--brand-midnight)]'
+                      : isDone
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-white/5 text-gray-500 border border-white/10'
+                  }`}
+                >
+                  <span>{step.emoji}</span>
+                  <span className="hidden sm:inline">{step.label}</span>
+                  {isDone && <CheckCircle className="w-3 h-3" />}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Live preview strip */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6 flex items-center gap-4">
+            <div className={`w-12 h-16 rounded-lg flex-shrink-0 bg-gradient-to-br ${formData.cover_color} overflow-hidden`}>
+              {coverPreview
+                ? <img src={coverPreview} alt="" className="w-full h-full object-cover" />
+                : <BookOpen className="w-5 h-5 m-auto mt-4 text-white/40" />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-black text-white truncate">{formData.title || '— Titre —'}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{formData.category} · {formData.level} · {formData.pages}p · {formData.price} FCFA</p>
+              <div className="flex items-center gap-2 mt-1">
+                {(pdfFile || formData.pdf_url) && <span className="text-[9px] text-emerald-400 font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> PDF prêt</span>}
+                {quizzes.length > 0 && <span className="text-[9px] text-[var(--brand-gold)] font-bold flex items-center gap-1"><HelpCircle className="w-3 h-3" /> {quizzes.length} quiz</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* ── STEP: Infos ── */}
+          {currentStep === 'infos' && (
+            <div className="space-y-4">
+              <FormSection title="📚 Informations générales">
+                <FormField label="Titre du livre *">
+                  <input type="text" value={formData.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    className={INPUT_CLS} placeholder="Ex: Guide complet du développement mobile" required />
+                </FormField>
+                <FormField label="Auteur">
+                  <input type="text" value={formData.author}
+                    onChange={e => setFormData({ ...formData, author: e.target.value })}
+                    className={INPUT_CLS} placeholder="MIDEESSI Team" />
+                </FormField>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="Catégorie *">
+                    <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className={INPUT_CLS}>
+                      {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </FormField>
+                  <FormField label="Niveau *">
+                    <select value={formData.level} onChange={e => setFormData({ ...formData, level: e.target.value })} className={INPUT_CLS}>
+                      {LEVELS.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                    </select>
+                  </FormField>
                 </div>
-              ))}
+                <FormField label="Description *">
+                  <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    rows={4} className={INPUT_CLS} placeholder="Décrivez le contenu du livre, ce que le lecteur va apprendre..." required />
+                </FormField>
+              </FormSection>
+
+              <FormSection title="📊 Statistiques & Prix">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: 'Prix (FCFA)', key: 'price', type: 'number', min: 0 },
+                    { label: 'Pages', key: 'pages', type: 'number', min: 1 },
+                    { label: 'Note /5', key: 'rating', type: 'number', step: '0.1', min: 0, max: 5 },
+                    { label: 'Lecteurs', key: 'students', type: 'number', min: 0 },
+                  ].map(f => (
+                    <FormField key={f.key} label={f.label}>
+                      <input type={f.type} value={(formData as any)[f.key]} step={(f as any).step}
+                        min={(f as any).min} max={(f as any).max}
+                        onChange={e => setFormData({ ...formData, [f.key]: f.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value })}
+                        className={INPUT_CLS} />
+                    </FormField>
+                  ))}
+                </div>
+                <FormField label="Semaine d'ajout">
+                  <input type="text" value={formData.week_added}
+                    onChange={e => setFormData({ ...formData, week_added: e.target.value })}
+                    className={INPUT_CLS} placeholder="Ex: 4 juillet 2026" />
+                </FormField>
+              </FormSection>
+
+              <FormSection title="🏷️ Badges">
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { key: 'is_new', label: '✨ Nouveau', sub: 'Badge "NEW" sur la carte' },
+                    { key: 'is_bestseller', label: '🔥 Bestseller', sub: 'Badge "BEST" + mis en avant' },
+                  ].map(badge => (
+                    <label key={badge.key} className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${(formData as any)[badge.key] ? 'border-[var(--brand-gold)]/60 bg-[var(--brand-gold)]/5' : 'border-white/10 hover:border-white/20'}`}>
+                      <input type="checkbox" checked={(formData as any)[badge.key]}
+                        onChange={e => setFormData({ ...formData, [badge.key]: e.target.checked })}
+                        className="w-4 h-4 accent-[var(--brand-gold)]" />
+                      <div>
+                        <p className="font-bold text-sm text-white">{badge.label}</p>
+                        <p className="text-[10px] text-gray-400">{badge.sub}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </FormSection>
+
+              <FormSection title="🔗 Liens externes (optionnels)">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField label="Article de blog associé">
+                    <input type="url" value={formData.article_url}
+                      onChange={e => setFormData({ ...formData, article_url: e.target.value })}
+                      className={INPUT_CLS} placeholder="https://..." />
+                  </FormField>
+                  <FormField label="Lien d'achat">
+                    <input type="url" value={formData.buy_url}
+                      onChange={e => setFormData({ ...formData, buy_url: e.target.value })}
+                      className={INPUT_CLS} placeholder="https://..." />
+                  </FormField>
+                </div>
+              </FormSection>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* ── Form Page ───────────────────────────────────────────────────────── */}
-      {showForm && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-[calc(100vh-10rem)]">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-[var(--brand-midnight)] text-white">
-              <div className="flex items-center gap-3">
-                <BookOpen className="w-5 h-5 text-[var(--brand-gold)]" />
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold leading-tight">
-                    {editingBook ? 'Modifier le PDF' : 'Publier un nouveau PDF'}
-                  </h2>
-                  <p className="text-sm text-[var(--brand-gold)] opacity-90">
-                    Utilisez le formulaire pour publier ou mettre à jour un ebook Cloudinary.
-                  </p>
+          {/* ── STEP: Fichiers ── */}
+          {currentStep === 'fichiers' && (
+            <div className="space-y-4">
+              <FormSection title="☁️ Fichier PDF">
+                <div
+                  className="border-2 border-dashed border-white/20 rounded-2xl p-8 text-center hover:border-[var(--brand-gold)]/40 transition-colors cursor-pointer"
+                  onClick={() => pdfInputRef.current?.click()}
+                >
+                  <input ref={pdfInputRef} type="file" accept="application/pdf" className="hidden"
+                    onChange={e => setPdfFile(e.target.files?.[0] || null)} />
+                  <Upload className="w-8 h-8 text-gray-500 mx-auto mb-3" />
+                  {pdfFile ? (
+                    <div>
+                      <p className="text-sm font-black text-emerald-400">{pdfFile.name}</p>
+                      <p className="text-xs text-gray-400 mt-1">{(pdfFile.size / 1024 / 1024).toFixed(1)} Mo · Cloudinary</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm font-semibold text-gray-300">Cliquez pour sélectionner un PDF</p>
+                      <p className="text-xs text-gray-500 mt-1">ou glissez-déposez ici</p>
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="inline-flex items-center justify-center px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
-                >
-                  Retour
-                </button>
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="inline-flex items-center justify-center p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+                {(editingBook || formData.pdf_url) && (
+                  <div className="mt-3">
+                    <label className="text-[10px] text-gray-400 block mb-1">Ou lien Cloudinary existant (si pas de ré-upload)</label>
+                    <input type="url" value={formData.pdf_url}
+                      onChange={e => setFormData({ ...formData, pdf_url: e.target.value })}
+                      className={INPUT_CLS} placeholder="https://res.cloudinary.com/..." />
+                    {formData.pdf_url && !pdfFile && (
+                      <a href={formData.pdf_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 mt-1.5 text-xs text-blue-400 hover:underline">
+                        <ExternalLink className="w-3 h-3" /> Voir le PDF actuel
+                      </a>
+                    )}
+                  </div>
+                )}
+                {uploadProgress && uploadProgress.pdf > 0 && (
+                  <ProgressBar label="Upload PDF..." value={uploadProgress.pdf} color="bg-[var(--brand-midnight)]" />
+                )}
+              </FormSection>
+
+              <FormSection title="🖼️ Image de couverture (optionnel)">
+                <div className="flex gap-4 items-start">
+                  <div className={`w-20 h-28 rounded-xl flex-shrink-0 overflow-hidden border-2 border-dashed border-white/20 cursor-pointer hover:border-[var(--brand-gold)]/40 transition-colors bg-gradient-to-br ${formData.cover_color} flex items-center justify-center`}
+                    onClick={() => coverInputRef.current?.click()}>
+                    {coverPreview ? <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" /> : <Image className="w-5 h-5 text-white/40" />}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
+                      onChange={e => { const f = e.target.files?.[0] || null; setCoverFile(f); if (f) { const r = new FileReader(); r.onload = ev => setCoverPreview(ev.target?.result as string); r.readAsDataURL(f); } }} />
+                    <button type="button" onClick={() => coverInputRef.current?.click()}
+                      className="w-full py-2.5 border border-white/15 rounded-xl text-xs text-gray-400 hover:border-[var(--brand-gold)]/40 hover:text-white transition-all flex items-center justify-center gap-2">
+                      <Upload className="w-3.5 h-3.5" /> {coverFile ? coverFile.name : 'Choisir une image...'}
+                    </button>
+                    <input type="url" value={coverFile ? '' : formData.cover_image}
+                      onChange={e => { setFormData({ ...formData, cover_image: e.target.value }); setCoverPreview(e.target.value); }}
+                      disabled={!!coverFile} className={`${INPUT_CLS} text-xs`} placeholder="Ou entrez une URL Cloudinary..." />
+                    <p className="text-[9px] text-gray-500">JPG, PNG, WebP · Max 5 Mo · Hébergée sur Cloudinary</p>
+                  </div>
+                </div>
+                {uploadProgress && uploadProgress.cover > 0 && (
+                  <ProgressBar label="Upload couverture..." value={uploadProgress.cover} color="bg-[var(--brand-gold)]" />
+                )}
+              </FormSection>
             </div>
+          )}
 
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-              <div className="p-4 sm:p-6 space-y-6">
+          {/* ── STEP: Apparence ── */}
+          {currentStep === 'apparence' && (
+            <FormSection title="🎨 Couleur de fond (si pas d'image de couverture)">
+              <div className="grid grid-cols-5 sm:grid-cols-9 gap-2">
+                {COVER_COLORS.map(c => (
+                  <button key={c.id} type="button" onClick={() => setFormData({ ...formData, cover_color: c.id })}
+                    className={`h-10 rounded-xl ${c.preview} transition-all ${formData.cover_color === c.id ? 'ring-4 ring-offset-2 ring-[var(--brand-gold)] ring-offset-[#0f1117] scale-110' : 'hover:scale-105 opacity-70 hover:opacity-100'}`}
+                    title={c.name} />
+                ))}
+              </div>
+              <div className="mt-4 flex items-center gap-4">
+                <div className={`w-20 h-28 rounded-xl flex-shrink-0 bg-gradient-to-br ${formData.cover_color} overflow-hidden flex items-center justify-center`}>
+                  {coverPreview ? <img src={coverPreview} alt="Preview" className="w-full h-full object-cover" /> : <BookOpen className="w-6 h-6 text-white/40" />}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white">{formData.title || 'Titre du livre'}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{formData.author}</p>
+                </div>
+              </div>
+            </FormSection>
+          )}
 
-                {/* ── Preview banner ── */}
-                <div className="rounded-2xl border border-[var(--brand-midnight)]/20 bg-[var(--brand-midnight)]/5 p-4">
-                  <div className="flex items-start gap-3">
-                    <FileText className="mt-0.5 h-5 w-5 text-[var(--brand-midnight)]" />
-                    <div>
-                      <p className="text-sm font-semibold text-[var(--brand-midnight)] dark:text-[var(--brand-gold)]">
-                        {formData.title || '— Titre du livre —'}
-                      </p>
-                      <p className="mt-0.5 text-xs text-gray-500">
-                        {formData.category} · {formData.level} · {formData.price} FCFA · {formData.pages}p
-                      </p>
-                      {(pdfFile || formData.pdf_url) && (
-                        <p className="mt-1 text-xs text-green-600 font-medium flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          {pdfFile ? `PDF prêt : ${pdfFile.name}` : 'PDF existant configuré'}
-                        </p>
-                      )}
+          {/* ── STEP: Quiz ── */}
+          {currentStep === 'quiz' && (
+            <div className="space-y-4">
+              <div className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-2xl p-4 flex items-start gap-3">
+                <Zap className="w-5 h-5 text-[var(--brand-gold)] flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-black text-white">Quiz interactifs après chaque chapitre</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Définissez à quelle page du PDF le quiz apparaîtra. Les lecteurs peuvent répondre ou passer pour plus tard. Leurs scores s'affichent sur leur profil.</p>
+                </div>
+              </div>
+
+              <QuizEditor
+                quizzes={quizzes}
+                setQuizzes={setQuizzes}
+                activeIndex={activeQuizIndex}
+                setActiveIndex={setActiveQuizIndex}
+                onAdd={addQuiz}
+                onRemove={removeQuiz}
+                pages={formData.pages}
+              />
+            </div>
+          )}
+
+          {/* ── STEP: Récapitulatif & Publier ── */}
+          {currentStep === 'recap' && (
+            <div className="space-y-4">
+              <FormSection title="📋 Récapitulatif avant publication">
+                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                  <div className={`w-16 h-20 rounded-xl flex-shrink-0 bg-gradient-to-br ${formData.cover_color} overflow-hidden`}>
+                    {coverPreview ? <img src={coverPreview} alt="" className="w-full h-full object-cover" /> : <BookOpen className="w-6 h-6 m-auto mt-6 text-white/40" />}
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="font-black text-white">{formData.title}</p>
+                    <p className="text-xs text-gray-400">{formData.author} · {formData.category} · {formData.level}</p>
+                    <p className="text-xs text-[var(--brand-gold)] font-bold">{formData.price} FCFA</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {[
+                        pdfFile ? '✅ Nouveau PDF sélectionné' : formData.pdf_url ? '✅ PDF existant' : '❌ PDF manquant',
+                        coverFile || formData.cover_image ? '✅ Couverture' : '⚠️ Pas d\'image',
+                        quizzes.length > 0 ? `✅ ${quizzes.length} quiz configuré(s)` : '— Aucun quiz',
+                        formData.is_new ? '✨ Nouveau' : null,
+                        formData.is_bestseller ? '🔥 Bestseller' : null,
+                      ].filter(Boolean).map((item, i) => (
+                        <span key={i} className="text-[10px] text-gray-300 bg-white/5 px-2 py-0.5 rounded-lg">{item}</span>
+                      ))}
                     </div>
                   </div>
                 </div>
 
-                {/* ── Section: Infos de base ── */}
-                <section className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                    📚 Informations générales
-                  </h3>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Titre du livre *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="Ex: Guide complet du développement mobile"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Auteur
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.author}
-                      onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="MIDEESSI Team"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Catégorie *</label>
-                      <select
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                      >
-                        {categories.map(cat => (
-                          <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Niveau *</label>
-                      <select
-                        value={formData.level}
-                        onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                      >
-                        {levels.map(lvl => (
-                          <option key={lvl.id} value={lvl.id}>{lvl.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Description *
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      rows={4}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                      placeholder="Décrivez le contenu du livre, ce que le lecteur va apprendre..."
-                      required
-                    />
-                  </div>
-                </section>
-
-                {/* ── Section: Fichiers (Cloudinary) ── */}
-                <section className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                    ☁️ Fichiers (Cloudinary)
-                  </h3>
-
-                  {/* PDF Upload */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Fichier PDF *
-                    </label>
-                    <div
-                      className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center hover:border-[var(--brand-midnight)] transition-colors cursor-pointer group"
-                      onClick={() => pdfInputRef.current?.click()}
-                    >
-                      <input
-                        ref={pdfInputRef}
-                        type="file"
-                        accept="application/pdf"
-                        className="hidden"
-                        onChange={(e) => handlePdfFileChange(e.target.files?.[0] || null)}
-                      />
-                      <Upload className="w-8 h-8 text-gray-400 group-hover:text-[var(--brand-midnight)] mx-auto mb-2 transition-colors" />
-                      {pdfFile ? (
-                        <div>
-                          <p className="text-sm font-semibold text-green-600">{pdfFile.name}</p>
-                          <p className="text-xs text-gray-500">{(pdfFile.size / 1024 / 1024).toFixed(1)} Mo · Sera uploadé sur Cloudinary</p>
+                {quizzes.length > 0 && (
+                  <div className="space-y-2 mt-2">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Quiz configurés</p>
+                    {quizzes.map((q, i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10 text-xs">
+                        <HelpCircle className="w-4 h-4 text-[var(--brand-gold)] flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-white">{q.title || `Quiz ${i + 1}`}</p>
+                          <p className="text-gray-400">{q.questions.filter(q2 => q2.question_text).length} questions · Déclenché page {q.trigger_page}</p>
                         </div>
-                      ) : (
-                        <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                            Cliquez pour sélectionner un PDF
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">ou glissez-déposez ici</p>
-                          {uploadHint && (
-                            <p className="text-xs text-gray-500 mt-2">{uploadHint}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* URL fallback for existing books */}
-                    {(editingBook || formData.pdf_url) && (
-                      <div className="mt-3">
-                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                          Ou lien PDF Cloudinary direct (si vous ne ré-uploadez pas)
-                        </label>
-                        <input
-                          type="url"
-                          value={formData.pdf_url}
-                          onChange={(e) => setFormData({ ...formData, pdf_url: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="https://res.cloudinary.com/..."
-                        />
-                        {formData.pdf_url && !pdfFile && (
-                          <a href={formData.pdf_url} target="_blank" rel="noreferrer"
-                            className="inline-flex items-center gap-1 mt-1 text-xs text-blue-600 hover:underline">
-                            <ExternalLink className="w-3 h-3" /> Voir le PDF actuel
-                          </a>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Progress bars */}
-                    {uploadProgress && (
-                      <div className="mt-3 space-y-2">
-                        {uploadProgress.pdf > 0 && (
-                          <div>
-                            <div className="flex justify-between text-xs text-gray-500 mb-1">
-                              <span>Upload PDF…</span>
-                              <span>{uploadProgress.pdf}%</span>
-                            </div>
-                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-[var(--brand-midnight)] transition-all duration-500 rounded-full"
-                                style={{ width: `${uploadProgress.pdf}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
-                        {uploadProgress.cover > 0 && (
-                          <div>
-                            <div className="flex justify-between text-xs text-gray-500 mb-1">
-                              <span>Upload couverture…</span>
-                              <span>{uploadProgress.cover}%</span>
-                            </div>
-                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-[var(--brand-gold)] transition-all duration-500 rounded-full"
-                                style={{ width: `${uploadProgress.cover}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Cover Image Upload */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Image de couverture (optionnel)
-                    </label>
-                    <div className="flex gap-4 items-start">
-                      {/* Preview */}
-                      <div
-                        className={`w-24 h-32 rounded-lg flex-shrink-0 overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 cursor-pointer hover:border-[var(--brand-gold)] transition-colors flex items-center justify-center bg-gradient-to-br ${formData.cover_color}`}
-                        onClick={() => coverInputRef.current?.click()}
-                      >
-                        {coverPreview ? (
-                          <img src={coverPreview} alt="Couverture" className="w-full h-full object-cover" />
-                        ) : (
-                          <Image className="w-6 h-6 text-white/60" />
-                        )}
-                      </div>
-
-                      <div className="flex-1">
-                        <input
-                          ref={coverInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleCoverFileChange(e.target.files?.[0] || null)}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => coverInputRef.current?.click()}
-                          className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:border-[var(--brand-gold)] hover:text-[var(--brand-midnight)] dark:hover:text-[var(--brand-gold)] transition-colors text-left flex items-center gap-2"
-                        >
-                          <Upload className="w-4 h-4" />
-                          {coverFile ? coverFile.name : 'Choisir une image…'}
+                        <button onClick={() => setCurrentStep('quiz')} className="text-gray-500 hover:text-white transition-colors">
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <p className="text-xs text-gray-400 mt-2">
-                          JPG, PNG, WebP. Max 5Mo. Uploadée sur Cloudinary.
-                        </p>
-                        {/* Or URL */}
-                        <input
-                          type="url"
-                          value={coverFile ? '' : formData.cover_image}
-                          onChange={(e) => { setFormData({ ...formData, cover_image: e.target.value }); setCoverPreview(e.target.value); }}
-                          className="mt-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
-                          placeholder="Ou entrez une URL Cloudinary..."
-                          disabled={!!coverFile}
-                        />
                       </div>
-                    </div>
-                  </div>
-                </section>
-
-                {/* ── Section: Apparence ── */}
-                <section className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                    🎨 Couleur de fond (si pas d'image)
-                  </h3>
-                  <div className="grid grid-cols-5 sm:grid-cols-9 gap-2">
-                    {coverColors.map(color => (
-                      <button
-                        key={color.id}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, cover_color: color.id })}
-                        className={`h-10 rounded-lg ${color.preview} transition-all ${
-                          formData.cover_color === color.id ? 'ring-4 ring-offset-2 ring-[var(--brand-gold)] dark:ring-offset-gray-800 scale-110' : 'hover:scale-105'
-                        }`}
-                        title={color.name}
-                      />
                     ))}
                   </div>
-                </section>
+                )}
 
-                {/* ── Section: Liens (optionnels) ── */}
-                <section className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                    🔗 Liens externes (optionnels)
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                        Article de blog associé
-                      </label>
-                      <input
-                        type="url"
-                        value={formData.article_url}
-                        onChange={(e) => setFormData({ ...formData, article_url: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                        placeholder="https://..."
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                        Lien d'achat
-                      </label>
-                      <input
-                        type="url"
-                        value={formData.buy_url}
-                        onChange={(e) => setFormData({ ...formData, buy_url: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[var(--brand-midnight)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                        placeholder="https://..."
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                {/* ── Section: Métadonnées ── */}
-                <section className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                    📊 Statistiques
-                  </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Prix (FCFA)</label>
-                      <input
-                        type="number"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        min="0"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Pages</label>
-                      <input
-                        type="number"
-                        value={formData.pages}
-                        onChange={(e) => setFormData({ ...formData, pages: parseInt(e.target.value) || 1 })}
-                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        min="1"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Note /5</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={formData.rating}
-                        onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) || 4.5 })}
-                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        min="0" max="5"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Lecteurs</label>
-                      <input
-                        type="number"
-                        value={formData.students}
-                        onChange={(e) => setFormData({ ...formData, students: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Semaine d'ajout</label>
-                    <input
-                      type="text"
-                      value={formData.week_added}
-                      onChange={(e) => setFormData({ ...formData, week_added: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="Ex: 4 juillet 2026"
-                    />
-                  </div>
-                </section>
-
-                {/* ── Section: Badges ── */}
-                <section className="space-y-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                    🏷️ Badges
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label className="flex items-center gap-3 p-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-yellow-400 transition-colors cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.is_new}
-                        onChange={(e) => setFormData({ ...formData, is_new: e.target.checked })}
-                        className="w-5 h-5 rounded accent-[var(--brand-gold)]"
-                      />
-                      <div>
-                        <p className="font-bold text-gray-900 dark:text-white">✨ Nouveau</p>
-                        <p className="text-xs text-gray-500">Badge "NEW" sur la carte</p>
-                      </div>
-                    </label>
-                    <label className="flex items-center gap-3 p-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-red-400 transition-colors cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.is_bestseller}
-                        onChange={(e) => setFormData({ ...formData, is_bestseller: e.target.checked })}
-                        className="w-5 h-5 rounded accent-red-500"
-                      />
-                      <div>
-                        <p className="font-bold text-gray-900 dark:text-white">🔥 Bestseller</p>
-                        <p className="text-xs text-gray-500">Badge "BEST" + mis en avant</p>
-                      </div>
-                    </label>
-                  </div>
-                </section>
-              </div>
-
-              {/* Form Footer */}
-              <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 p-4 sm:p-6 flex-shrink-0 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Annuler
+                <button onClick={handleSubmit} disabled={loading || !formData.title || (!pdfFile && !formData.pdf_url && !editingBook)}
+                  className="w-full mt-2 inline-flex items-center justify-center gap-3 py-4 bg-[var(--brand-gold)] text-[var(--brand-midnight)] font-black text-base rounded-2xl hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity shadow-xl">
+                  {loading
+                    ? <><Loader className="w-5 h-5 animate-spin" /> Publication en cours...</>
+                    : <><Zap className="w-5 h-5" />{editingBook ? 'Mettre à jour' : '🚀 Publier maintenant'}</>}
                 </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--brand-midnight)] hover:bg-[var(--brand-midnight-dark)] text-[var(--brand-gold)] font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <>
-                      <Loader className="w-5 h-5 animate-spin" />
-                      <span>Publication…</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5" />
-                      <span>{editingBook ? 'Mettre à jour' : '🚀 Publier'}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+              </FormSection>
+            </div>
+          )}
+
+          {/* Step navigation buttons */}
+          <div className="flex items-center justify-between gap-3 mt-6 pt-6 border-t border-white/10">
+            <button onClick={() => setCurrentStep(STEPS[Math.max(0, stepIndex - 1)].key)}
+              disabled={stepIndex === 0}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+              <ChevronLeft className="w-4 h-4" /> Précédent
+            </button>
+            {stepIndex < STEPS.length - 1 && (
+              <button onClick={() => setCurrentStep(STEPS[Math.min(STEPS.length - 1, stepIndex + 1)].key)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--brand-midnight)] text-[var(--brand-gold)] border border-[var(--brand-gold)]/20 rounded-xl text-sm font-black hover:opacity-90 transition-opacity shadow-sm">
+                Suivant <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}
     </div>
   );
-};
+}
 
-export default AdminDashboard;
+// ─── Sub-components ───────────────────────────────────────────────────────────
+const INPUT_CLS = "w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[var(--brand-gold)]/50 transition-colors";
+
+function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+      <h3 className="text-sm font-black text-white border-b border-white/10 pb-3">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function ProgressBar({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="mt-3">
+      <div className="flex justify-between text-xs text-gray-400 mb-1"><span>{label}</span><span>{value}%</span></div>
+      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full transition-all duration-500`} style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Quiz Editor (reusable for form step and quiz manager) ────────────────────
+function QuizEditor({
+  quizzes, setQuizzes, activeIndex, setActiveIndex, onAdd, onRemove, pages
+}: {
+  quizzes: QuizDraft[];
+  setQuizzes: React.Dispatch<React.SetStateAction<QuizDraft[]>>;
+  activeIndex: number;
+  setActiveIndex: (i: number) => void;
+  onAdd: () => void;
+  onRemove: (i: number) => void;
+  pages: number;
+}) {
+  const quiz = quizzes[activeIndex];
+
+  const updateQuiz = (patch: Partial<QuizDraft>) => {
+    setQuizzes(prev => prev.map((q, i) => i === activeIndex ? { ...q, ...patch } : q));
+  };
+
+  const addQuestion = () => {
+    if (!quiz) return;
+    updateQuiz({ questions: [...quiz.questions, { question_text: '', options: ['', '', '', ''], correct_option_index: 0 }] });
+  };
+
+  const removeQuestion = (qIdx: number) => {
+    if (!quiz) return;
+    updateQuiz({ questions: quiz.questions.filter((_, i) => i !== qIdx) });
+  };
+
+  const updateQuestion = (qIdx: number, patch: Partial<QuizDraft['questions'][0]>) => {
+    if (!quiz) return;
+    const updated = quiz.questions.map((q, i) => i === qIdx ? { ...q, ...patch } : q);
+    updateQuiz({ questions: updated });
+  };
+
+  const updateOption = (qIdx: number, optIdx: number, value: string) => {
+    if (!quiz) return;
+    const updated = quiz.questions.map((q, i) => {
+      if (i !== qIdx) return q;
+      const opts = [...q.options];
+      opts[optIdx] = value;
+      return { ...q, options: opts };
+    });
+    updateQuiz({ questions: updated });
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Quiz tabs */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {quizzes.map((q, i) => (
+          <button key={i} onClick={() => setActiveIndex(i)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              i === activeIndex ? 'bg-[var(--brand-gold)] text-[var(--brand-midnight)]' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+            }`}>
+            🧠 {q.title || `Quiz ${i + 1}`}
+            <button type="button" onClick={e => { e.stopPropagation(); onRemove(i); }}
+              className="ml-1 opacity-60 hover:opacity-100 transition-opacity">
+              <X className="w-3 h-3" />
+            </button>
+          </button>
+        ))}
+        <button type="button" onClick={onAdd}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/5 text-gray-400 hover:bg-[var(--brand-gold)]/10 hover:text-[var(--brand-gold)] border border-dashed border-white/15 transition-all">
+          <Plus className="w-3 h-3" /> Ajouter un quiz
+        </button>
+      </div>
+
+      {quizzes.length === 0 && (
+        <div className="text-center py-12 text-gray-500 border border-dashed border-white/10 rounded-2xl">
+          <HelpCircle className="w-8 h-8 mx-auto mb-3 opacity-40" />
+          <p className="text-sm font-semibold">Aucun quiz créé pour ce livre</p>
+          <p className="text-xs mt-1 opacity-60">Cliquez sur "Ajouter un quiz" pour commencer</p>
+        </div>
+      )}
+
+      {quiz && (
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-5">
+          {/* Quiz header fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Titre du quiz">
+              <input type="text" value={quiz.title}
+                onChange={e => updateQuiz({ title: e.target.value })}
+                className={INPUT_CLS} placeholder="Ex: Quiz Chapitre 1" />
+            </FormField>
+            <FormField label={`Page de déclenchement (max ${pages})`}>
+              <input type="number" value={quiz.trigger_page}
+                onChange={e => updateQuiz({ trigger_page: Math.max(1, parseInt(e.target.value) || 1) })}
+                className={INPUT_CLS} min={1} max={pages} />
+            </FormField>
+          </div>
+
+          {/* Questions */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Questions ({quiz.questions.length})</p>
+              <button type="button" onClick={addQuestion}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[var(--brand-gold)] bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 rounded-xl transition-colors">
+                <Plus className="w-3 h-3" /> Ajouter une question
+              </button>
+            </div>
+
+            {quiz.questions.map((q, qIdx) => (
+              <div key={qIdx} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="text-[10px] font-black text-[var(--brand-gold)] bg-[var(--brand-gold)]/10 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
+                      {qIdx + 1}
+                    </span>
+                    <textarea
+                      value={q.question_text}
+                      onChange={e => updateQuestion(qIdx, { question_text: e.target.value })}
+                      rows={2}
+                      className={`${INPUT_CLS} resize-none`}
+                      placeholder="Formulez votre question ici..." />
+                  </div>
+                  {quiz.questions.length > 1 && (
+                    <button type="button" onClick={() => removeQuestion(qIdx)}
+                      className="p-1.5 text-gray-500 hover:text-red-400 transition-colors flex-shrink-0">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Options */}
+                <div className="space-y-2 pl-8">
+                  {q.options.map((opt, optIdx) => (
+                    <div key={optIdx} className="flex items-center gap-2">
+                      <button type="button"
+                        onClick={() => updateQuestion(qIdx, { correct_option_index: optIdx })}
+                        className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                          q.correct_option_index === optIdx
+                            ? 'border-emerald-500 bg-emerald-500'
+                            : 'border-white/20 hover:border-white/40'
+                        }`}>
+                        {q.correct_option_index === optIdx && <CheckCircle className="w-3 h-3 text-white" />}
+                      </button>
+                      <input type="text" value={opt}
+                        onChange={e => updateOption(qIdx, optIdx, e.target.value)}
+                        className={`${INPUT_CLS} flex-1`}
+                        placeholder={`Option ${String.fromCharCode(65 + optIdx)}`} />
+                    </div>
+                  ))}
+                  <p className="text-[9px] text-gray-500 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3 text-emerald-500" />
+                    Cliquez le cercle vert pour définir la bonne réponse
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
