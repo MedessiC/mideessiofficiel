@@ -106,7 +106,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const downloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const progressIntervalRef = useRef<number | null>(null);
 
   const isCloudinary = pdfUrl.includes('cloudinary.com');
   const effectiveUrl = isCloudinary ? `/api/proxy-pdf?url=${encodeURIComponent(pdfUrl)}` : pdfUrl;
@@ -359,28 +358,9 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   useEffect(() => {
     let cancelled = false;
 
-    const stopProgressLoop = () => {
-      if (progressIntervalRef.current !== null) {
-        window.clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
-    };
-
-    const startProgressLoop = () => {
-      stopProgressLoop();
-      progressIntervalRef.current = window.setInterval(() => {
-        setDownloadProgress(prev => {
-          if (prev >= 90) return prev;
-          const step = prev < 20 ? 7 : prev < 60 ? 4 : 2;
-          return Math.min(90, prev + step + Math.floor(Math.random() * 3));
-        });
-      }, 350);
-    };
-
     setLoading(true);
-    setDownloadProgress(5);
+    setDownloadProgress(prev => Math.max(prev, 10));
     setError(null);
-    startProgressLoop();
 
     const loadPdf = async (urlToFetch: string, isFallback: boolean = false) => {
       const cachedDocument = pdfDocumentCache.get(urlToFetch);
@@ -388,6 +368,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         setPdfDoc(cachedDocument.doc);
         setPageCount(cachedDocument.pageCount);
         setDownloadProgress(100);
+        setLoading(false);
         await loadSavedProgress(cachedDocument.doc);
         return;
       }
@@ -399,6 +380,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           setPdfDoc(cached.doc);
           setPageCount(cached.pageCount);
           setDownloadProgress(100);
+          setLoading(false);
           await loadSavedProgress(cached.doc);
         }
         return;
@@ -435,10 +417,10 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
             received += value.length;
 
             if (contentLength > 0) {
-              const percent = Math.min(90, Math.round((received / contentLength) * 90));
-              setDownloadProgress(percent);
+              const percent = Math.min(85, Math.round((received / contentLength) * 85));
+              setDownloadProgress(prev => Math.max(prev, percent));
             } else {
-              setDownloadProgress(prev => Math.min(90, prev + 2));
+              setDownloadProgress(prev => Math.min(85, prev + 2));
             }
           }
 
@@ -455,8 +437,8 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           loadingTask.onProgress = (progressData: { loaded?: number; total?: number }) => {
             if (cancelled) return;
             if (progressData?.total) {
-              const percent = Math.min(95, 75 + Math.round((progressData.loaded || 0) / progressData.total * 20));
-              setDownloadProgress(percent);
+              const percent = Math.min(95, 80 + Math.round((progressData.loaded || 0) / progressData.total * 15));
+              setDownloadProgress(prev => Math.max(prev, percent));
             }
           };
 
@@ -477,7 +459,8 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         if (cancelled) return;
         setPdfDoc(result.doc);
         setPageCount(result.pageCount);
-        setDownloadProgress(95);
+        setDownloadProgress(100);
+        setLoading(false);
         await loadSavedProgress(result.doc);
 
         try {
@@ -503,7 +486,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           setLoading(false);
         }
       } finally {
-        stopProgressLoop();
         pdfLoadingPromises.delete(urlToFetch);
       }
     };
@@ -512,9 +494,8 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
 
     return () => {
       cancelled = true;
-      stopProgressLoop();
     };
-  }, [effectiveUrl, pdfUrl, isCloudinary, loadSavedProgress, isFullscreen, requiresAuth, user]);
+  }, [effectiveUrl, pdfUrl, isCloudinary, loadSavedProgress]);
 
   // Rendu de page(s) et prefetching en arrière-plan
   const renderSinglePage = useCallback(async (num: number, canvas: HTMLCanvasElement) => {
