@@ -1,28 +1,12 @@
 # ============================================================
-# Fichiers statiques - servir directement (pas de rewrite)
+# Assets statiques - Netlify les sert directement, pas besoin de règles ici
 # ============================================================
 
-# Ne pas rediriger les assets avec hash
-/assets/*  /assets/:splat  200
+# ============================================================
+# API functions
+# ============================================================
 
-# Ne pas rediriger les images et fichiers statiques
-/*.js  /:splat
-/*.css  /:splat
-/*.webp  /:splat
-/*.png  /:splat
-/*.jpg  /:splat
-/*.jpeg  /:splat
-/*.svg  /:splat
-/*.gif  /:splat
-/*.ico  /:splat
-/*.woff2  /:splat
-/*.ttf  /:splat
-/*.woff  /:splat
-/*.eot  /:splat
-*.json  /:splat
-*.webmanifest  /:splat
-*.txt  /:splat
-*.xml  /:splat
+/api/*  /.netlify/functions/:splat  200
 
 # ============================================================
 # Redirections pour les crawlers de réseaux sociaux
@@ -38,13 +22,7 @@
 /blog/:slug  https://mideessi-seo.onrender.com/blog/:slug  200  User-Agent=Pinterest/*
 
 # ============================================================
-# API functions
-# ============================================================
-
-/api/*  /.netlify/functions/:splat  200
-
-# ============================================================
-# SPA React - Route par défaut
+# SPA React - Route par défaut (doit être en DERNIER)
 # ============================================================
 
 /*  /index.html  200
