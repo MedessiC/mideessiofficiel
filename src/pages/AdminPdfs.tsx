@@ -9,6 +9,8 @@ import {
 import { supabase } from '../lib/supabase';
 import { uploadFileToCloudinary } from '../lib/cloudinary';
 import { isCloudinaryUrl } from '../utils/cloudinaryImage';
+import QuizImportModal from '../components/QuizImportModal';
+import { type QuizImportFormat } from '../utils/quizImport';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Book = {
@@ -126,6 +128,7 @@ export default function AdminPdfs() {
   const [quizManagerBook, setQuizManagerBook] = useState<Book | null>(null);
   const [quizManagerData, setQuizManagerData] = useState<QuizDraft[]>([]);
   const [quizManagerLoading, setQuizManagerLoading] = useState(false);
+  const [showQuizImportModal, setShowQuizImportModal] = useState(false);
 
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -280,6 +283,46 @@ export default function AdminPdfs() {
       });
     }
     return result;
+  };
+
+  // ── Handle imported quizzes (from JSON) ───────────────────────────────────
+  const handleImportQuizzes = async (imported: QuizImportFormat[]) => {
+    // Convert imported format to QuizDraft
+    const converted: QuizDraft[] = imported.map(i => ({
+      title: i.title,
+      trigger_page: i.trigger_page,
+      questions: i.questions.map(q => ({
+        question_text: q.question_text,
+        options: q.options,
+        correct_option_index: q.correct_option_index,
+      }))
+    }));
+
+    // If editing an existing book, persist immediately
+    if (editingBook && editingBook.id) {
+      try {
+        setLoading(true);
+        await saveQuizzesForBook(editingBook.id, converted);
+        addToast('success', `Importé ${converted.length} quiz pour "${editingBook.title}"`);
+        // refresh quiz manager if open
+        if (quizManagerBook && quizManagerBook.id === editingBook.id) {
+          const refreshed = await loadQuizzesForBook(editingBook.id);
+          setQuizManagerData(refreshed);
+        }
+      } catch (err) {
+        addToast('error', err instanceof Error ? err.message : 'Erreur lors de l\'import');
+      } finally {
+        setLoading(false);
+        setShowQuizImportModal(false);
+      }
+      return;
+    }
+
+    // If creating a new book, merge into local quizzes state for later save
+    setQuizzes(prev => [...prev, ...converted]);
+    setActiveQuizIndex(quizzes.length); // jump to first newly added
+    addToast('success', `Importé ${converted.length} quiz localement (en attente de publication)`);
+    setShowQuizImportModal(false);
   };
 
   // ── Upload ────────────────────────────────────────────────────────────────
@@ -919,6 +962,16 @@ export default function AdminPdfs() {
                 </div>
               </div>
 
+              <div className="flex justify-end mt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowQuizImportModal(true)}
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-white/5 text-gray-200 rounded-lg hover:bg-white/10 text-sm font-bold"
+                >
+                  <Upload className="w-4 h-4" /> Importer JSON
+                </button>
+              </div>
+
               <QuizEditor
                 quizzes={quizzes}
                 setQuizzes={setQuizzes}
@@ -927,6 +980,12 @@ export default function AdminPdfs() {
                 onAdd={addQuiz}
                 onRemove={removeQuiz}
                 pages={formData.pages}
+              />
+              <QuizImportModal
+                isOpen={showQuizImportModal}
+                onClose={() => setShowQuizImportModal(false)}
+                onImport={handleImportQuizzes}
+                maxPages={formData.pages || 9999}
               />
             </div>
           )}
