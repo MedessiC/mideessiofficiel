@@ -1177,61 +1177,59 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
             <button onClick={() => setReaderTheme('light')} className={`p-1.5 rounded-md transition-all ${readerTheme === 'light' ? 'bg-white text-gray-900 shadow-sm' : 'opacity-60'}`}><Sun size={14} /></button>
             <button onClick={() => setReaderTheme('sepia')} className={`p-1.5 rounded-md transition-all ${readerTheme === 'sepia' ? 'bg-[#dfceaa] text-[#5b4636]' : 'opacity-60'}`}><Eye size={14} /></button>
           </div>
-          {user && (
-            <div className="relative group">
-              <button
-                onClick={handleDownload}
-                disabled={isDownloading}
-                title="Télécharger le PDF"
-                className={`min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center rounded-lg transition-all active:scale-95 relative overflow-hidden font-semibold ${
-                  downloadSuccess
-                    ? 'bg-green-500/30 text-green-400'
-                    : downloadError
-                    ? 'bg-red-500/30 text-red-400'
-                    : `${theme.btnBg} hover:bg-[#ffd700]/20 hover:text-[#ffd700]`
-                } ${isDownloading ? 'opacity-75 cursor-wait' : 'cursor-pointer'}`}
-              >
-                {isDownloading ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : downloadSuccess ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  <Download size={16} />
-                )}
-              </button>
-              
-              {/* Tooltip avec progression */}
-              {isDownloading && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 dark:bg-white/10 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-1.5 bg-black/30 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-[#ffd700] to-yellow-300 transition-all duration-300"
-                        style={{ width: `${downloadProgress}%` }}
-                      />
-                    </div>
-                    <span className="font-semibold">{downloadProgress}%</span>
+          <div className="relative group">
+            <button
+              onClick={handleDownload}
+              disabled={isDownloading}
+              title="Télécharger le PDF"
+              className={`min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center rounded-lg transition-all active:scale-95 relative overflow-hidden font-semibold ${
+                downloadSuccess
+                  ? 'bg-green-500/30 text-green-400'
+                  : downloadError
+                  ? 'bg-red-500/30 text-red-400'
+                  : `${theme.btnBg} hover:bg-[#ffd700]/20 hover:text-[#ffd700]`
+              } ${isDownloading ? 'opacity-75 cursor-wait' : 'cursor-pointer'}`}
+            >
+              {isDownloading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : downloadSuccess ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <Download size={16} />
+              )}
+            </button>
+            
+            {/* Tooltip avec progression */}
+            {isDownloading && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 dark:bg-white/10 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-1.5 bg-black/30 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-[#ffd700] to-yellow-300 transition-all duration-300"
+                      style={{ width: `${downloadProgress}%` }}
+                    />
                   </div>
+                  <span className="font-semibold">{downloadProgress}%</span>
                 </div>
-              )}
-              
-              {/* Toast de succès */}
-              {downloadSuccess && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-green-500/90 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none animate-bounce z-50">
-                  PDF téléchargé ✓
-                </div>
-              )}
-              
-              {/* Toast d'erreur */}
-              {downloadError && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-red-500/90 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none z-50 max-w-xs">
-                  {downloadError}
-                </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+            
+            {/* Toast de succès */}
+            {downloadSuccess && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-green-500/90 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none animate-bounce z-50">
+                PDF téléchargé ✓
+              </div>
+            )}
+            
+            {/* Toast d'erreur */}
+            {downloadError && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-red-500/90 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none z-50 max-w-xs">
+                {downloadError}
+              </div>
+            )}
+          </div>
           <button
             onClick={toggleBrowserFullscreen}
             className={`min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center rounded-lg ${theme.btnBg} transition-all active:scale-95`}

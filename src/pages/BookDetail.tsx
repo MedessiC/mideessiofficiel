@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft, BookOpen, Download, ExternalLink, Star, Users, FileText,
   Award, Bookmark, BookMarked, Share2, Eye, ChevronRight, Play, X,
-  BarChart2, Clock, Zap, Heart, MessageCircle, CheckCircle, BookmarkCheck, Sparkles
+  BarChart2, Clock, Zap, Heart, MessageCircle, CheckCircle, BookmarkCheck, Sparkles, Loader2
 } from 'lucide-react';
 import SEO from '../components/SEO';
 import BookLikesComments from '../components/BookLikesComments';
@@ -65,8 +65,13 @@ export default function BookDetail() {
   const [shareToast, setShareToast] = useState(false);
   const [topReaders, setTopReaders] = useState<TopReader[]>([]);
   const [readerCount, setReaderCount] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
-  const readerRef = useRef<HTMLDivElement>(null);
+  const readerRef = useRef<HTMLDivElement | null>(null);
+  const downloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     fetchBook();
@@ -210,6 +215,11 @@ export default function BookDetail() {
     }
     if (!book?.pdf_url) return;
     
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    setDownloadError(null);
+    setDownloadSuccess(false);
+    
     try {
       // Pour Cloudinary, ajouter le paramètre fl_attachment pour forcer le téléchargement
       const isCloudinary = book.pdf_url.includes('cloudinary.com');
@@ -222,10 +232,41 @@ export default function BookDetail() {
         }
       });
       
-      if (!response.ok) throw new Error('Download failed');
+      if (!response.ok) throw new Error('Erreur HTTP');
+      
+      // Récupérer la taille totale
+      const contentLength = response.headers.get('content-length');
+      const total = parseInt(contentLength || '0', 10);
+      
+      // Lire le contenu avec progression
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Impossible de lire le fichier');
+      
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        chunks.push(value);
+        received += value.length;
+        
+        if (total > 0) {
+          const progress = Math.round((received / total) * 100);
+          setDownloadProgress(progress);
+        }
+      }
       
       // Créer le blob avec le type MIME explicite
-      const blob = new Blob([await response.arrayBuffer()], { type: 'application/pdf' });
+      const arrayBuffer = new Uint8Array(received);
+      let position = 0;
+      for (const chunk of chunks) {
+        arrayBuffer.set(chunk, position);
+        position += chunk.length;
+      }
+      
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -234,9 +275,29 @@ export default function BookDetail() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      setDownloadProgress(100);
+      setDownloadSuccess(true);
+      
+      // Réinitialiser après 2 secondes
+      if (downloadTimeoutRef.current) clearTimeout(downloadTimeoutRef.current);
+      downloadTimeoutRef.current = setTimeout(() => {
+        setDownloadSuccess(false);
+        setDownloadProgress(0);
+      }, 2000);
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Erreur inconnue';
       console.error('Download error:', err);
-      alert('Erreur lors du téléchargement du PDF');
+      setDownloadError(errorMsg);
+      
+      // Réinitialiser après 3 secondes
+      if (downloadTimeoutRef.current) clearTimeout(downloadTimeoutRef.current);
+      downloadTimeoutRef.current = setTimeout(() => {
+        setDownloadError(null);
+        setDownloadProgress(0);
+      }, 3000);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -414,16 +475,54 @@ export default function BookDetail() {
                         <Play className="w-4 h-4 fill-current" />
                         Lire le PDF
                       </button>
-                      {user && (
+                      <div className="relative group">
                         <button
                           onClick={handleDownload}
-                          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-all shadow-lg shadow-black/30 active:scale-95 text-sm sm:text-base"
+                          disabled={isDownloading}
+                          className={`inline-flex items-center justify-center gap-2 px-6 py-3 font-black rounded-xl transition-all shadow-lg shadow-black/30 active:scale-95 text-sm sm:text-base relative overflow-hidden ${
+                            downloadSuccess
+                              ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
+                              : downloadError
+                              ? 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700'
+                              : 'bg-gradient-to-r from-[#ffd700] to-yellow-400 text-[#191970] hover:from-yellow-300 hover:to-yellow-500'
+                          } ${isDownloading ? 'opacity-75 cursor-wait' : 'cursor-pointer'}`}
                           title="Télécharger le PDF"
                         >
-                          <Download className="w-4 h-4" />
-                          Télécharger
+                          {isDownloading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Téléchargement...
+                            </>
+                          ) : downloadSuccess ? (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Téléchargé ✓
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-4 h-4" />
+                              Télécharger
+                            </>
+                          )}
                         </button>
-                      )}
+                        
+                        {/* Tooltip avec progression */}
+                        {isDownloading && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-4 py-2 bg-gray-900 dark:bg-white/10 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                            <div className="flex items-center gap-2">
+                              <div className="w-32 h-2 bg-black/30 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-[#ffd700] to-yellow-300 transition-all duration-300"
+                                  style={{ width: `${downloadProgress}%` }}
+                                />
+                              </div>
+                              <span className="font-semibold min-w-[35px]">{downloadProgress}%</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </>
                   )}
                   {book.buy_url && (
@@ -553,15 +652,54 @@ export default function BookDetail() {
                       >
                         <Play className="w-4 h-4 fill-current" /> Lire le PDF
                       </button>
-                      {user && (
+                      <div className="w-full relative group">
                         <button
                           onClick={handleDownload}
-                          className="w-full inline-flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all text-sm"
+                          disabled={isDownloading}
+                          className={`w-full inline-flex items-center justify-center gap-2 py-3 font-bold rounded-xl transition-all text-sm relative overflow-hidden ${
+                            downloadSuccess
+                              ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
+                              : downloadError
+                              ? 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700'
+                              : 'bg-gradient-to-r from-[#ffd700] to-yellow-400 text-[#191970] hover:from-yellow-300 hover:to-yellow-500'
+                          } ${isDownloading ? 'opacity-75 cursor-wait' : 'cursor-pointer'}`}
                           title="Télécharger le PDF"
                         >
-                          <Download className="w-4 h-4" /> Télécharger
+                          {isDownloading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Téléchargement...
+                            </>
+                          ) : downloadSuccess ? (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Téléchargé ✓
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-4 h-4" />
+                              Télécharger
+                            </>
+                          )}
                         </button>
-                      )}
+                        
+                        {/* Tooltip avec progression */}
+                        {isDownloading && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-4 py-2 bg-gray-900 dark:bg-white/10 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                            <div className="flex items-center gap-2">
+                              <div className="w-32 h-2 bg-black/30 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-[#ffd700] to-yellow-300 transition-all duration-300"
+                                  style={{ width: `${downloadProgress}%` }}
+                                />
+                              </div>
+                              <span className="font-semibold min-w-[35px]">{downloadProgress}%</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </>
                   )}
                   {book.buy_url && (
