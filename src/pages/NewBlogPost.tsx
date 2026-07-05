@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Calendar, User, ArrowLeft, Tag, Eye, Share2, Clock, Facebook, Twitter, Linkedin, Link as LinkIcon, Check, Bookmark, Flame, MessageSquare, Send } from 'lucide-react';
 import SEO from '../components/SEO';
+import { Avatar } from '../components/ui/Avatar';
 import { supabase, BlogPost } from '../lib/supabase';
 import { toCloudinaryUrl } from '../utils/cloudinaryImage';
 
@@ -34,7 +35,7 @@ const PostSkeleton = () => (
 // -----------------------------------------------------------------------------
 // COMMENT SECTION COMPONENT
 // -----------------------------------------------------------------------------
-const CommentSection = ({ postId }: { postId: string }) => {
+const CommentSection = ({ postId, onCommentCountChange }: { postId: string; onCommentCountChange?: (count: number) => void }) => {
   const [comments, setComments] = useState<Array<{
     id: string;
     content: string;
@@ -64,9 +65,12 @@ const CommentSection = ({ postId }: { postId: string }) => {
       .order('created_at', { ascending: true });
 
     if (!error && data) {
-      setComments(data || []);
+      const commentsData = data || [];
+      setComments(commentsData);
+      const topLevelCount = commentsData.filter(comment => comment.parent_id === null).length;
+      if (onCommentCountChange) onCommentCountChange(topLevelCount);
 
-      const commentIds = (data || []).map(comment => comment.id);
+      const commentIds = commentsData.map(comment => comment.id);
       if (commentIds.length > 0) {
         const { data: likesData } = await supabase
           .from('blog_comment_likes')
@@ -182,12 +186,20 @@ const CommentSection = ({ postId }: { postId: string }) => {
     return (
       <div key={comment.id} className={`rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 shadow-sm ${depth > 0 ? 'ml-4 border-l-2 border-l-gold/40' : ''}`}>
         <div className="flex gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold to-yellow-500 text-midnight font-bold flex items-center justify-center flex-shrink-0">
-            {(comment.users?.username || 'U').charAt(0).toUpperCase()}
-          </div>
+          <Avatar
+            name={comment.users?.username || 'Utilisateur'}
+            src={comment.users?.avatar_url || null}
+            size="sm"
+            className="flex-shrink-0"
+          />
           <div className="flex-1">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <span className="font-bold text-[var(--brand-midnight)] dark:text-white">{comment.users?.username || 'Utilisateur'}</span>
+              <Link
+                to={`/profile/${encodeURIComponent(comment.users?.username || 'utilisateur')}`}
+                className="font-bold text-[var(--brand-midnight)] dark:text-white hover:text-gold transition"
+              >
+                {comment.users?.username || 'Utilisateur'}
+              </Link>
               <span className="text-xs text-gray-500">{new Date(comment.created_at).toLocaleDateString('fr-FR')}</span>
             </div>
 
@@ -299,6 +311,7 @@ const NewBlogPost = () => {
   
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
 
   useEffect(() => {
     if (slug) {
@@ -533,7 +546,7 @@ const NewBlogPost = () => {
       >
         <div className="flex flex-col items-center">
           <MessageSquare className="w-5 h-5 group-hover:scale-110 transition-transform" />
-          <span className="text-[10px] font-bold mt-0.5">💬</span>
+          <span className="text-[10px] font-bold mt-0.5">{commentCount}</span>
         </div>
       </a>
 
@@ -644,7 +657,7 @@ const NewBlogPost = () => {
           </div>
 
           {/* Comment Section (Mocked) */}
-          <CommentSection postId={post.id} />
+          <CommentSection postId={post.id} onCommentCountChange={setCommentCount} />
           
         </article>
 

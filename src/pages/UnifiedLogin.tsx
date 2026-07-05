@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { Lock, Mail, Eye, EyeOff, AlertCircle, LogIn, Github, Facebook, Globe, ChevronLeft } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, AlertCircle, LogIn, ChevronLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useClientAuth } from '../contexts/ClientContext';
 import SEO from '../components/SEO';
@@ -108,7 +108,7 @@ const UnifiedLogin = () => {
     }
   };
 
-  const handleProviderSignIn = async (provider: 'google' | 'github' | 'facebook') => {
+  const handleProviderSignIn = async (provider: 'google') => {
     setError('');
     setLoading(true);
 
@@ -197,7 +197,7 @@ const UnifiedLogin = () => {
               {/* Form */}
               <form onSubmit={handleLogin} className="space-y-5">
                 <div>
-                  <label className="block text-xs font-bold mb-2 text-[var(--text-primary)] uppercase tracking-wider">
+                  <label className="block text-xs font-bold mb-2 text-[var(--text-primary)] dark:text-[#191970] uppercase tracking-wider">
                     Adresse e-mail
                   </label>
                   <div className="relative">
@@ -215,7 +215,7 @@ const UnifiedLogin = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold mb-2 text-[var(--text-primary)] uppercase tracking-wider">
+                  <label className="block text-xs font-bold mb-2 text-[var(--text-primary)] dark:text-[#191970] uppercase tracking-wider">
                     Mot de passe
                   </label>
                   <div className="relative">
@@ -269,22 +269,20 @@ const UnifiedLogin = () => {
                     <div className="flex-1 h-px bg-[var(--border)]"></div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <button
                       type="button"
                       onClick={() => handleProviderSignIn('google')}
                       disabled={loading}
                       className="flex items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:border-gray-300 hover:bg-gray-50 transition-all disabled:opacity-50"
                     >
-                      <Globe className="w-4 h-4 text-red-500" /> Google
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleProviderSignIn('github')}
-                      disabled={loading}
-                      className="flex items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[#24292e] py-2.5 text-sm font-semibold text-white hover:bg-black transition-all disabled:opacity-50"
-                    >
-                      <Github className="w-4 h-4" /> GitHub
+                      <svg className="w-4 h-4" viewBox="0 0 533.5 544.3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#4285F4" d="M533.5 278.4c0-18.8-1.7-37-5-54.7H272.1v103.5h146.9c-6.3 34.1-25.2 62.5-53.7 81.7v67.8h86.9c50.8-46.8 80.3-115.9 80.3-198.3z" />
+                        <path fill="#34A853" d="M272.1 544.3c72.7 0 133.7-24.1 178.2-65.7l-86.9-67.8c-24.2 16.2-55.3 25.8-91.3 25.8-70.1 0-129.4-47.2-150.6-110.4h-89.4v69.4C75.9 474.7 168.5 544.3 272.1 544.3z" />
+                        <path fill="#FBBC05" d="M121.5 327.2c-4.9-14.7-7.7-30.4-7.7-46.5s2.8-31.8 7.7-46.5v-69.4H32.1c-19.2 38.4-30.2 81.3-30.2 125.9s11 87.5 30.2 125.9l89.4-69.4z" />
+                        <path fill="#EA4335" d="M272.1 107.7c39.6 0 75.1 13.6 103.2 40.3l77.4-77.4C402.2 24.6 339.5 0 272.1 0 168.5 0 75.9 69.6 32.1 178.5l89.4 69.4c21.2-63.2 80.5-110.4 150.6-110.4z" />
+                      </svg>
+                      Google
                     </button>
                   </div>
                 </>

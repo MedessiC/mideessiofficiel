@@ -22,7 +22,7 @@ interface AuthContextType {
   refreshUserProfile: () => Promise<void>;
   signUp: (email: string, password: string, username: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signInWithProvider: (provider: 'google' | 'github' | 'facebook') => Promise<{ error: string | null }>;
+  signInWithProvider: (provider: 'google') => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   detectRole: (userId: string) => Promise<UserRole>;
 }
@@ -257,7 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithProvider = async (
-    provider: 'google' | 'github' | 'facebook'
+    provider: 'google'
   ): Promise<{ error: string | null }> => {
     try {
       const redirectTo = import.meta.env.VITE_SUPABASE_OAUTH_REDIRECT_URL || window.location.origin;

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, BadgeCheck, Trash2, AlertCircle, Loader } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Avatar } from './ui/Avatar';
 
 interface BookComment {
@@ -10,6 +10,7 @@ interface BookComment {
   content: string;
   rating: number | null;
   user_id: string;
+  parent_id: string | null;
   created_at: string;
   users?: {
     username: string;
@@ -30,8 +31,11 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [comments, setComments] = useState<BookComment[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState('');
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
+  const [commentLikes, setCommentLikes] = useState<Record<string, { count: number; liked: boolean }>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -85,6 +89,7 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
           content,
           rating,
           user_id,
+          parent_id,
           created_at,
           users (username, avatar_url)
         `)
@@ -101,6 +106,32 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
           setAverageRating(Number(avg.toFixed(1)));
         }
       }
+
+      if (commentsData?.length) {
+        const commentIds = commentsData.map((comment) => comment.id);
+        const { data: likesData, error: likesError } = await supabase
+          .from('book_comment_likes')
+          .select('comment_id, user_id')
+          .in('comment_id', commentIds);
+
+        if (!likesError) {
+          const likesMap: Record<string, { count: number; liked: boolean }> = {};
+          commentIds.forEach((commentId) => {
+            likesMap[commentId] = { count: 0, liked: false };
+          });
+
+          likesData?.forEach((like: { comment_id: string; user_id: string }) => {
+            likesMap[like.comment_id] = {
+              count: (likesMap[like.comment_id]?.count || 0) + 1,
+              liked: user?.id === like.user_id || likesMap[like.comment_id]?.liked || false,
+            };
+          });
+
+          setCommentLikes(likesMap);
+        }
+      } else {
+        setCommentLikes({});
+      }
     } catch (err) {
       console.error('Erreur:', err);
     } finally {
@@ -116,7 +147,6 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
 
     try {
       if (isLiked) {
-        // Remove like
         await supabase
           .from('book_likes')
           .delete()
@@ -126,7 +156,6 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
         setLikes(Math.max(0, likes - 1));
         setIsLiked(false);
       } else {
-        // Add like
         await supabase
           .from('book_likes')
           .insert([{ book_id: bookId, user_id: user.id }]);
@@ -139,7 +168,34 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
     }
   };
 
-  const handleAddComment = async (e: React.FormEvent) => {
+  const handleLikeComment = async (commentId: string) => {
+    if (!user?.id) {
+      navigate('/login');
+      return;
+    }
+
+    const isCommentLiked = commentLikes[commentId]?.liked;
+
+    try {
+      if (isCommentLiked) {
+        await supabase
+          .from('book_comment_likes')
+          .delete()
+          .eq('comment_id', commentId)
+          .eq('user_id', user.id);
+      } else {
+        await supabase
+          .from('book_comment_likes')
+          .insert([{ comment_id: commentId, user_id: user.id }]);
+      }
+
+      await fetchLikesAndComments();
+    } catch (err) {
+      console.error('Erreur like commentaire:', err);
+    }
+  };
+
+  const handleAddComment = async (e: React.FormEvent, parentId: string | null = null, draftValue: string = newComment) => {
     e.preventDefault();
 
     if (!user?.id) {
@@ -147,7 +203,8 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
       return;
     }
 
-    if (!newComment.trim()) {
+    const content = draftValue.trim();
+    if (!content) {
       setError('Le commentaire ne peut pas être vide');
       return;
     }
@@ -161,14 +218,16 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
         .insert([{
           book_id: bookId,
           user_id: user.id,
-          content: newComment.trim(),
-          rating: rating
+          content,
+          rating: parentId ? null : rating,
+          parent_id: parentId,
         }])
         .select(`
           id,
           content,
           rating,
           user_id,
+          parent_id,
           created_at,
           users (username, avatar_url)
         `);
@@ -176,9 +235,11 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
       if (insertError) throw insertError;
 
       if (data) {
-        setComments([data[0], ...comments]);
         setNewComment('');
         setRating(5);
+        setReplyTo(null);
+        setReplyContent('');
+        await fetchLikesAndComments();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'ajout du commentaire');
@@ -197,7 +258,7 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
         .eq('id', commentId)
         .eq('user_id', user?.id);
 
-      setComments(comments.filter(c => c.id !== commentId));
+      await fetchLikesAndComments();
     } catch (err) {
       console.error('Erreur suppression:', err);
     }
@@ -225,6 +286,93 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
             />
           </button>
         ))}
+      </div>
+    );
+  };
+
+  const renderComment = (comment: BookComment, depth = 0) => {
+    const isAuthor = user?.id === comment.user_id;
+    const children = comments.filter((item) => item.parent_id === comment.id);
+    const likes = commentLikes[comment.id];
+
+    return (
+      <div
+        key={comment.id}
+        className={`rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 ${depth > 0 ? 'ml-4 border-l-2 border-gold/40' : ''}`}
+      >
+        <div className="flex gap-3">
+          <Avatar
+            name={comment.users?.username || 'Utilisateur'}
+            src={comment.users?.avatar_url || null}
+            size="sm"
+            className="flex-shrink-0"
+          />
+          <div className="flex-1">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <Link
+                to={`/profile/${encodeURIComponent(comment.users?.username || 'utilisateur')}`}
+                className="font-bold text-slate-900 dark:text-white hover:text-gold transition"
+              >
+                {comment.users?.username || 'Utilisateur'}
+              </Link>
+              <span className="text-xs text-slate-500">
+                {new Date(comment.created_at).toLocaleDateString('fr-FR')}
+              </span>
+            </div>
+
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">{comment.content}</p>
+
+            <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-500">
+              <button
+                onClick={() => handleLikeComment(comment.id)}
+                className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 transition ${likes?.liked ? 'bg-orange-50 text-orange-500' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${likes?.liked ? 'fill-current' : ''}`} />
+                {likes?.count || 0}
+              </button>
+              <button
+                onClick={() => {
+                  setReplyTo(comment.id);
+                  setReplyContent('');
+                }}
+                className="hover:text-[var(--brand-midnight)] dark:hover:text-white"
+              >
+                Répondre
+              </button>
+              {isAuthor && (
+                <button onClick={() => handleDeleteComment(comment.id)} className="hover:text-red-500">
+                  Supprimer
+                </button>
+              )}
+            </div>
+
+            {replyTo === comment.id && (
+              <form onSubmit={(e) => handleAddComment(e, comment.id, replyContent)} className="mt-3 space-y-2">
+                <textarea
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  rows={2}
+                  placeholder="Répondre à ce commentaire..."
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm"
+                />
+                <div className="flex gap-2">
+                  <button type="submit" disabled={submitting || !replyContent.trim()} className="rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-midnight">
+                    Publier
+                  </button>
+                  <button type="button" onClick={() => { setReplyTo(null); setReplyContent(''); }} className="rounded-lg border px-3 py-2 text-sm">
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {children.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {children.map((child) => renderComment(child, depth + 1))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
@@ -273,9 +421,8 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
       <div className="space-y-6">
         <h3 className="text-2xl font-bold text-slate-900 dark:text-white font-poppins flex items-center gap-2">
           <MessageCircle size={24} />
-          Avis et commentaires ({comments.length})
+          Avis et commentaires ({comments.filter((comment) => comment.parent_id === null).length})
         </h3>
-
         {/* Comment Form */}
         {user ? (
           <form onSubmit={handleAddComment} className="space-y-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600/50">
@@ -336,55 +483,14 @@ export default function BookLikesComments({ bookId, bookTitle }: BookLikesCommen
 
         {/* Comments List */}
         <div className="space-y-4">
-          {comments.length === 0 ? (
+          {comments.filter((comment) => comment.parent_id === null).length === 0 ? (
             <p className="text-center py-8 text-slate-500 dark:text-slate-400 font-poppins">
               Pas encore d'avis. Soyez le premier à commenter!
             </p>
           ) : (
-            comments.map((comment) => (
-              <div key={comment.id} className="p-4 rounded-lg bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600/50 space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  {/* Avatar */}
-                  <Avatar
-                    name={comment.users?.username || 'Utilisateur'}
-                    src={comment.users?.avatar_url || null}
-                    size="sm"
-                    className="flex-shrink-0"
-                  />
-                  <div className="flex-1 space-y-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <p className="font-semibold text-slate-900 dark:text-white font-poppins text-sm">
-                        {comment.users?.username || 'Utilisateur'}
-                      </p>
-                      {comment.rating && (
-                        <div className="flex gap-0.5">
-                          {renderStars(comment.rating, false)}
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {new Date(comment.created_at).toLocaleDateString('fr-FR', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                  {user?.id === comment.user_id && (
-                    <button
-                      onClick={() => handleDeleteComment(comment.id)}
-                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition text-red-600 dark:text-red-400 flex-shrink-0"
-                      title="Supprimer"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
-                </div>
-                <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap font-poppins pl-12">
-                  {comment.content}
-                </p>
-              </div>
-            ))
+            comments
+              .filter((comment) => comment.parent_id === null)
+              .map((comment) => renderComment(comment))
           )}
         </div>
       </div>
