@@ -98,7 +98,11 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const [applauseAnim, setApplauseAnim] = useState(false);
   const [isFirstPageView, setIsFirstPageView] = useState(true);
   const [pageFlip, setPageFlip] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const downloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isCloudinary = pdfUrl.includes('cloudinary.com');
   const effectiveUrl = isCloudinary ? `/api/proxy-pdf?url=${encodeURIComponent(pdfUrl)}` : pdfUrl;
@@ -852,6 +856,12 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       window.location.href = '/login';
       return;
     }
+    
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    setDownloadError(null);
+    setDownloadSuccess(false);
+    
     try {
       // Pour Cloudinary, ajouter le paramètre fl_attachment pour forcer le téléchargement
       const downloadUrl = isCloudinary ? `${pdfUrl}?fl_attachment` : pdfUrl;
@@ -864,11 +874,42 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Erreur HTTP ${response.status}`);
+      }
+      
+      // Récupérer la taille totale
+      const contentLength = response.headers.get('content-length');
+      const total = parseInt(contentLength || '0', 10);
+      
+      // Lire le contenu avec progression
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Impossible de lire le fichier');
+      
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        chunks.push(value);
+        received += value.length;
+        
+        if (total > 0) {
+          const progress = Math.round((received / total) * 100);
+          setDownloadProgress(progress);
+        }
       }
       
       // Créer le blob avec le type MIME explicite
-      const blob = new Blob([await response.arrayBuffer()], { type: 'application/pdf' });
+      const arrayBuffer = new Uint8Array(received);
+      let position = 0;
+      for (const chunk of chunks) {
+        arrayBuffer.set(chunk, position);
+        position += chunk.length;
+      }
+      
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -877,9 +918,29 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      setDownloadProgress(100);
+      setDownloadSuccess(true);
+      
+      // Réinitialiser après 2 secondes
+      if (downloadTimeoutRef.current) clearTimeout(downloadTimeoutRef.current);
+      downloadTimeoutRef.current = setTimeout(() => {
+        setDownloadSuccess(false);
+        setDownloadProgress(0);
+      }, 2000);
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Erreur inconnue';
       console.error('Download error:', err);
-      alert('Erreur lors du téléchargement du PDF');
+      setDownloadError(errorMsg);
+      
+      // Réinitialiser après 3 secondes
+      if (downloadTimeoutRef.current) clearTimeout(downloadTimeoutRef.current);
+      downloadTimeoutRef.current = setTimeout(() => {
+        setDownloadError(null);
+        setDownloadProgress(0);
+      }, 3000);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -1117,13 +1178,59 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
             <button onClick={() => setReaderTheme('sepia')} className={`p-1.5 rounded-md transition-all ${readerTheme === 'sepia' ? 'bg-[#dfceaa] text-[#5b4636]' : 'opacity-60'}`}><Eye size={14} /></button>
           </div>
           {user && (
-            <button
-              onClick={handleDownload}
-              title="Télécharger le PDF"
-              className={`min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center rounded-lg ${theme.btnBg} transition-all active:scale-95 hover:bg-blue-500/30 hover:text-blue-400`}
-            >
-              <Download size={16} />
-            </button>
+            <div className="relative group">
+              <button
+                onClick={handleDownload}
+                disabled={isDownloading}
+                title="Télécharger le PDF"
+                className={`min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center rounded-lg transition-all active:scale-95 relative overflow-hidden font-semibold ${
+                  downloadSuccess
+                    ? 'bg-green-500/30 text-green-400'
+                    : downloadError
+                    ? 'bg-red-500/30 text-red-400'
+                    : `${theme.btnBg} hover:bg-[#ffd700]/20 hover:text-[#ffd700]`
+                } ${isDownloading ? 'opacity-75 cursor-wait' : 'cursor-pointer'}`}
+              >
+                {isDownloading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : downloadSuccess ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <Download size={16} />
+                )}
+              </button>
+              
+              {/* Tooltip avec progression */}
+              {isDownloading && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 dark:bg-white/10 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 h-1.5 bg-black/30 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-[#ffd700] to-yellow-300 transition-all duration-300"
+                        style={{ width: `${downloadProgress}%` }}
+                      />
+                    </div>
+                    <span className="font-semibold">{downloadProgress}%</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Toast de succès */}
+              {downloadSuccess && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-green-500/90 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none animate-bounce z-50">
+                  PDF téléchargé ✓
+                </div>
+              )}
+              
+              {/* Toast d'erreur */}
+              {downloadError && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-red-500/90 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none z-50 max-w-xs">
+                  {downloadError}
+                </div>
+              )}
+            </div>
           )}
           <button
             onClick={toggleBrowserFullscreen}

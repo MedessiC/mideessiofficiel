@@ -153,7 +153,7 @@ export default function Login() {
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs text-[#ffd700] hover:text-[#ffed4e] font-semibold transition"
+                  className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-[#ffd700]/10 hover:bg-[#ffd700]/20 text-[#ffd700] hover:text-[#ffed4e] font-semibold transition-all hover:scale-105 active:scale-95"
                 >
                   Oublié ?
                 </Link>

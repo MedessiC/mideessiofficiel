@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useClientAuth } from '../contexts/ClientContext';
 import SEO from '../components/SEO';
@@ -128,9 +128,9 @@ const ClientLogin = () => {
 
           <div className="mt-5 flex items-center justify-between text-sm text-[var(--text-secondary)]">
             <span>Accès sur invitation</span>
-            <a href="#" className="text-[var(--brand-gold)] hover:text-[#ffe34d] transition">
+            <Link to="/forgot-password" className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 font-semibold text-[var(--brand-gold)] hover:text-[#ffed4e] transition-all hover:scale-105 active:scale-95">
               Mot de passe oublié ?
-            </a>
+            </Link>
           </div>
         </div>
 

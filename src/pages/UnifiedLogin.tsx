@@ -245,7 +245,9 @@ const UnifiedLogin = () => {
                     <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]" />
                     <span className="text-xs text-[var(--text-secondary)]">Se souvenir de moi</span>
                   </label>
-                  <a href="#" className="text-xs font-semibold text-[var(--brand-gold)] hover:underline">Mot de passe oublié ?</a>
+                  <Link to="/forgot-password" className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 font-semibold text-[var(--brand-gold)] hover:text-[#ffed4e] transition-all hover:scale-105 active:scale-95">
+                    Mot de passe oublié ?
+                  </Link>
                 </div>
 
                 <button
