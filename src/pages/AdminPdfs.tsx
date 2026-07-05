@@ -298,6 +298,13 @@ export default function AdminPdfs() {
       }))
     }));
 
+    if (quizManagerBook?.id) {
+      setQuizManagerData(prev => [...prev, ...converted]);
+      addToast('success', `Importé ${converted.length} quiz pour "${quizManagerBook.title}"`);
+      setShowQuizImportModal(false);
+      return;
+    }
+
     // If editing an existing book, persist immediately
     if (editingBook && editingBook.id) {
       try {
@@ -679,11 +686,17 @@ export default function AdminPdfs() {
               <h2 className="text-xl font-black text-white">🧠 Quiz — {quizManagerBook.title}</h2>
               <p className="text-xs text-gray-400 mt-1">Créez et gérez les quiz interactifs pour ce livre.</p>
             </div>
-            <button onClick={saveQuizManager} disabled={quizManagerLoading}
-              className="inline-flex items-center gap-2 bg-[var(--brand-gold)] text-[var(--brand-midnight)] font-black px-5 py-2.5 rounded-xl text-sm hover:opacity-90 disabled:opacity-50 transition-opacity shadow-lg flex-shrink-0">
-              {quizManagerLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Sauvegarder
-            </button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button onClick={() => setShowQuizImportModal(true)}
+                className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-gray-200 font-semibold px-4 py-2.5 rounded-xl text-sm transition-colors">
+                <Upload className="w-4 h-4" /> Importer JSON
+              </button>
+              <button onClick={saveQuizManager} disabled={quizManagerLoading}
+                className="inline-flex items-center gap-2 bg-[var(--brand-gold)] text-[var(--brand-midnight)] font-black px-5 py-2.5 rounded-xl text-sm hover:opacity-90 disabled:opacity-50 transition-opacity shadow-lg">
+                {quizManagerLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Sauvegarder
+              </button>
+            </div>
           </div>
 
           <QuizEditor
