@@ -358,7 +358,7 @@ export default function ProfileOverview() {
                     <h1 className="text-xl sm:text-2xl font-black text-midnight dark:text-white">
                       @{profile.username}
                     </h1>
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-500/10 text-blue-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-500/10 dark:bg-blue-500/20 text-blue-500 dark:text-blue-400 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider">
                       <ShieldCheck className="h-3 w-3" /> Vérifié
                     </span>
                   </div>
@@ -425,10 +425,10 @@ export default function ProfileOverview() {
           </div>
         </div>
         {error && (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs font-semibold text-red-700">{error}</div>
+          <div className="mb-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 p-3.5 text-xs font-semibold text-red-700 dark:text-red-400">{error}</div>
         )}
         {successMessage && (
-          <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-3.5 text-xs font-semibold text-green-700">{successMessage}</div>
+          <div className="mb-4 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/40 p-3.5 text-xs font-semibold text-green-700 dark:text-green-400">{successMessage}</div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           {activeTab !== 'settings' && (
@@ -509,8 +509,8 @@ export default function ProfileOverview() {
                   <Award size={14} className="text-gold" /> Contributions
                 </h3>
                 <div className="mt-4 text-center py-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-                  <span className="text-2xl font-black text-midnight dark:text-white">{stats.contributionsScore}</span>
-                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-black mt-1">Score d'Apprentissage</p>
+                  <span className="text-2xl font-black text-[var(--text-primary)]">{stats.contributionsScore}</span>
+                  <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-widest font-black mt-1">Score d'Apprentissage</p>
                 </div>
               </div>
             </div>
@@ -646,8 +646,8 @@ export default function ProfileOverview() {
                       <input
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2.5 text-xs text-midnight dark:text-white outline-none focus:border-gold"
-                        placeholder="Nom d’utilisateur"
+                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2.5 text-xs text-[var(--text-primary)] outline-none focus:border-gold placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                        placeholder="Nom d'utilisateur"
                       />
                     </div>
                     <div>
@@ -672,7 +672,7 @@ export default function ProfileOverview() {
                       <input
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2.5 text-xs text-midnight dark:text-white outline-none focus:border-gold"
+                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2.5 text-xs text-[var(--text-primary)] outline-none focus:border-gold placeholder:text-gray-400 dark:placeholder:text-gray-600"
                         placeholder="Ex: Cotonou, Bénin"
                       />
                     </div>
@@ -681,7 +681,7 @@ export default function ProfileOverview() {
                       <input
                         value={formData.website}
                         onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2.5 text-xs text-midnight dark:text-white outline-none focus:border-gold"
+                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2.5 text-xs text-[var(--text-primary)] outline-none focus:border-gold placeholder:text-gray-400 dark:placeholder:text-gray-600"
                         placeholder="https://example.com"
                       />
                     </div>
@@ -691,7 +691,7 @@ export default function ProfileOverview() {
                         value={formData.bio}
                         onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                         rows={4}
-                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2.5 text-xs text-midnight dark:text-white outline-none focus:border-gold resize-none"
+                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2.5 text-xs text-[var(--text-primary)] outline-none focus:border-gold resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
                         placeholder="Parlez-nous de vous..."
                       />
                     </div>
@@ -699,7 +699,7 @@ export default function ProfileOverview() {
                   <div className="pt-4 border-t border-[var(--border)] flex gap-2 justify-end">
                     <button
                       onClick={() => setActiveTab('activity')}
-                      className="inline-flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-midnight dark:hover:text-white text-xs font-bold px-4 py-2.5 transition-all"
+                      className="inline-flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 hover:text-midnight dark:hover:text-white text-xs font-bold px-4 py-2.5 transition-all"
                     >
                       Annuler
                     </button>
@@ -791,7 +791,7 @@ export default function ProfileOverview() {
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deletingAccount}
-                className="flex-1 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-white text-xs font-bold py-2.5 transition-all"
+                className="flex-1 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 text-xs font-bold py-2.5 transition-all"
               >
                 Annuler
               </button>

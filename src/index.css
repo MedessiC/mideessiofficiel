@@ -18,6 +18,18 @@
   --success: #22c55e;
 }
 
+/* ── Dark mode CSS variable overrides ── */
+.dark {
+  --bg-page: #030712;
+  --bg-card: #111827;
+  --bg-surface: #1f2937;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-hint: #6b7280;
+  --border: #374151;
+  --danger-bg: #450a0a;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
