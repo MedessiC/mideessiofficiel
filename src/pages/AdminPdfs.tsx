@@ -351,6 +351,25 @@ export default function AdminPdfs() {
     }
   };
 
+  // ── Toggle free book ──────────────────────────────────────────────────────
+  const handleToggleFree = async (book: Book) => {
+    const newPrice = book.price === 0 ? 1000 : 0;
+    try {
+      const { error } = await supabase
+        .from('books')
+        .update({ price: newPrice })
+        .eq('id', book.id);
+      
+      if (error) throw error;
+      
+      setBooks(books.map(b => b.id === book.id ? { ...b, price: newPrice } : b));
+      const status = newPrice === 0 ? '✅ Livre rendu gratuit' : '💰 Livre remis à la vente';
+      addToast('success', status);
+    } catch (err: any) {
+      addToast('error', err.message || 'Erreur lors de la mise à jour');
+    }
+  };
+
   // ── Delete book ───────────────────────────────────────────────────────────
   const handleDelete = async (id: string) => {
     if (!confirm('Supprimer ce livre ? Cette action est irréversible.')) return;
@@ -566,7 +585,7 @@ export default function AdminPdfs() {
                         <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-yellow-400" />{book.rating}</span>
                         <span className="flex items-center gap-1"><Users className="w-3 h-3 text-blue-400" />{book.students}</span>
                         <span className="flex items-center gap-1"><BookOpen className="w-3 h-3 text-emerald-400" />{book.pages}p</span>
-                        <span className="ml-auto font-black text-[var(--brand-gold)]">{book.price} FCFA</span>
+                        <span className="ml-auto font-black text-[var(--brand-gold)]">{book.price === 0 ? '🎁 Gratuit' : `${book.price} FCFA`}</span>
                       </div>
                     </div>
 
@@ -579,6 +598,14 @@ export default function AdminPdfs() {
                       <button onClick={() => handleEdit(book)}
                         className="inline-flex items-center justify-center gap-1.5 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-xl text-xs font-semibold transition-colors">
                         <Edit2 className="w-3.5 h-3.5" /> Modifier
+                      </button>
+                      <button onClick={() => handleToggleFree(book)}
+                        className={`inline-flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                          book.price === 0
+                            ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400'
+                            : 'bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 text-[var(--brand-gold)]'
+                        }`}>
+                        {book.price === 0 ? '💰 Repayer' : '🎁 Gratuit'}
                       </button>
                       <button onClick={() => openQuizManager(book)}
                         className="col-span-2 inline-flex items-center justify-center gap-1.5 py-2 bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 text-[var(--brand-gold)] rounded-xl text-xs font-black transition-colors">
