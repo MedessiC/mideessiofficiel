@@ -192,9 +192,8 @@ const NewHome = () => {
       } else if (weekly) {
         // Fetch real metrics: likes, readers, average rating
         try {
-          const [{ count: likeCount }, { count: readerCount }, { data: ratings }] = await Promise.all([
+          const [{ count: likeCount }, { data: ratings }] = await Promise.all([
             supabase.from('book_likes').select('id', { count: 'exact', head: true }).eq('book_id', weekly.id),
-            supabase.from('book_progress').select('user_id', { count: 'exact', head: true }).eq('book_id', weekly.id).gte('progress_percent', 1),
             supabase.from('book_ratings').select('rating').eq('book_id', weekly.id),
           ]);
 
@@ -202,7 +201,10 @@ const NewHome = () => {
             ? (ratings.reduce((s: any, r: any) => s + Number(r.rating || 0), 0) / ratings.length).toFixed(1)
             : (weekly.rating || 0);
 
-          setWeeklyPDF({ ...weekly, likes: likeCount || 0, readers: readerCount || 0, avgRating });
+          // Use `weekly.views` for readers — this counts anonymous + authenticated views
+          const readers = weekly.views ?? weekly.students ?? 0;
+
+          setWeeklyPDF({ ...weekly, likes: likeCount || 0, readers, avgRating });
         } catch (err) {
           console.error('Erreur lors du chargement des métriques du PDF:', err);
           setWeeklyPDF(weekly);

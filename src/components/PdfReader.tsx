@@ -137,6 +137,28 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     }
   }, [user, pageCount, pdfUrl, getBookIdentifier]);
 
+  // Record a read in the books.views counter (visible to everyone)
+  const recordRead = useCallback(async (bookId: string | undefined) => {
+    if (!bookId) return;
+    if (typeof window === 'undefined') return;
+    try {
+      const key = `book_read_logged:${bookId}`;
+      if (localStorage.getItem(key)) return; // already recorded in this browser
+      await supabase.rpc('increment_book_views', { p_book_id: bookId });
+      // Also insert a detailed read event for audit and public metrics
+      const sessionKey = `s:${Math.random().toString(36).slice(2,9)}`;
+      try {
+        await supabase.from('book_reads').insert([{ book_id: bookId, user_id: user?.id ?? null, session_key: sessionKey }]);
+      } catch (err) {
+        // non-fatal
+        console.warn('Could not insert into book_reads:', err);
+      }
+      localStorage.setItem(key, sessionKey);
+    } catch (err) {
+      console.error('Error recording book read:', err);
+    }
+  }, []);
+
   // Sauvegarder les marque-pages
   const saveBookmarksToDb = useCallback(async (newBookmarks: number[]) => {
     localStorage.setItem(`pdf_bookmarks_${getBookIdentifier()}`, JSON.stringify(newBookmarks));
@@ -186,6 +208,8 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
 
         if (bookData?.id) {
           setCurrentBookId(bookData.id);
+          // Record that this browser started reading this book (increments public views)
+          recordRead(bookData.id);
           const { data: progressData } = await supabase
             .from('book_progress')
             .select('last_page_read, bookmarks')

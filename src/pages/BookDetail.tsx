@@ -139,50 +139,24 @@ export default function BookDetail() {
         .eq('book_id', id);
       setLikeCount(count || 0);
 
-      // Real reader count from book_progress
-      const { count: progressCount } = await supabase
-        .from('book_progress')
-        .select('user_id', { count: 'exact', head: true })
-        .eq('book_id', id)
-        .gte('progress_percent', 1);
-      setReaderCount(progressCount || 0);
+      // Use books.views as public reader count (includes anonymous)
+      setReaderCount(data.views || 0);
 
-      // Récupérer le Top 3 des meilleurs lecteurs pour ce livre
+      // Try to fetch leaderboard from the public view `book_leaderboard`
       try {
-        const { data: quizzes } = await supabase
-          .from('book_quizzes')
-          .select('id')
-          .eq('book_id', id);
+        const { data: board } = await supabase
+          .from('book_leaderboard')
+          .select('user_id, username, avatar_url, total_score, total_questions')
+          .eq('book_id', id)
+          .order('total_score', { ascending: false })
+          .limit(3);
 
-        if (quizzes && quizzes.length > 0) {
-          const quizIds = quizzes.map((q: any) => q.id);
-          const { data: attempts } = await supabase
-            .from('user_quiz_attempts')
-            .select('score, total_questions, users(username, avatar_url)')
-            .in('quiz_id', quizIds);
-
-          if (attempts) {
-            // Regrouper par utilisateur pour sommer leurs points
-            const userScores: Record<string, { username: string; avatar_url: string | null; score: number; total: number }> = {};
-            attempts.forEach((a: any) => {
-              const u = a.users;
-              if (!u) return;
-              if (!userScores[u.username]) {
-                userScores[u.username] = { username: u.username, avatar_url: u.avatar_url, score: 0, total: 0 };
-              }
-              userScores[u.username].score += Number(a.score || 0);
-              userScores[u.username].total += Number(a.total_questions || 0);
-            });
-
-            const sorted = Object.values(userScores)
-              .sort((a, b) => b.score - a.score)
-              .slice(0, 3) as TopReader[];
-            
-            setTopReaders(sorted);
-          }
+        if (board && board.length > 0) {
+          const mapped = board.map((b: any) => ({ username: b.username, avatar_url: b.avatar_url, score: Number(b.total_score || 0), total_questions: Number(b.total_questions || 0) }));
+          setTopReaders(mapped);
         }
       } catch (err) {
-        console.error('Error fetching book leaderboard:', err);
+        console.error('Error fetching public leaderboard view:', err);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
