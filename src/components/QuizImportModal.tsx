@@ -76,9 +76,17 @@ export default function QuizImportModal({ isOpen, onClose, onImport, maxPages }:
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+      {/*
+        Contrainte de hauteur + flex-col sur la carte du modal :
+        - max-h-[90vh] empêche le modal de dépasser l'écran
+        - flex flex-col + les 3 sections (header / contenu / footer) permettent
+          au contenu du milieu de scroller pendant que le header et le footer
+          restent toujours visibles.
+      */}
+      <div className="bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+        
+        {/* Header — fixe */}
+        <div className="flex items-center justify-between p-6 pb-4 flex-shrink-0">
           <div>
             <h2 className="text-2xl font-black text-white">
               Importer des quiz
@@ -95,107 +103,113 @@ export default function QuizImportModal({ isOpen, onClose, onImport, maxPages }:
           </button>
         </div>
 
-        {/* Help section */}
-        {!file && (
-          <div className="bg-blue-950/30 border border-blue-800/50 rounded-xl p-4">
-            <p className="text-sm text-blue-200 mb-3">
-              📋 <strong>Format JSON requis:</strong> Un tableau contenant vos quiz avec questions et réponses
-            </p>
-            <button
-              onClick={downloadSampleQuizTemplate}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition"
-            >
-              <Download className="w-4 h-4" />
-              Télécharger un modèle JSON
-            </button>
-          </div>
-        )}
-
-        {/* File upload */}
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-slate-600 hover:border-[#ffd700]/40 rounded-2xl p-8 text-center cursor-pointer transition-colors"
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            className="hidden"
-            onChange={handleFileSelect}
-            disabled={loading}
-          />
-          
-          {loading ? (
-            <div className="space-y-3">
-              <Loader2 className="w-8 h-8 text-[#ffd700] mx-auto animate-spin" />
-              <p className="text-sm font-bold text-gray-300">Parsing du fichier...</p>
-            </div>
-          ) : file ? (
-            <div className="space-y-2">
-              <FileJson className="w-8 h-8 text-emerald-400 mx-auto" />
-              <p className="text-sm font-bold text-emerald-400">{file.name}</p>
-              <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} Ko</p>
+        {/* Contenu — scrollable */}
+        <div className="flex-1 overflow-y-auto px-6 space-y-4 min-h-0">
+          {/* Help section */}
+          {!file && (
+            <div className="bg-blue-950/30 border border-blue-800/50 rounded-xl p-4">
+              <p className="text-sm text-blue-200 mb-3">
+                📋 <strong>Format JSON requis:</strong> Un tableau contenant vos quiz avec questions et réponses
+              </p>
               <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fileInputRef.current?.click();
-                }}
-                className="mt-2 text-xs text-gray-400 hover:text-white transition"
+                onClick={downloadSampleQuizTemplate}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition"
               >
-                Changer de fichier
+                <Download className="w-4 h-4" />
+                Télécharger un modèle JSON
               </button>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <Upload className="w-8 h-8 text-gray-500 mx-auto" />
-              <p className="text-sm font-bold text-gray-300">Cliquez pour sélectionner un fichier JSON</p>
-              <p className="text-xs text-gray-500">ou glissez-déposez</p>
+          )}
+
+          {/* File upload */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-slate-600 hover:border-[#ffd700]/40 rounded-2xl p-8 text-center cursor-pointer transition-colors"
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleFileSelect}
+              disabled={loading}
+            />
+            
+            {loading ? (
+              <div className="space-y-3">
+                <Loader2 className="w-8 h-8 text-[#ffd700] mx-auto animate-spin" />
+                <p className="text-sm font-bold text-gray-300">Parsing du fichier...</p>
+              </div>
+            ) : file ? (
+              <div className="space-y-2">
+                <FileJson className="w-8 h-8 text-emerald-400 mx-auto" />
+                <p className="text-sm font-bold text-emerald-400">{file.name}</p>
+                <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} Ko</p>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="mt-2 text-xs text-gray-400 hover:text-white transition"
+                >
+                  Changer de fichier
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Upload className="w-8 h-8 text-gray-500 mx-auto" />
+                <p className="text-sm font-bold text-gray-300">Cliquez pour sélectionner un fichier JSON</p>
+                <p className="text-xs text-gray-500">ou glissez-déposez</p>
+              </div>
+            )}
+          </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="bg-red-950/30 border border-red-800/50 rounded-xl p-4 flex gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-red-200">{error}</div>
             </div>
           )}
-        </div>
 
-        {/* Error message */}
-        {error && (
-          <div className="bg-red-950/30 border border-red-800/50 rounded-xl p-4 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-red-200">{error}</div>
-          </div>
-        )}
-
-        {/* Success preview */}
-        {success && parsedData && (
-          <div className="bg-emerald-950/30 border border-emerald-800/50 rounded-xl p-4 space-y-3">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-bold text-emerald-300">
-                  ✓ Fichier valide: {parsedData.length} quiz à importer
-                </p>
-                <p className="text-xs text-emerald-200 mt-0.5">
-                  {parsedData.reduce((acc, q) => acc + q.questions.length, 0)} questions au total
-                </p>
-              </div>
-            </div>
-
-            {/* Quiz preview */}
-            <div className="space-y-2">
-              {parsedData.map((quiz, idx) => (
-                <div key={idx} className="bg-slate-700/50 rounded-lg p-3 text-xs">
-                  <p className="font-bold text-white">
-                    📖 {quiz.title} <span className="text-gray-400 font-normal">(page {quiz.trigger_page})</span>
+          {/* Success preview */}
+          {success && parsedData && (
+            <div className="bg-emerald-950/30 border border-emerald-800/50 rounded-xl p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-emerald-300">
+                    ✓ Fichier valide: {parsedData.length} quiz à importer
                   </p>
-                  <p className="text-gray-300 mt-1">
-                    {quiz.questions.length} question{quiz.questions.length > 1 ? 's' : ''}
+                  <p className="text-xs text-emerald-200 mt-0.5">
+                    {parsedData.reduce((acc, q) => acc + q.questions.length, 0)} questions au total
                   </p>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
 
-        {/* Action buttons */}
-        <div className="flex gap-3 pt-4 border-t border-slate-700">
+              {/* Quiz preview */}
+              <div className="space-y-2">
+                {parsedData.map((quiz, idx) => (
+                  <div key={idx} className="bg-slate-700/50 rounded-lg p-3 text-xs">
+                    <p className="font-bold text-white">
+                      📖 {quiz.title} <span className="text-gray-400 font-normal">(page {quiz.trigger_page})</span>
+                    </p>
+                    <p className="text-gray-300 mt-1">
+                      {quiz.questions.length} question{quiz.questions.length > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Petit espace en bas de la zone scrollable pour ne pas coller au footer */}
+          <div className="h-2" />
+        </div>
+
+        {/* Footer — fixe, toujours visible même si le contenu du milieu déborde */}
+        <div className="flex gap-3 p-6 pt-4 border-t border-slate-700 flex-shrink-0">
           <button
             onClick={handleClose}
             className="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg transition"
