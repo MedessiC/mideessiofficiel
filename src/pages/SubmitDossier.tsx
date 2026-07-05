@@ -118,11 +118,14 @@ const SubmitDossier: React.FC<Props> = () => {
   };
 
   const uploadAttachment = async (file: File) => {
-    const filePath = `quote-requests/attachments/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-    const { data, error: upErr } = await supabase.storage.from('pdfs').upload(filePath, file, { cacheControl: '3600', upsert: true });
-    if (upErr || !data) throw upErr || new Error('Erreur d\'upload');
-    const { data: pub } = await supabase.storage.from('pdfs').getPublicUrl(filePath);
-    return pub?.publicUrl || '';
+    const { uploadFileToCloudinary } = await import('../lib/cloudinary');
+    // Déterminer le type de ressource pour Cloudinary (les documents non images/vidéos utilisent raw)
+    const isImageOrVideo = file.type.startsWith('image/') || file.type.startsWith('video/');
+    const resourceType = isImageOrVideo ? 'auto' : 'raw';
+    
+    // Upload vers le dossier mideessi/briefs
+    const url = await uploadFileToCloudinary(file, 'mideessi/briefs', resourceType);
+    return url;
   };
 
   const handleSubmit = async () => {
