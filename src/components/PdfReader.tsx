@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   X, Download, ExternalLink, ChevronLeft, ChevronRight,
   ZoomIn, ZoomOut, Maximize2, Minimize2, RotateCw, BookOpen, Loader2,
-  BookOpenCheck, Layers, Eye, Sun, Moon, Lock, LogIn
+  BookOpenCheck, Layers, Eye, Sun, Moon, Lock, LogIn, Sparkles
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -91,6 +91,11 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const [showBookmarksList, setShowBookmarksList] = useState(false);
   const [currentBookId, setCurrentBookId] = useState<string | null>(null);
   const [quizTriggered, setQuizTriggered] = useState(false);
+  const [completionConfirmed, setCompletionConfirmed] = useState(false);
+  const [completionSaving, setCompletionSaving] = useState(false);
+  const [completionError, setCompletionError] = useState<string | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [applauseAnim, setApplauseAnim] = useState(false);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isCloudinary = pdfUrl.includes('cloudinary.com');
@@ -110,7 +115,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   }, [pdfUrl, title]);
 
   // Sauvegarder la progression
-  const saveProgress = useCallback(async (page: number) => {
+  const saveProgress = useCallback(async (page: number, forceComplete = false) => {
     if (!pageCount || page < 1 || page > pageCount) return;
     localStorage.setItem(`pdf_progress_${getBookIdentifier()}`, String(page));
     if (user) {
@@ -123,20 +128,23 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           .maybeSingle();
 
         if (bookData?.id) {
-          // Nous sauvegardons aussi les bookmarks courants
-          await supabase.from('book_progress').upsert({
+          const payload: any = {
             book_id: bookData.id,
             user_id: user.id,
             last_page_read: page,
             progress_percent: percent,
-            last_read_at: new Date().toISOString()
-          }, { onConflict: 'book_id,user_id' });
+            last_read_at: new Date().toISOString(),
+          };
+          if (forceComplete || completionConfirmed) {
+            payload.is_completed = true;
+          }
+          await supabase.from('book_progress').upsert(payload, { onConflict: 'book_id,user_id' });
         }
       } catch (err) {
         console.error('Error saving PDF progress:', err);
       }
     }
-  }, [user, pageCount, pdfUrl, getBookIdentifier]);
+  }, [user, pageCount, pdfUrl, getBookIdentifier, completionConfirmed]);
 
   // Record a read in the books.views counter (visible to everyone)
   const recordRead = useCallback(async (bookId: string | undefined) => {
@@ -185,6 +193,73 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     }
   }, [user, pdfUrl, getBookIdentifier]);
 
+  const confirmCompletion = useCallback(async () => {
+    if (!currentBookId || pageCount === 0) return;
+    setCompletionSaving(true);
+    setCompletionError(null);
+
+    try {
+      const payload: any = {
+        book_id: currentBookId,
+        user_id: user?.id ?? null,
+        last_page_read: pageCount,
+        progress_percent: 100,
+        last_read_at: new Date().toISOString(),
+        is_completed: true,
+      };
+
+      if (user) {
+        await supabase.from('book_progress').upsert(payload, { onConflict: 'book_id,user_id' });
+        const statusKey = `reading_status_${user.id}`;
+        try {
+          const saved = window.localStorage.getItem(statusKey);
+          const statusMap = saved ? JSON.parse(saved) : {};
+          statusMap[currentBookId] = 'completed';
+          window.localStorage.setItem(statusKey, JSON.stringify(statusMap));
+        } catch {
+          // ignore
+        }
+      } else {
+        window.localStorage.setItem(`pdf_completed_${getBookIdentifier()}`, '1');
+      }
+
+      setCompletionConfirmed(true);
+      // persist local completed flag for both logged and anonymous users
+      try { window.localStorage.setItem(`pdf_completed_${getBookIdentifier()}`, '1'); } catch {}
+
+      // Trigger confetti + applause animation once
+      setShowConfetti(true);
+      setApplauseAnim(true);
+      playApplauseSound();
+      // hide applause animation after short time
+      setTimeout(() => setApplauseAnim(false), 1400);
+      // stop confetti after a while
+      setTimeout(() => setShowConfetti(false), 5200);
+
+      // send analytics if available
+      try {
+        const meta = { book_id: currentBookId, pdf_url: pdfUrl };
+        if ((window as any).gtag) {
+          (window as any).gtag('event', 'book_completion', meta);
+        } else if ((window as any).dataLayer) {
+          (window as any).dataLayer.push({ event: 'book_completion', ...meta });
+        } else if ((window as any).analytics && (window as any).analytics.track) {
+          (window as any).analytics.track('Book Completed', meta);
+        }
+        console.info('Analytics: book_completion', meta);
+      } catch (e) {
+        // non-fatal
+      }
+
+      saveProgress(pageCount, true);
+    } catch (err) {
+      console.error('Error confirming book completion:', err);
+      setCompletionError('Impossible de confirmer la fin du livre pour le moment.');
+    } finally {
+      setCompletionSaving(false);
+    }
+  }, [currentBookId, pageCount, user, getBookIdentifier, saveProgress]);
+
   // Ajouter / Retirer un marque-page
   const toggleBookmark = useCallback(() => {
     setBookmarks(prev => {
@@ -213,7 +288,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           recordRead(bookData.id);
           const { data: progressData } = await supabase
             .from('book_progress')
-            .select('last_page_read, bookmarks')
+            .select('last_page_read, bookmarks, is_completed')
             .eq('book_id', bookData.id)
             .eq('user_id', user.id)
             .maybeSingle();
@@ -226,6 +301,9 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
               ? JSON.parse(progressData.bookmarks)
               : progressData.bookmarks;
             if (Array.isArray(parsed)) setBookmarks(parsed);
+          }
+          if (progressData?.is_completed || Number(progressData?.progress_percent || 0) >= 100) {
+            setCompletionConfirmed(true);
           }
         }
       } catch (err) {
@@ -248,6 +326,8 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       if (localBookmarks) {
         try { setBookmarks(JSON.parse(localBookmarks)); } catch {}
       }
+      const completed = localStorage.getItem(`pdf_completed_${getBookIdentifier()}`) === '1';
+      if (completed) setCompletionConfirmed(true);
     }
 
     if (savedPage >= 1 && savedPage <= doc.numPages) {
@@ -433,6 +513,79 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     }
   }, [pdfDoc, pageNum, readerMode, scale, rotation, pageCount, renderSinglePage, isGuestLocked]);
 
+  // Small Confetti component (inline, lightweight) and animations
+  const Confetti = () => {
+    const pieces = Array.from({ length: 30 }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 0.6,
+      duration: 3 + Math.random() * 2,
+      color: ['#EF4444', '#F97316', '#FACC15', '#10B981', '#3B82F6', '#8B5CF6'][Math.floor(Math.random() * 6)],
+      spin: Math.random() * 360,
+      size: 6 + Math.random() * 10,
+    }));
+
+    return (
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-50 overflow-hidden">
+        <style>{`
+          @keyframes confetti-fall { to { transform: translateY(120vh) rotate(360deg); opacity: 0.9; } }
+          @keyframes applaud { 0% { transform: scale(1); } 30% { transform: scale(1.45) rotate(-6deg);} 60% { transform: scale(0.95) rotate(4deg);} 100% { transform: scale(1); } }
+          .animate-applaud { animation: applaud 1200ms ease; display:inline-block }
+        `}</style>
+        {pieces.map(p => (
+          <span
+            key={p.id}
+            style={{
+              position: 'absolute',
+              left: `${p.left}%`,
+              top: '-10%',
+              width: p.size,
+              height: p.size * 1.4,
+              backgroundColor: p.color,
+              transform: `rotate(${p.spin}deg)`,
+              borderRadius: 2,
+              animation: `confetti-fall ${p.duration}s ${p.delay}s linear forwards`,
+              opacity: 0.95,
+            }}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  // Play a short applause/chime using WebAudio (no external assets)
+  const playApplauseSound = () => {
+    try {
+      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Two quick detuned oscillators for a pleasant chime
+      const o1 = ctx.createOscillator();
+      const o2 = ctx.createOscillator();
+      const g = ctx.createGain();
+
+      o1.type = 'sine'; o2.type = 'sine';
+      o1.frequency.setValueAtTime(880, now);
+      o2.frequency.setValueAtTime(660, now);
+      o2.detune.setValueAtTime(40, now);
+
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.12, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+
+      o1.connect(g); o2.connect(g); g.connect(ctx.destination);
+      o1.start(now); o2.start(now);
+      o1.stop(now + 1.2); o2.stop(now + 1.2);
+
+      // close context after sound
+      setTimeout(() => { try { ctx.close(); } catch {} }, 1400);
+    } catch (e) {
+      // ignore sound errors
+    }
+  };
+
   // Gestion de l'affichage de la barre d'outils (inactivité)
   const resetHideTimeout = useCallback(() => {
     if (!isFullscreen) {
@@ -493,7 +646,13 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     if (currentPage !== pageNum) {
       setPageNum(currentPage);
       setPageInput(String(currentPage));
-      saveProgress(currentPage);
+      // If user scrolled to the extra completion element (index > pageCount)
+      if (currentPage > pageCount) {
+        // mark as complete (force)
+        saveProgress(pageCount, true);
+      } else {
+        saveProgress(currentPage);
+      }
       setQuizTriggered(true); // Tentative initiale, effect ci-dessous validera si on doit vraiment afficher
     }
   }, [readerMode, pageCount, pageNum, saveProgress]);
@@ -509,16 +668,30 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   // Navigation
   const prev = useCallback(() => {
     setPageNum(p => {
+      // allow navigating back from the completion page to the last PDF page
+      if (pageCount > 0 && p === pageCount + 1) {
+        const prevP = pageCount;
+        saveProgress(prevP);
+        return prevP;
+      }
       const nextP = Math.max(1, p - 1);
       saveProgress(nextP);
       return nextP;
     });
-  }, [saveProgress]);
+  }, [saveProgress, pageCount]);
 
   const next = useCallback(() => {
     setPageNum(p => {
-      const nextP = Math.min(pageCount || p + 1, p + 1);
-      saveProgress(nextP);
+      if (!pageCount) return p + 1;
+      // allow one extra page index after the last PDF page for completion
+      const maxIndex = pageCount + 1;
+      const nextP = Math.min(maxIndex, p + 1);
+      // if moving onto the completion page, mark complete (force)
+      if (p === pageCount && nextP === pageCount + 1) {
+        saveProgress(pageCount, true);
+      } else {
+        saveProgress(nextP);
+      }
       return nextP;
     });
   }, [pageCount, saveProgress]);
@@ -529,9 +702,14 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
 
   const goToPage = useCallback((value: string) => {
     const num = parseInt(value, 10);
-    if (!isNaN(num) && num >= 1 && num <= pageCount) {
+    if (!isNaN(num) && num >= 1 && num <= (pageCount ? pageCount + 1 : num)) {
       setPageNum(num);
-      saveProgress(num);
+      // If jumping to the completion extra page, force-complete
+      if (pageCount && num === pageCount + 1) {
+        saveProgress(pageCount, true);
+      } else {
+        saveProgress(num);
+      }
       setQuizTriggered(true);
       if (readerMode === 'scroll') {
         const canvas = canvasRefs.current[num];
@@ -691,8 +869,12 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       ? (pageNum / pageCount) * 100
       : 0;
 
+  const completionPageIndex = pageCount > 0 ? pageCount + 1 : 1;
+  const shouldShowCompletionPrompt = !completionConfirmed && pageCount > 0 && pageNum === completionPageIndex;
+
   useEffect(() => {
-    const safePage = pageCount > 0 ? Math.min(Math.max(pageNum, 1), pageCount) : Math.max(1, pageNum);
+    const maxPage = pageCount > 0 ? pageCount + 1 : 1;
+    const safePage = Math.min(Math.max(pageNum, 1), maxPage);
     if (safePage !== pageNum) {
       setPageNum(safePage);
     }
@@ -933,39 +1115,109 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
 
       {!loading && !error && (
         <div className="flex flex-col items-center w-full h-fit">
-          {readerMode === 'page' ? (
-            <div className="relative my-auto flex flex-col items-center justify-center">
-              {rendering && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-gray-900/40 z-10 rounded-lg backdrop-blur-xs">
-                  <Loader2 className="w-6 h-6 text-[var(--brand-gold)] animate-spin" />
-                </div>
-              )}
-              {/* Rendre tous les canvas dans le DOM mais masquer les inactifs pour permettre le pre-rendering */}
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map(num => (
-                <canvas
-                  key={num}
-                  ref={el => { canvasRefs.current[num] = el; }}
-                  className={`rounded-lg shadow-2xl max-w-full h-auto transition-transform ${
-                    isFullscreen ? 'border border-white/5' : ''
-                  } ${num === pageNum ? 'block' : 'hidden'}`}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-8 w-full items-center py-4">
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map(num => (
-                <div key={num} className="relative flex flex-col items-center w-full">
+          <div className="flex flex-col items-center w-full h-fit">
+            {readerMode === 'page' ? (
+              <div className="relative my-auto flex flex-col items-center justify-center">
+                {rendering && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-gray-900/40 z-10 rounded-lg backdrop-blur-xs">
+                    <Loader2 className="w-6 h-6 text-[var(--brand-gold)] animate-spin" />
+                  </div>
+                )}
+                {/* Rendre tous les canvas dans le DOM mais masquer les inactifs pour permettre le pre-rendering */}
+                {Array.from({ length: pageCount }, (_, i) => i + 1).map(num => (
                   <canvas
+                    key={num}
                     ref={el => { canvasRefs.current[num] = el; }}
-                    className="rounded-lg shadow-xl max-w-full h-auto border border-white/5"
+                    className={`rounded-lg shadow-2xl max-w-full h-auto transition-transform ${
+                      isFullscreen ? 'border border-white/5' : ''
+                    } ${num === pageNum ? 'block' : 'hidden'}`}
                   />
-                  <div className="mt-2 text-[10px] font-bold opacity-40">
-                    Page {num} / {pageCount}
+                ))}
+                {/* Completion full-page when in page mode and user moved past last page */}
+                {pageNum === completionPageIndex && (
+                  <div className="w-full flex justify-center py-12 relative">
+                    {showConfetti && <Confetti />}
+                    <div className="max-w-3xl w-full rounded-3xl p-8 bg-white dark:bg-gray-900 border border-[var(--border)] shadow-lg text-center">
+                      <h2 className="text-2xl font-black text-midnight dark:text-white mb-3">Félicitations — Lecture terminée</h2>
+                      <p className="text-sm text-[var(--text-secondary)] mb-6">Vous avez atteint la fin de ce livre. Cliquez sur le bouton ci-dessous pour confirmer que vous l'avez terminé et mettre à jour votre bibliothèque et votre profil.</p>
+                      <div className="flex items-center justify-center gap-3">
+                        {!completionConfirmed ? (
+                          <button
+                            onClick={() => { confirmCompletion(); }}
+                            disabled={completionSaving}
+                            className="inline-flex items-center justify-center rounded-full bg-[var(--brand-midnight)] text-white px-6 py-3 text-sm font-bold transition-all hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            <span className={`mr-2 text-xl ${applauseAnim ? 'animate-applaud' : ''}`}>👏</span>
+                            {completionSaving ? 'Confirmation...' : 'Confirmer la lecture'}
+                          </button>
+                        ) : (
+                          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
+                            <BookOpenCheck className="w-5 h-5 text-green-600" />
+                            <span className="text-sm font-bold text-green-700">Lecture confirmée</span>
+                          </div>
+                        )}
+                        <button
+                          onClick={() => { setPageNum(Math.max(1, pageCount)); setPageInput(String(Math.max(1, pageCount))); }}
+                          className="inline-flex items-center justify-center rounded-full bg-white border border-[var(--border)] px-4 py-2 text-sm font-semibold"
+                        >
+                          Revenir au livre
+                        </button>
+                      </div>
+                      {completionError && <p className="mt-4 text-sm text-red-600">{completionError}</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-8 w-full items-center py-4">
+                {Array.from({ length: pageCount }, (_, i) => i + 1).map(num => (
+                  <div key={num} className="relative flex flex-col items-center w-full">
+                    <canvas
+                      ref={el => { canvasRefs.current[num] = el; }}
+                      className="rounded-lg shadow-xl max-w-full h-auto border border-white/5"
+                    />
+                    <div className="mt-2 text-[10px] font-bold opacity-40">
+                      Page {num} / {pageCount}
+                    </div>
+                  </div>
+                ))}
+                {/* Completion full-page appended after all pages in scroll mode */}
+                <div className={`relative flex flex-col items-center w-full ${pageCount > 0 ? '' : 'hidden'}`}>
+                  <div className="w-full flex justify-center py-16 relative">
+                    {showConfetti && <Confetti />}
+                    <div className="max-w-3xl w-full rounded-3xl p-10 bg-white dark:bg-gray-900 border border-[var(--border)] shadow-lg text-center">
+                      <h2 className="text-3xl font-black text-midnight dark:text-white mb-4">Félicitations ! Vous avez terminé ce livre</h2>
+                      <p className="text-sm text-[var(--text-secondary)] mb-6">Confirmez la lecture pour que votre bibliothèque et votre profil soient mis à jour.</p>
+                      <div className="flex items-center justify-center gap-3">
+                        {!completionConfirmed ? (
+                          <button
+                            onClick={() => { confirmCompletion(); }}
+                            disabled={completionSaving}
+                            className="inline-flex items-center justify-center rounded-full bg-[var(--brand-midnight)] text-white px-6 py-3 text-sm font-bold transition-all hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            <span className={`mr-2 text-xl ${applauseAnim ? 'animate-applaud' : ''}`}>👏</span>
+                            {completionSaving ? 'Confirmation...' : 'Confirmer la lecture'}
+                          </button>
+                        ) : (
+                          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
+                            <BookOpenCheck className="w-5 h-5 text-green-600" />
+                            <span className="text-sm font-bold text-green-700">Lecture confirmée</span>
+                          </div>
+                        )}
+                        <button
+                          onClick={() => { const el = canvasRefs.current[pageCount]; if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                          className="inline-flex items-center justify-center rounded-full bg-white border border-[var(--border)] px-4 py-2 text-sm font-semibold"
+                        >
+                          Revenir au livre
+                        </button>
+                      </div>
+                      {completionError && <p className="mt-4 text-sm text-red-600">{completionError}</p>}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -982,9 +1234,9 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           >
             <ChevronLeft size={24} />
           </button>
-          <button
+            <button
             onClick={next}
-            disabled={pageNum >= pageCount}
+            disabled={pageNum >= completionPageIndex}
             className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 sm:p-4 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all duration-300 disabled:opacity-0 disabled:pointer-events-none active:scale-95 ${
               isFullscreen && !showToolbar ? 'opacity-0 scale-90' : 'opacity-100 scale-100'
             }`}

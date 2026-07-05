@@ -61,7 +61,7 @@ export default function ProfileOverview() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [isLibraryPublic, setIsLibraryPublic] = useState(true);
-  const [readBooks, setReadBooks] = useState<{ id: string; title: string; cover_url: string | null; progress_percent: number }[]>([]);
+  const [readBooks, setReadBooks] = useState<{ id: string; title: string; cover_url: string | null; progress_percent: number; is_completed?: boolean }[]>([]);
 
   useEffect(() => {
     fetchProfile();
@@ -168,7 +168,7 @@ export default function ProfileOverview() {
         if (canSeeBooks) {
           const { data: progressData } = await supabase
             .from('book_progress')
-            .select('progress_percent, books(id, title, cover_url)')
+            .select('progress_percent, is_completed, books(id, title, cover_url)')
             .eq('user_id', userId)
             .gte('progress_percent', 5)
             .order('updated_at', { ascending: false })
@@ -182,7 +182,8 @@ export default function ProfileOverview() {
                   id: p.books.id,
                   title: p.books.title,
                   cover_url: p.books.cover_url,
-                  progress_percent: p.progress_percent,
+                  progress_percent: Number(p.progress_percent || 0),
+                  is_completed: Boolean(p.is_completed),
                 }))
             );
           }

@@ -180,18 +180,23 @@ export default function MyLibrary() {
       // Récupérer la progression réelle et les notes pour chaque livre de l'utilisateur
       const { data: progressData } = await supabase
         .from('book_progress')
-        .select('book_id, progress_percent, study_notes')
+        .select('book_id, progress_percent, study_notes, is_completed')
         .eq('user_id', user.id);
 
       if (progressData) {
         const progMap: Record<string, number> = {};
         const noteMap: Record<string, string> = {};
+        const statusMap = { ...readingStatuses };
         progressData.forEach((p: any) => {
           progMap[p.book_id] = Number(p.progress_percent || 0);
           noteMap[p.book_id] = p.study_notes || '';
+          if (p.is_completed || Number(p.progress_percent || 0) >= 100) {
+            statusMap[p.book_id] = 'completed';
+          }
         });
         setProgressions(progMap);
         setNotes(noteMap);
+        setReadingStatuses(statusMap);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de charger votre bibliothèque');
