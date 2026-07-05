@@ -41,6 +41,7 @@ export default function MyLibrary() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [likedBooks, setLikedBooks] = useState<Book[]>([]);
+  const [likedSet, setLikedSet] = useState<Set<string>>(new Set());
   const [username, setUsername] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
   
@@ -135,30 +136,41 @@ export default function MyLibrary() {
     setError('');
 
     try {
-      const [{ data: profileData }, { data: likesData, error: likesError }] = await Promise.all([
+      const [{ data: profileData }, { data: savesData, error: savesError }, { data: likesData }] = await Promise.all([
         supabase
           .from('users')
           .select('username')
           .eq('id', user.id)
           .single(),
         supabase
-          .from('book_likes')
+          .from('book_saves')
           .select('book_id, books(*)')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('book_likes')
+          .select('book_id')
+          .eq('user_id', user.id),
       ]);
 
       if (profileData) {
         setUsername(profileData.username || user.email || null);
       }
 
-      if (likesError) {
-        throw likesError;
+      if (savesError) {
+        throw savesError;
       }
 
-      const books = (likesData || [])
+      const books = (savesData || [])
         .map((item: BookLikeJoin) => item.books)
         .filter((book): book is Book => Boolean(book));
+
+      // build liked set
+      const likedIds = new Set<string>();
+      if (likesData && Array.isArray(likesData)) {
+        likesData.forEach((r: any) => { if (r.book_id) likedIds.add(r.book_id); });
+      }
+      setLikedSet(likedIds);
 
       setLikedBooks(books);
       if (books.length > 0) {
@@ -186,6 +198,38 @@ export default function MyLibrary() {
       console.error('Erreur MyLibrary:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleLike = async (e: React.MouseEvent, bookId: string) => {
+    e.stopPropagation();
+    if (!user) { window.location.assign(`/login?redirect=/my-library`); return; }
+    try {
+      const { data } = await supabase.rpc('toggle_book_like', { p_book_id: bookId });
+      const liked = !!(data?.liked);
+      setLikedSet(prev => {
+        const next = new Set(prev);
+        if (liked) next.add(bookId); else next.delete(bookId);
+        return next;
+      });
+    } catch (err) {
+      console.error('Error toggling like:', err);
+    }
+  };
+
+  const toggleSave = async (e: React.MouseEvent, bookId: string) => {
+    e.stopPropagation();
+    if (!user) { window.location.assign(`/login?redirect=/my-library`); return; }
+    try {
+      const { data } = await supabase.rpc('toggle_book_save', { p_book_id: bookId });
+      const saved = !!(data?.saved);
+      if (!saved) {
+        // remove from saved list
+        setLikedBooks(prev => prev.filter(b => b.id !== bookId));
+        if (selectedBook?.id === bookId) setSelectedBook(null);
+      }
+    } catch (err) {
+      console.error('Error toggling save:', err);
     }
   };
 
@@ -475,7 +519,25 @@ export default function MyLibrary() {
                           </div>
                         </div>
                         
-                        <ChevronRight className={`w-3.5 h-3.5 self-center flex-shrink-0 transition-colors ${isSelected ? 'text-[var(--brand-gold)]' : 'text-gray-300'}`} />
+                        <div className="flex items-center gap-2 self-center flex-shrink-0">
+                          <button
+                            onClick={(e) => toggleLike(e, book.id)}
+                            className={`p-2 rounded-lg transition-colors ${likedSet.has(book.id) ? 'bg-red-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                            title={likedSet.has(book.id) ? 'Retirer le like' : 'Liker'}
+                          >
+                            <Heart className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={(e) => toggleSave(e, book.id)}
+                            className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 transition-colors"
+                            title="Retirer de ma bibliothèque"
+                          >
+                            <Bookmark className="w-3.5 h-3.5" />
+                          </button>
+
+                          <ChevronRight className={`w-3.5 h-3.5 transition-colors ${isSelected ? 'text-[var(--brand-gold)]' : 'text-gray-300'}`} />
+                        </div>
                       </div>
                     );
                   })}

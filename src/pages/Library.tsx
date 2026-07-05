@@ -12,6 +12,7 @@ interface Book {
   category?: string;
   price?: string | number;
   rating?: number;
+  views?: number;
   students?: number;
   pages?: number;
   level?: string;
@@ -51,8 +52,8 @@ const Library = () => {
         console.error('Erreur:', error);
       } else {
         setBooks(data || []);
-        // Fetch real reader counts from book_progress
-        if (data && data.length > 0) {
+        // If books.views is missing, fall back to progress-based reader counts
+        if (data && data.length > 0 && !data.every((book: any) => typeof book.views === 'number')) {
           const { data: progressData } = await supabase
             .from('book_progress')
             .select('book_id')
@@ -221,7 +222,7 @@ const Library = () => {
                   </div>
                   <div className="flex items-center gap-1.5 text-gray-300 text-xs font-medium">
                     <Users className="w-4 h-4 text-blue-400" />
-                    <span>{readerCounts[book.id] ?? 0} lecteur{(readerCounts[book.id] ?? 0) !== 1 ? 's' : ''}</span>
+                    <span>{book.views ?? readerCounts[book.id] ?? 0} lecteur{(book.views ?? readerCounts[book.id] ?? 0) !== 1 ? 's' : ''}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-gray-300 text-xs font-medium">
                     <BookOpen className="w-4 h-4 text-emerald-400" />
@@ -353,7 +354,7 @@ const Library = () => {
               </div>
                 <div className="flex items-center gap-1">
                 <Users className="w-3 h-3 text-blue-400" />
-                <span>{readerCounts[book.id] ?? 0}</span>
+                <span>{book.views ?? readerCounts[book.id] ?? 0}</span>
               </div>
               <div className="flex items-center gap-1">
                 <BookOpen className="w-3 h-3 text-emerald-400" />

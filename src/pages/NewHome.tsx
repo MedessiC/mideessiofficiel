@@ -1,10 +1,11 @@
 import {
   ArrowRight, TrendingUp, Shield, Sparkles, Users, Award,
   CheckCircle, Building2, Heart, Lightbulb, HandHeart, Globe, ChevronLeft, ChevronRight, ChevronUp,
-  BookOpen, Download, BadgeCheck, ExternalLink, Play
+  BookOpen, Download, BadgeCheck, ExternalLink, Play, Bookmark
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import PopupDisplay from '../components/PopupDisplay';
 import NewsletterSignup from '../components/NewsletterSignup';
@@ -108,6 +109,37 @@ const NewHome = () => {
   const [weeklyPDF, setWeeklyPDF] = useState(null);
   const [loadingPDF, setLoadingPDF] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [likedSet, setLikedSet] = useState<Set<any>>(new Set());
+  const [savedSet, setSavedSet] = useState<Set<any>>(new Set());
+
+  useEffect(() => {
+    const fetchUserFlags = async () => {
+      if (!user) {
+        setLikedSet(new Set());
+        setSavedSet(new Set());
+        return;
+      }
+      try {
+        const [{ data: likes }, { data: saves }] = await Promise.all([
+          supabase.from('book_likes').select('book_id').eq('user_id', user.id),
+          supabase.from('book_saves').select('book_id').eq('user_id', user.id),
+        ]);
+        const lset = new Set((likes || []).map((r: any) => r.book_id));
+        const sset = new Set((saves || []).map((r: any) => r.book_id));
+        setLikedSet(lset);
+        setSavedSet(sset);
+        setIsLiked(weeklyPDF && lset.has(weeklyPDF.id));
+        setIsSaved(weeklyPDF && sset.has(weeklyPDF.id));
+      } catch (err) {
+        console.warn('Error fetching user flags on home:', err);
+      }
+    };
+    fetchUserFlags();
+  }, [user, weeklyPDF]);
 
   useEffect(() => {
     fetchHeroSlides();
@@ -151,6 +183,53 @@ const NewHome = () => {
       }
     } catch (error) {
       console.error('Erreur lors du chargement des slides:', error);
+    }
+  };
+
+  const toggleLike = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!weeklyPDF?.id) return;
+    if (!user) {
+      navigate(`/login?redirect=${location.pathname}${location.search}`);
+      return;
+    }
+    try {
+      const { data } = await supabase.rpc('toggle_book_like', { p_book_id: weeklyPDF.id });
+      if (data) {
+        const liked = !!data.liked;
+        setIsLiked(liked);
+        setLikedSet(prev => {
+          const next = new Set(prev);
+          if (liked) next.add(weeklyPDF.id); else next.delete(weeklyPDF.id);
+          return next;
+        });
+        setWeeklyPDF((prev: any) => ({ ...(prev || {}), likes: data.count ?? prev?.likes }));
+      }
+    } catch (err) {
+      console.error('Error toggling like:', err);
+    }
+  };
+
+  const toggleSave = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!weeklyPDF?.id) return;
+    if (!user) {
+      navigate(`/login?redirect=${location.pathname}${location.search}`);
+      return;
+    }
+    try {
+      const { data } = await supabase.rpc('toggle_book_save', { p_book_id: weeklyPDF.id });
+      if (data) {
+        const saved = !!data.saved;
+        setIsSaved(saved);
+        setSavedSet(prev => {
+          const next = new Set(prev);
+          if (saved) next.add(weeklyPDF.id); else next.delete(weeklyPDF.id);
+          return next;
+        });
+      }
+    } catch (err) {
+      console.error('Error toggling save:', err);
     }
   };
 
@@ -205,6 +284,19 @@ const NewHome = () => {
           const readers = weekly.views ?? weekly.students ?? 0;
 
           setWeeklyPDF({ ...weekly, likes: likeCount || 0, readers, avgRating });
+          // if user is logged in, fetch personal like/save state
+          if (user) {
+            try {
+              const [{ data: likeData }, { data: saveData }] = await Promise.all([
+                supabase.from('book_likes').select('id').eq('book_id', weekly.id).eq('user_id', user.id).maybeSingle(),
+                supabase.from('book_saves').select('id').eq('book_id', weekly.id).eq('user_id', user.id).maybeSingle(),
+              ]);
+              setIsLiked(!!likeData);
+              setIsSaved(!!saveData);
+            } catch (err) {
+              console.warn('Error fetching like/save state for weekly PDF', err);
+            }
+          }
         } catch (err) {
           console.error('Erreur lors du chargement des métriques du PDF:', err);
           setWeeklyPDF(weekly);
@@ -246,37 +338,23 @@ const NewHome = () => {
     let cancelled = false;
     const fetchSiteStats = async () => {
       try {
-        // Total distinct readers with progress >= 1
-        const { count: readersCount } = await supabase
-          .from('book_progress')
-          .select('user_id', { count: 'exact', head: true })
-          .gte('progress_percent', 1);
-
-        // Fetch all book ratings and compute average locally
-        const { data: booksData } = await supabase
+        const { data: booksData, error } = await supabase
           .from('books')
-          .select('rating')
-          .is('rating', null);
+          .select('views, rating');
 
-        // Fallback: if above returned empty because of `.is('rating', null)` usage,
-        // we fetch ratings without the filter
-        let ratings: number[] = [];
-        if (booksData && booksData.length > 0) {
-          ratings = booksData.map((b: any) => Number(b.rating || 0)).filter((r: number) => r > 0);
-        } else {
-          const { data: allBooks } = await supabase.from('books').select('rating');
-          if (allBooks) ratings = allBooks.map((b: any) => Number(b.rating || 0)).filter((r: number) => r > 0);
+        if (error) {
+          throw error;
         }
 
-        const avgRating = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length) : 0;
-
-        // Total books
-        const { count: booksCount } = await supabase
-          .from('books')
-          .select('id', { count: 'exact', head: true });
+        const readersCount = (booksData || []).reduce((sum: number, book: any) => sum + (Number(book.views) || 0), 0);
+        const ratings = (booksData || [])
+          .map((book: any) => Number(book.rating || 0))
+          .filter((rating: number) => rating > 0);
+        const avgRating = ratings.length ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length : 0;
+        const booksCount = (booksData || []).length;
 
         if (!cancelled) {
-          setSiteStats({ readers: readersCount || 0, avgRating: Number(avgRating.toFixed(1)), books: booksCount || 0 });
+          setSiteStats({ readers: readersCount, avgRating: Number(avgRating.toFixed(1)), books: booksCount });
         }
       } catch (err) {
         console.error('Error fetching site stats:', err);
@@ -542,7 +620,7 @@ const NewHome = () => {
                       <div className="bg-gray-50 dark:bg-gray-800 p-2 sm:p-3 md:p-4 rounded-lg">
                         <div className="flex items-center gap-1 mb-1 justify-center sm:justify-start">
                           <Users className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
-                          <span className="font-bold text-xs sm:text-sm">{weeklyPDF.readers ?? weeklyPDF.students ?? 0}</span>
+                          <span className="font-bold text-xs sm:text-sm">{weeklyPDF.views ?? weeklyPDF.readers ?? weeklyPDF.students ?? 0}</span>
                         </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400">Étudiants</p>
                       </div>
@@ -556,6 +634,20 @@ const NewHome = () => {
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <button
+                      onClick={(e) => toggleLike(e)}
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold ${likedSet.has(weeklyPDF.id) ? 'bg-red-600 text-white' : 'bg-white/10 text-gray-800 dark:text-white'}`}
+                    >
+                      <Heart className="w-4 h-4" />
+                      <span className="hidden sm:inline">{likedSet.has(weeklyPDF.id) ? 'Liked' : 'Like'}</span>
+                    </button>
+                    <button
+                      onClick={(e) => toggleSave(e)}
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold ${savedSet.has(weeklyPDF.id) ? 'bg-emerald-600 text-white' : 'bg-white/10 text-gray-800 dark:text-white'}`}
+                    >
+                      <Bookmark className="w-4 h-4" />
+                      <span className="hidden sm:inline">{savedSet.has(weeklyPDF.id) ? 'Enregistré' : 'Enregistrer'}</span>
+                    </button>
                     {weeklyPDF.id && (
                       <Link
                         to={`/library/${weeklyPDF.id}`}

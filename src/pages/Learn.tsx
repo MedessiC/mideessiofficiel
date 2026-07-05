@@ -10,6 +10,7 @@ interface Book {
   category?: string;
   price?: string | number;
   rating?: number;
+  views?: number;
   students?: number;
   pages?: number;
   level?: string;
@@ -239,7 +240,7 @@ const Learn = () => {
                         <div className="flex items-center justify-center gap-1 mb-0.5">
                           <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
                           <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                            {book.students || 150}
+                            {book.views ?? book.students ?? 150}
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-500">Lus</p>
