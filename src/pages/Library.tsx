@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Star, Users, Download, Heart, Share2, Search, Filter, Trophy, Sparkles, ChevronRight, Bookmark, Play } from 'lucide-react';
+import { BookOpen, Star, Users, Download, Heart, Share2, Search, Filter, Trophy, Sparkles, ChevronRight, Bookmark, Play, Gift } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PopupDisplay from '../components/PopupDisplay';
 import { useAuth } from '../contexts/AuthContext';
@@ -234,8 +234,7 @@ const Library = () => {
               {/* Price / CTA Buttons */}
               <div className="flex flex-wrap items-center gap-3">
                 <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
-                  <span className="text-2xl font-black text-gold">{book.price === 0 ? '🎁 Gratuit' : (book.price || '1000')}</span>
-                  {book.price !== 0 && <span className="text-xs text-gray-400 ml-1">FCFA</span>}
+                  <span className="text-2xl font-black text-gold flex items-center gap-1.5">{book.price === 0 ? <><Gift className="w-6 h-6" /> Gratuit</> : <>{(book.price || '1000')} <span className="text-xs text-gray-400">FCFA</span></> }</span>
                 </div>
                 <Link
                   to={`/library/${book.id}`}

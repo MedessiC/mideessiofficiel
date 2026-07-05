@@ -4,7 +4,7 @@ import {
   BookOpen, Plus, Edit2, Trash2, Save, X, Palette, Sparkles, Users, Loader, LogOut,
   TrendingUp, Award, Download, Clock, AlertCircle, CheckCircle, FileText, Upload,
   Image, ExternalLink, ChevronRight, ChevronLeft, HelpCircle, Zap, Eye, Search,
-  BookOpenCheck, GripVertical
+  BookOpenCheck, GripVertical, Gift
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadFileToCloudinary } from '../lib/cloudinary';
@@ -585,7 +585,7 @@ export default function AdminPdfs() {
                         <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-yellow-400" />{book.rating}</span>
                         <span className="flex items-center gap-1"><Users className="w-3 h-3 text-blue-400" />{book.students}</span>
                         <span className="flex items-center gap-1"><BookOpen className="w-3 h-3 text-emerald-400" />{book.pages}p</span>
-                        <span className="ml-auto font-black text-[var(--brand-gold)]">{book.price === 0 ? '🎁 Gratuit' : `${book.price} FCFA`}</span>
+                        <span className="ml-auto font-black text-[var(--brand-gold)] flex items-center gap-1">{book.price === 0 ? <><Gift className="w-4 h-4" /> Gratuit</> : `${book.price} FCFA`}</span>
                       </div>
                     </div>
 
@@ -605,7 +605,7 @@ export default function AdminPdfs() {
                             ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400'
                             : 'bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 text-[var(--brand-gold)]'
                         }`}>
-                        {book.price === 0 ? '💰 Repayer' : '🎁 Gratuit'}
+                        {book.price === 0 ? '💰 Repayer' : <><Gift className="w-3.5 h-3.5" /> Gratuit</>}
                       </button>
                       <button onClick={() => openQuizManager(book)}
                         className="col-span-2 inline-flex items-center justify-center gap-1.5 py-2 bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 text-[var(--brand-gold)] rounded-xl text-xs font-black transition-colors">

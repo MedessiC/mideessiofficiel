@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
-import { ArrowRight, MessageCircle, Globe, ShoppingCart, Smartphone, Code, PackageOpen, CheckCircle, FileText } from 'lucide-react';
+import { ArrowRight, MessageCircle, Globe, ShoppingCart, Smartphone, Code, PackageOpen, CheckCircle, FileText, Gift } from 'lucide-react';
 import SEO from '../components/SEO';
 import QuoteRequestModal from '../components/QuoteRequestModal';
 import { devServices } from '../data/devServices';
@@ -196,8 +196,8 @@ const DetailDevService = () => {
 
               {/* Bonus */}
               <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-6 md:p-8 border-2 border-blue-200 dark:border-blue-800">
-                <h3 className="text-xl font-bold text-midnight dark:text-white mb-6">
-                  🎁 Bonus inclus
+                <h3 className="text-xl font-bold text-midnight dark:text-white mb-6 flex items-center gap-2">
+                  <Gift className="w-5 h-5 text-gold" /> Bonus inclus
                 </h3>
                 <ul className="space-y-3">
                   {service.bonus.map((bonus, idx) => (
