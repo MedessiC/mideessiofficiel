@@ -234,8 +234,8 @@ const Library = () => {
               {/* Price / CTA Buttons */}
               <div className="flex flex-wrap items-center gap-3">
                 <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
-                  <span className="text-2xl font-black text-gold">{book.price || '1000'}</span>
-                  <span className="text-xs text-gray-400 ml-1">FCFA</span>
+                  <span className="text-2xl font-black text-gold">{book.price === 0 ? '🎁 Gratuit' : (book.price || '1000')}</span>
+                  {book.price !== 0 && <span className="text-xs text-gray-400 ml-1">FCFA</span>}
                 </div>
                 <Link
                   to={`/library/${book.id}`}
