@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { 
   BookOpen, LogOut, Heart, Search, BookOpenCheck, Clock, Bookmark, 
   Download, ChevronRight, BookOpen as BookIcon, Star, Users, 
-  FileText, Sparkles, Plus, Share2, Eye, X, BookMarked
+  FileText, Sparkles, Plus, Share2, Eye, X, BookMarked, Play
 } from 'lucide-react';
 import SEO from '../components/SEO';
 import PdfReader from '../components/PdfReader';
@@ -203,6 +203,14 @@ export default function MyLibrary() {
     }
   };
 
+  const getStatusColor = (status: ReadingStatus) => {
+    switch (status) {
+      case 'to-read': return 'text-gray-400 bg-gray-100 dark:bg-gray-800';
+      case 'reading': return 'text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400';
+      case 'completed': return 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400';
+    }
+  };
+
   const getProgressPercentage = (bookId: string, status: ReadingStatus) => {
     if (progressions[bookId] !== undefined) {
       return progressions[bookId];
@@ -250,142 +258,142 @@ export default function MyLibrary() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-page)] dark:bg-gray-950 text-[var(--text-primary)] font-poppins selection:bg-gold selection:text-midnight pb-12">
+    <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] pb-16">
       <SEO
         title="Ma Bibliothèque | MIDEESSI"
         description="Accédez à vos ebooks préférés, vos PDF sauvegardés et votre espace personnel MIDEESSI."
       />
 
-      {/* Modern Glassmorphic Header */}
-      <header className="relative overflow-hidden bg-[var(--brand-midnight)] text-white py-12 sm:py-16 border-b border-white/5 shadow-2xl">
-        <div className="absolute inset-0 opacity-20 pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gold rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-600 rounded-full blur-[120px] animate-pulse" />
+      {/* Header — style cohérent avec le reste du site */}
+      <header className="relative bg-[var(--brand-midnight)] text-white pt-24 pb-10 border-b border-white/5">
+        {/* Subtle static background gradient — pas d'animation */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-32 right-0 w-[500px] h-[500px] bg-[var(--brand-gold)]/10 rounded-full blur-[100px]" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-900/20 rounded-full blur-[80px]" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col gap-6 md:flex-row md:justify-between md:items-center">
+          <div className="flex flex-col gap-5 md:flex-row md:justify-between md:items-start">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gold/10 border border-gold/20 text-gold text-xs font-semibold uppercase tracking-wider backdrop-blur-md">
-                <Sparkles size={12} className="animate-spin-slow" />
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 text-[var(--brand-gold)] text-[10px] font-black uppercase tracking-wider">
+                <Sparkles size={11} />
                 <span>Mon Espace Étude</span>
               </div>
-              <h1 className="text-3xl sm:text-5xl font-black tracking-tight bg-gradient-to-r from-white via-gray-100 to-gold bg-clip-text text-transparent">
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
                 Ma Bibliothèque
               </h1>
-              <p className="text-sm sm:text-base text-gray-300 max-w-2xl leading-relaxed font-light">
-                Retrouvez vos PDF likés, vos ressources favorites et continuez votre apprentissage avec MIDEESSI.
+              <p className="text-sm text-gray-300/80 max-w-lg leading-relaxed font-light">
+                Retrouvez vos ebooks likés, continuez votre lecture et prenez des notes.
               </p>
             </div>
 
-            <div className="flex flex-row gap-3 w-full md:w-auto">
+            <div className="flex flex-row gap-2.5 w-full md:w-auto md:pt-1">
+              <Link
+                to="/library"
+                className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand-gold)] text-[var(--brand-midnight)] px-5 py-2.5 font-black text-xs hover:opacity-90 transition-opacity shadow-lg"
+              >
+                <BookIcon size={13} /> Parcourir
+              </Link>
               <button
                 onClick={handleSignOut}
                 disabled={loading}
-                className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 rounded-xl bg-white text-midnight px-5 py-3.5 font-bold text-xs hover:bg-gray-100 transition-all shadow-lg active:scale-95 duration-200"
+                className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 border border-white/20 text-white px-5 py-2.5 font-bold text-xs hover:bg-white/15 transition-all"
               >
-                <LogOut size={14} /> <span>Se déconnecter</span>
+                <LogOut size={13} /> Déconnexion
               </button>
-              <Link
-                to="/library"
-                className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 border border-white/20 text-white px-5 py-3.5 font-bold text-xs hover:bg-white/20 transition-all backdrop-blur-md"
-              >
-                <BookIcon size={14} /> <span>Parcourir</span>
-              </Link>
             </div>
           </div>
 
-          {/* Metrics Shelf - Mobile Friendly Grid */}
-          <div className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Card: Welcome */}
-            <div className="group rounded-2xl bg-white/5 border border-white/10 p-4 sm:p-5 shadow-lg backdrop-blur-md transition-all hover:bg-white/[0.08] hover:border-gold/30">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">{greeting}</span>
-              <h2 className="text-base sm:text-xl font-black text-white truncate mt-1 group-hover:text-gold transition-colors">
-                {username || user?.email?.split('@')[0]}
-              </h2>
-              <p className="mt-2 text-[10px] sm:text-xs text-gray-400 leading-normal">
-                Votre espace personnel MIDEESSI.
-              </p>
-            </div>
-
-            {/* Card: Liked Books */}
-            <div className="group rounded-2xl bg-white/5 border border-white/10 p-4 sm:p-5 shadow-lg backdrop-blur-md transition-all hover:bg-white/[0.08] hover:border-gold/30">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">LIVRES LIKÉS</span>
-              <p className="text-2xl sm:text-3xl font-black text-gold mt-1">
-                {likedBooks.length}
-              </p>
-              <p className="mt-2 text-[10px] sm:text-xs text-gray-400 leading-normal">
-                Ressources que vous avez ajoutées à votre bibliothèque.
-              </p>
-            </div>
-
-            {/* Card: Categories */}
-            <div className="group rounded-2xl bg-white/5 border border-white/10 p-4 sm:p-5 shadow-lg backdrop-blur-md transition-all hover:bg-white/[0.08] hover:border-gold/30">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">CATÉGORIES</span>
-              <p className="text-2xl sm:text-3xl font-black text-gold mt-1">
-                {totalCategories}
-              </p>
-              <p className="mt-2 text-[10px] sm:text-xs text-gray-400 leading-normal">
-                Thèmes différents dans votre collection.
-              </p>
-            </div>
-
-            {/* Card: Quick Action */}
-            <div className="group rounded-2xl bg-gradient-to-br from-gold/10 to-transparent border border-gold/30 p-4 sm:p-5 shadow-lg backdrop-blur-md transition-all hover:from-gold/20 hover:border-gold/50">
-              <span className="text-[10px] font-bold text-gold uppercase tracking-widest block">ACTION RAPIDE</span>
-              <button 
-                onClick={() => navigate('/library')}
-                className="mt-2 inline-flex items-center gap-1 text-xs font-black text-white hover:text-gold transition-colors"
+          {/* Stats shelf */}
+          <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              {
+                label: greeting,
+                value: username || user?.email?.split('@')[0] || '—',
+                sub: 'Votre espace personnel MIDEESSI.',
+                isName: true,
+              },
+              {
+                label: 'Livres likés',
+                value: likedBooks.length.toString(),
+                sub: 'Dans votre collection.',
+                isName: false,
+              },
+              {
+                label: 'En cours',
+                value: totalReading.toString(),
+                sub: 'Lectures en cours.',
+                isName: false,
+              },
+              {
+                label: 'Terminés',
+                value: totalCompleted.toString(),
+                sub: 'Livres lus entièrement.',
+                isName: false,
+              },
+            ].map((card) => (
+              <div
+                key={card.label}
+                className="rounded-2xl bg-white/5 border border-white/8 p-4 sm:p-5 hover:bg-white/8 hover:border-[var(--brand-gold)]/25 transition-all"
               >
-                <Plus size={14} className="text-gold" /> Ajouter des PDFs
-              </button>
-              <p className="mt-2 text-[10px] sm:text-xs text-gray-400 leading-normal">
-                Explorez la bibliothèque publique et ajoutez-en.
-              </p>
-            </div>
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">{card.label}</span>
+                <p className={`mt-1 font-black text-white ${card.isName ? 'text-base sm:text-lg truncate' : 'text-2xl sm:text-3xl text-[var(--brand-gold)]'}`}>
+                  {card.value}
+                </p>
+                <p className="mt-1.5 text-[10px] text-gray-400 leading-normal">{card.sub}</p>
+              </div>
+            ))}
           </div>
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-2xl text-xs text-red-600 dark:text-red-400 font-semibold">
+            {error}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* Left panel: Filters & Search */}
           <div className="lg:col-span-3 space-y-4">
-            <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-4 shadow-md transition-all hover:shadow-lg">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Rechercher</label>
+            {/* Search */}
+            <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-4 shadow-sm">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2.5">Rechercher</label>
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Rechercher par titre, thème..."
+                  placeholder="Titre, thème..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl focus:outline-none focus:border-gold dark:text-white"
+                  className="w-full pl-10 pr-4 py-2.5 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl focus:outline-none focus:border-[var(--brand-gold)] dark:text-white transition-colors"
                 />
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-4 shadow-md space-y-1.5">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2.5">Mes Dossiers</label>
+            {/* Folders */}
+            <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-4 shadow-sm space-y-1">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Mes dossiers</label>
               {[
                 { id: 'all', label: 'Toutes les ressources', count: likedBooks.length, icon: BookOpen },
                 { id: 'to-read', label: 'À lire', count: likedBooks.filter(b => (readingStatuses[b.id] || 'to-read') === 'to-read').length, icon: Bookmark },
                 { id: 'reading', label: 'En cours', count: totalReading, icon: Clock },
-                { id: 'completed', label: 'Terminés', count: totalCompleted, icon: BookOpenCheck }
+                { id: 'completed', label: 'Terminés', count: totalCompleted, icon: BookOpenCheck },
               ].map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => { setStatusFilter(tab.id as any); setSelectedBook(likedBooks[0] || null); }}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all ${
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     statusFilter === tab.id
-                      ? 'bg-[var(--brand-midnight)] text-white shadow-lg shadow-blue-900/10'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-[var(--bg-surface)]'
+                      ? 'bg-[var(--brand-midnight)] text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-[var(--bg-surface)]'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <tab.icon className="w-4 h-4" />
+                    <tab.icon className="w-3.5 h-3.5" />
                     <span>{tab.label}</span>
                   </div>
                   <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${statusFilter === tab.id ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
@@ -394,211 +402,288 @@ export default function MyLibrary() {
                 </button>
               ))}
             </div>
+
+            {/* Quick action */}
+            <div className="bg-[var(--brand-midnight)] rounded-2xl p-4 border border-[var(--brand-gold)]/15">
+              <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest block mb-2">Action rapide</span>
+              <button
+                onClick={() => navigate('/library')}
+                className="inline-flex items-center gap-1.5 text-xs font-black text-white hover:text-[var(--brand-gold)] transition-colors"
+              >
+                <Plus size={13} className="text-[var(--brand-gold)]" /> Ajouter des livres
+              </button>
+              <p className="mt-1.5 text-[10px] text-gray-400 leading-normal">
+                Explorez et likez des ebooks depuis la bibliothèque publique.
+              </p>
+            </div>
           </div>
 
           {/* Center panel: Book List */}
           <div className="lg:col-span-5 flex flex-col">
             {loading ? (
-              <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-12 text-center shadow-md h-full flex flex-col items-center justify-center min-h-[350px]">
-                <div className="mb-3 h-10 w-10 rounded-full border-4 border-gold border-t-transparent animate-spin" />
-                <p className="text-xs font-bold text-gray-500">Chargement de votre bibliothèque...</p>
+              <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-12 text-center shadow-sm flex flex-col items-center justify-center min-h-[350px]">
+                <div className="mb-3 h-9 w-9 rounded-full border-2 border-[var(--brand-gold)] border-t-transparent animate-spin" />
+                <p className="text-xs font-semibold text-gray-400">Chargement de votre bibliothèque...</p>
               </div>
             ) : filteredBooks.length === 0 ? (
-              <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-12 text-center shadow-md h-full flex flex-col items-center justify-center min-h-[350px]">
-                <Heart className="w-12 h-12 text-gold/30 mb-4 animate-bounce" />
-                <h3 className="text-sm sm:text-base font-bold text-midnight dark:text-white">Votre espace est vide</h3>
-                <p className="text-xs text-gray-500 mt-2 max-w-xs mx-auto">
-                  Découvrez les ebooks et documents MIDEESSI puis cliquez sur le cœur pour les ajouter ici.
+              <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-12 text-center shadow-sm flex flex-col items-center justify-center min-h-[350px]">
+                <div className="w-14 h-14 rounded-full bg-[var(--brand-gold)]/10 flex items-center justify-center mx-auto mb-4">
+                  <Heart className="w-6 h-6 text-[var(--brand-gold)]" />
+                </div>
+                <h3 className="text-sm font-bold text-[var(--brand-midnight)] dark:text-white">Votre espace est vide</h3>
+                <p className="text-xs text-gray-500 mt-2 max-w-xs mx-auto leading-relaxed">
+                  Découvrez les ebooks MIDEESSI et cliquez sur le cœur pour les ajouter ici.
                 </p>
                 <Link
                   to="/library"
-                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gold text-midnight font-bold text-xs px-5 py-2.5 hover:bg-yellow-400 transition-all shadow-md"
+                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[var(--brand-midnight)] text-[var(--brand-gold)] font-black text-xs px-5 py-2.5 hover:opacity-90 transition-opacity shadow-sm"
                 >
-                  <Plus size={14} /> Explorer
+                  <Plus size={13} /> Explorer la bibliothèque
                 </Link>
               </div>
             ) : (
-              <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-4 shadow-md flex-grow overflow-y-auto max-h-[600px] space-y-3">
-                {filteredBooks.map((book) => {
-                  const status = readingStatuses[book.id] || 'to-read';
-                  const isSelected = selectedBook?.id === book.id;
-                  const progress = getProgressPercentage(book.id, status);
+              <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl shadow-sm divide-y divide-[var(--border)]">
+                <div className="p-4 flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                    {filteredBooks.length} livre{filteredBooks.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="overflow-y-auto max-h-[580px] divide-y divide-[var(--border)]">
+                  {filteredBooks.map((book) => {
+                    const status = readingStatuses[book.id] || 'to-read';
+                    const isSelected = selectedBook?.id === book.id;
+                    const progress = getProgressPercentage(book.id, status);
 
-                  return (
-                    <div
-                      key={book.id}
-                      onClick={() => handleBookSelect(book)}
-                      className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-start gap-4 cursor-pointer group ${
-                        isSelected
-                          ? 'bg-gold/5 border-gold/70 shadow-sm'
-                          : 'bg-[var(--bg-surface)] border-transparent hover:border-gold/30 hover:shadow-sm'
-                      }`}
-                    >
-                      <div className="w-12 h-16 sm:w-14 sm:h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200/50 shadow-sm transition-transform group-hover:scale-105">
-                        {book.cover_image ? (
-                          <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-midnight flex items-center justify-center">
-                            <BookIcon className="w-6 h-6 text-white/40" />
+                    return (
+                      <div
+                        key={book.id}
+                        onClick={() => handleBookSelect(book)}
+                        className={`w-full text-left p-4 flex items-start gap-4 cursor-pointer group transition-colors ${
+                          isSelected
+                            ? 'bg-[var(--brand-midnight)]/4 dark:bg-[var(--brand-gold)]/5'
+                            : 'hover:bg-[var(--bg-surface)]'
+                        }`}
+                      >
+                        {/* Barre de sélection gauche */}
+                        <div className={`absolute left-0 top-0 h-full w-0.5 rounded-r-full transition-all ${isSelected ? 'bg-[var(--brand-gold)]' : 'bg-transparent'}`} />
+
+                        {/* Couverture */}
+                        <div className="w-12 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 shadow-sm">
+                          {book.cover_image ? (
+                            <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-[var(--brand-midnight)] flex items-center justify-center">
+                              <BookIcon className="w-5 h-5 text-[var(--brand-gold)]/50" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-grow min-w-0 space-y-1.5">
+                          <div>
+                            <span className="text-[9px] uppercase tracking-wider text-[var(--brand-gold)] font-bold">
+                              {book.category || 'Ebook'}
+                            </span>
+                            <h4 className={`text-xs font-black truncate transition-colors ${isSelected ? 'text-[var(--brand-midnight)] dark:text-[var(--brand-gold)]' : 'text-[var(--brand-midnight)] dark:text-white group-hover:text-[var(--brand-gold)] dark:group-hover:text-[var(--brand-gold)]'}`}>
+                              {book.title}
+                            </h4>
                           </div>
-                        )}
+
+                          {/* Progress Bar */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-[9px] text-gray-400">
+                              <span>Progression</span>
+                              <span className="font-semibold">{progress}%</span>
+                            </div>
+                            <div className="w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  progress === 100
+                                    ? 'bg-emerald-500'
+                                    : progress > 0
+                                    ? 'bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400'
+                                    : 'bg-gray-200 dark:bg-gray-700'
+                                }`}
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${getLevelColor(book.level)}`}>
+                              {book.level || 'Général'}
+                            </span>
+                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${getStatusColor(status)}`}>
+                              {getStatusLabel(status)}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <ChevronRight className={`w-4 h-4 self-center flex-shrink-0 transition-colors ${isSelected ? 'text-[var(--brand-gold)]' : 'text-gray-300 group-hover:text-gray-500'}`} />
                       </div>
-                      
-                      <div className="flex-grow min-w-0 space-y-1.5">
-                        <div>
-                          <span className="text-[9px] uppercase tracking-wider text-gold font-bold">
-                            {book.category || 'Ebook'}
-                          </span>
-                          <h4 className="text-xs sm:text-sm font-black text-midnight dark:text-white truncate group-hover:text-gold transition-colors">
-                            {book.title}
-                          </h4>
-                        </div>
-
-                        {/* Progress Bar Mini */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-[9px] text-gray-400">
-                            <span>Progression</span>
-                            <span className="font-semibold">{progress}%</span>
-                          </div>
-                          <div className="w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full transition-all duration-500 rounded-full ${
-                                progress === 100 ? 'bg-emerald-500' : progress > 0 ? 'bg-blue-500' : 'bg-gray-300'
-                              }`} 
-                              style={{ width: `${progress}%` }} 
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-0.5">
-                          <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${getLevelColor(book.level)}`}>
-                            {book.level || 'Général'}
-                          </span>
-                          <span className="text-[9px] text-gray-400 font-semibold bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
-                            {getStatusLabel(status)}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <ChevronRight className="w-5 h-5 text-gray-400 self-center group-hover:translate-x-0.5 transition-transform" />
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Right panel: Details & Study Notes (Hidden on mobile unless selected) */}
-          <div className="hidden lg:block lg:col-span-4 h-full">
+          {/* Right panel: Details & Study Notes */}
+          <div className="hidden lg:block lg:col-span-4">
             {selectedBook ? (
-              <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-5 shadow-md flex flex-col h-full sticky top-6">
-                <div className="space-y-4">
-                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-sm border border-gray-200/50">
-                    {selectedBook.cover_image ? (
-                      <img src={selectedBook.cover_image} alt={selectedBook.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[var(--brand-midnight)] to-blue-950 flex items-center justify-center">
-                        <BookIcon className="w-12 h-12 text-white/30 animate-pulse" />
-                      </div>
-                    )}
-                    <div className="absolute top-3 right-3 flex gap-1.5">
-                      <button 
-                        onClick={() => shareBook(selectedBook)}
-                        className="p-2 bg-white/90 dark:bg-gray-950/80 hover:bg-white rounded-lg shadow transition-all text-midnight dark:text-white"
-                        title="Copier le lien"
-                      >
-                        <Share2 size={12} />
-                      </button>
-                    </div>
-                    <div className="absolute bottom-3 left-3">
-                      <span className="px-2.5 py-1 bg-gold text-midnight text-[9px] font-black uppercase tracking-wider rounded-lg shadow">
-                        {selectedBook.category || 'Guide'}
-                      </span>
-                    </div>
+              <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl shadow-sm sticky top-24 overflow-hidden">
+                {/* Cover banner */}
+                <div className="relative h-44 bg-[var(--brand-midnight)] overflow-hidden">
+                  {selectedBook.cover_image ? (
+                    <img
+                      src={selectedBook.cover_image}
+                      alt={selectedBook.title}
+                      className="w-full h-full object-cover opacity-60"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[var(--brand-midnight)] via-blue-950 to-slate-900" />
+                  )}
+                  {/* Overlay gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-midnight)] via-transparent to-transparent" />
+
+                  {/* Category badge */}
+                  <div className="absolute bottom-3 left-4">
+                    <span className="px-2.5 py-1 bg-[var(--brand-gold)] text-[var(--brand-midnight)] text-[9px] font-black uppercase tracking-wider rounded-lg shadow">
+                      {selectedBook.category || 'Ebook'}
+                    </span>
                   </div>
 
+                  {/* Share button */}
+                  <button
+                    onClick={() => shareBook(selectedBook)}
+                    className="absolute top-3 right-3 p-2 bg-black/30 hover:bg-black/50 border border-white/10 rounded-lg text-white transition-all backdrop-blur-sm"
+                    title="Copier le lien"
+                  >
+                    <Share2 size={12} />
+                  </button>
+                  {copiedId === selectedBook.id && (
+                    <span className="absolute top-3 right-14 px-2 py-1 bg-emerald-500 text-white text-[9px] font-bold rounded-lg shadow">
+                      Lien copié !
+                    </span>
+                  )}
+                </div>
+
+                <div className="p-5 space-y-4">
+                  {/* Title & meta */}
                   <div>
-                    <h3 className="text-base font-black text-midnight dark:text-white leading-snug">
+                    <h3 className="text-sm font-black text-[var(--brand-midnight)] dark:text-white leading-snug">
                       {selectedBook.title}
                     </h3>
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
                       <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded ${getLevelColor(selectedBook.level)}`}>
                         {selectedBook.level || 'Tous niveaux'}
                       </span>
-                      {copiedId === selectedBook.id && (
-                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">Lien copié !</span>
+                      {selectedBook.pages && (
+                        <span className="text-[9px] text-gray-400 font-semibold">{selectedBook.pages} pages</span>
+                      )}
+                      {selectedBook.rating && (
+                        <span className="flex items-center gap-0.5 text-[9px] text-yellow-500 font-bold">
+                          <Star size={9} className="fill-yellow-500" /> {selectedBook.rating}/5
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  <p className="text-xs text-gray-500 leading-relaxed dark:text-gray-400">
+                  {/* Description */}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">
                     {selectedBook.description}
                   </p>
 
-                  {/* Study Notes Feature */}
-                  <div className="space-y-2 pt-3 border-t border-[var(--border)]">
-                    <div className="flex items-center gap-1 text-xs font-bold text-midnight dark:text-white">
-                      <FileText size={14} className="text-gold" />
+                  {/* Progress */}
+                  {(() => {
+                    const status = readingStatuses[selectedBook.id] || 'to-read';
+                    const progress = getProgressPercentage(selectedBook.id, status);
+                    return (
+                      <div className="space-y-1.5 p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)]">
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="font-bold text-[var(--brand-midnight)] dark:text-white">Progression de lecture</span>
+                          <span className="font-black text-[var(--brand-gold)]">{progress}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ${
+                              progress === 100
+                                ? 'bg-emerald-500'
+                                : 'bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400'
+                            }`}
+                            style={{ width: `${Math.max(progress, 0)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Study Notes */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-black text-[var(--brand-midnight)] dark:text-white">
+                      <FileText size={13} className="text-[var(--brand-gold)]" />
                       <span>Mes Notes d'Études</span>
                     </div>
                     <textarea
-                      placeholder="Notez vos idées, questions ou résumés de ce livre ici..."
+                      placeholder="Notez vos idées, questions ou résumés de ce livre..."
                       value={noteText}
                       onChange={(e) => handleSaveNote(e.target.value)}
                       rows={4}
-                      className="w-full p-2.5 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl focus:outline-none focus:border-gold text-midnight dark:text-white resize-none"
+                      className="w-full p-3 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl focus:outline-none focus:border-[var(--brand-gold)] text-[var(--brand-midnight)] dark:text-white resize-none transition-colors"
                     />
                   </div>
-                </div>
 
-                <div className="pt-4 border-t border-[var(--border)] space-y-3 mt-6">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Statut</span>
-                    <select
-                      value={readingStatuses[selectedBook.id] || 'to-read'}
-                      onChange={(e) => updateReadingStatus(selectedBook.id, e.target.value as ReadingStatus)}
-                      className="bg-[var(--bg-surface)] border border-[var(--border)] text-xs font-bold rounded-lg px-2.5 py-1 text-midnight dark:text-white focus:outline-none focus:border-gold"
-                    >
-                      <option value="to-read">À lire</option>
-                      <option value="reading">En cours</option>
-                      <option value="completed">Terminé</option>
-                    </select>
-                  </div>
+                  {/* Status + CTA */}
+                  <div className="pt-3 border-t border-[var(--border)] space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Statut</span>
+                      <select
+                        value={readingStatuses[selectedBook.id] || 'to-read'}
+                        onChange={(e) => updateReadingStatus(selectedBook.id, e.target.value as ReadingStatus)}
+                        className="bg-[var(--bg-surface)] border border-[var(--border)] text-xs font-bold rounded-lg px-2.5 py-1.5 text-[var(--brand-midnight)] dark:text-white focus:outline-none focus:border-[var(--brand-gold)] transition-colors"
+                      >
+                        <option value="to-read">À lire</option>
+                        <option value="reading">En cours</option>
+                        <option value="completed">Terminé</option>
+                      </select>
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <Link
-                      to={`/library/${selectedBook.id}`}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] hover:bg-gray-100 dark:hover:bg-gray-800 text-xs font-bold py-2.5 transition-all text-midnight dark:text-white"
-                    >
-                      <Eye size={14} /> Fiche
-                    </Link>
-                    {selectedBook.pdf_url ? (
-                      <button
-                        onClick={() => {
-                          setReadingPdfUrl(selectedBook.pdf_url!);
-                          setReadingPdfTitle(selectedBook.title);
-                        }}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gold text-midnight hover:bg-yellow-400 text-xs font-black py-2.5 transition-all shadow-md active:scale-95"
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link
+                        to={`/library/${selectedBook.id}`}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-bold py-2.5 transition-colors text-[var(--brand-midnight)] dark:text-white"
                       >
-                        <Download size={14} /> Lire PDF
-                      </button>
-                    ) : (
-                      <button
-                        disabled
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gray-100 text-gray-400 text-xs font-bold py-2.5 cursor-not-allowed dark:bg-gray-800"
-                      >
-                        Bientôt
-                      </button>
-                    )}
+                        <Eye size={13} /> Fiche
+                      </Link>
+                      {selectedBook.pdf_url ? (
+                        <button
+                          onClick={() => {
+                            setReadingPdfUrl(selectedBook.pdf_url!);
+                            setReadingPdfTitle(selectedBook.title);
+                          }}
+                          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[var(--brand-midnight)] text-[var(--brand-gold)] hover:opacity-90 text-xs font-black py-2.5 transition-opacity shadow-sm"
+                        >
+                          <Play size={12} className="fill-current" /> Lire PDF
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 text-xs font-bold py-2.5 cursor-not-allowed"
+                        >
+                          Bientôt
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-6 text-center shadow-md h-full flex flex-col items-center justify-center min-h-[350px] sticky top-6">
-                <BookMarked className="w-12 h-12 text-gold/30 mb-3" />
-                <h3 className="text-sm font-bold text-midnight dark:text-white">Sélectionnez un document</h3>
-                <p className="text-[10px] text-gray-500 max-w-xs mt-2">
-                  Cliquez sur n'importe quel livre à gauche pour l'étudier, télécharger son PDF ou ajouter vos notes de lecture.
+              <div className="bg-white dark:bg-gray-900 border border-[var(--border)] rounded-2xl p-8 text-center shadow-sm flex flex-col items-center justify-center min-h-[300px] sticky top-24">
+                <div className="w-12 h-12 rounded-full bg-[var(--brand-midnight)]/5 dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
+                  <BookMarked className="w-5 h-5 text-[var(--brand-gold)]" />
+                </div>
+                <h3 className="text-sm font-bold text-[var(--brand-midnight)] dark:text-white">Sélectionnez un document</h3>
+                <p className="text-[10px] text-gray-400 max-w-xs mt-2 leading-relaxed">
+                  Cliquez sur un livre pour voir ses détails, lire le PDF et ajouter vos notes.
                 </p>
               </div>
             )}
@@ -607,62 +692,85 @@ export default function MyLibrary() {
         </div>
       </main>
 
-      {/* Mobile Details Modal Sheet (Fits mobile screen size perfectly) */}
+      {/* Mobile Details Bottom Sheet */}
       {isMobileDetailOpen && selectedBook && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm lg:hidden transition-all duration-300">
-          <div className="bg-white dark:bg-gray-900 w-full max-h-[85vh] rounded-t-3xl p-5 overflow-y-auto space-y-4 shadow-2xl border-t border-white/10 animate-slide-up">
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 lg:hidden"
+          onClick={(e) => { if (e.target === e.currentTarget) setIsMobileDetailOpen(false); }}
+        >
+          <div className="bg-white dark:bg-gray-900 w-full max-h-[88vh] rounded-t-3xl p-5 overflow-y-auto space-y-4 shadow-2xl border-t border-[var(--border)]">
             
-            {/* Header control */}
+            {/* Header */}
             <div className="flex justify-between items-center pb-2 border-b border-[var(--border)]">
-              <span className="text-[10px] font-black uppercase text-gold tracking-widest">
+              <span className="text-[10px] font-black uppercase text-[var(--brand-gold)] tracking-widest">
                 Détails du document
               </span>
               <button 
                 onClick={() => setIsMobileDetailOpen(false)}
-                className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-400"
+                className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
-            {/* Book Header info */}
+            {/* Book info */}
             <div className="flex gap-4 items-start">
-              <div className="w-16 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border shadow-sm">
+              <div className="w-14 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 shadow-sm">
                 {selectedBook.cover_image ? (
                   <img src={selectedBook.cover_image} alt={selectedBook.title} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-midnight flex items-center justify-center">
-                    <BookIcon className="w-6 h-6 text-white/40" />
+                  <div className="w-full h-full bg-[var(--brand-midnight)] flex items-center justify-center">
+                    <BookIcon className="w-5 h-5 text-[var(--brand-gold)]/50" />
                   </div>
                 )}
               </div>
-              <div className="min-w-0">
-                <span className="text-[9px] uppercase tracking-wider text-gold font-bold">
-                  {selectedBook.category || 'Guide'}
+              <div className="min-w-0 flex-1">
+                <span className="text-[9px] uppercase tracking-wider text-[var(--brand-gold)] font-bold block">
+                  {selectedBook.category || 'Ebook'}
                 </span>
-                <h3 className="text-sm font-black text-midnight dark:text-white leading-snug">
+                <h3 className="text-sm font-black text-[var(--brand-midnight)] dark:text-white leading-snug">
                   {selectedBook.title}
                 </h3>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span className={`inline-block text-[8px] font-bold px-1.5 py-0.5 rounded ${getLevelColor(selectedBook.level)}`}>
                     {selectedBook.level || 'Tous niveaux'}
                   </span>
                   {copiedId === selectedBook.id && (
-                    <span className="text-[8px] text-emerald-600 font-bold">Lien copié !</span>
+                    <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">Lien copié !</span>
                   )}
                 </div>
               </div>
             </div>
 
+            {/* Progress */}
+            {(() => {
+              const status = readingStatuses[selectedBook.id] || 'to-read';
+              const progress = getProgressPercentage(selectedBook.id, status);
+              return progress > 0 ? (
+                <div className="space-y-1.5 p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)]">
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="font-bold text-[var(--brand-midnight)] dark:text-white">Progression</span>
+                    <span className="font-black text-[var(--brand-gold)]">{progress}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400 transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              ) : null;
+            })()}
+
             {/* Description */}
-            <p className="text-xs text-gray-500 leading-relaxed dark:text-gray-400">
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">
               {selectedBook.description}
             </p>
 
             {/* Mobile Study Notes */}
-            <div className="space-y-2 pt-2 border-t border-[var(--border)]">
-              <div className="flex items-center gap-1 text-xs font-bold text-midnight dark:text-white">
-                <FileText size={13} className="text-gold" />
+            <div className="space-y-2 pt-1 border-t border-[var(--border)]">
+              <div className="flex items-center gap-1.5 text-xs font-black text-[var(--brand-midnight)] dark:text-white pt-1">
+                <FileText size={13} className="text-[var(--brand-gold)]" />
                 <span>Mes Notes d'Études</span>
               </div>
               <textarea
@@ -670,18 +778,18 @@ export default function MyLibrary() {
                 value={noteText}
                 onChange={(e) => handleSaveNote(e.target.value)}
                 rows={3}
-                className="w-full p-2.5 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl focus:outline-none focus:border-gold text-midnight dark:text-white resize-none"
+                className="w-full p-2.5 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl focus:outline-none focus:border-[var(--brand-gold)] text-[var(--brand-midnight)] dark:text-white resize-none transition-colors"
               />
             </div>
 
             {/* Actions & Status */}
-            <div className="pt-3 border-t border-[var(--border)] space-y-3">
+            <div className="pt-2 border-t border-[var(--border)] space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Statut</span>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Statut</span>
                 <select
                   value={readingStatuses[selectedBook.id] || 'to-read'}
                   onChange={(e) => updateReadingStatus(selectedBook.id, e.target.value as ReadingStatus)}
-                  className="bg-[var(--bg-surface)] border border-[var(--border)] text-xs font-bold rounded-lg px-2.5 py-1 text-midnight dark:text-white focus:outline-none"
+                  className="bg-[var(--bg-surface)] border border-[var(--border)] text-xs font-bold rounded-lg px-2.5 py-1.5 text-[var(--brand-midnight)] dark:text-white focus:outline-none"
                 >
                   <option value="to-read">À lire</option>
                   <option value="reading">En cours</option>
@@ -689,18 +797,18 @@ export default function MyLibrary() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 pt-1">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => shareBook(selectedBook)}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] text-xs font-bold py-2.5 transition-all text-midnight dark:text-white"
+                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] text-xs font-bold py-2.5 transition-colors text-[var(--brand-midnight)] dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
-                  <Share2 size={13} /> Partager
+                  <Share2 size={12} /> Partager
                 </button>
                 <Link
                   to={`/library/${selectedBook.id}`}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] text-xs font-bold py-2.5 transition-all text-midnight dark:text-white"
+                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] text-xs font-bold py-2.5 transition-colors text-[var(--brand-midnight)] dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
-                  <Eye size={13} /> Fiche
+                  <Eye size={12} /> Fiche
                 </Link>
                 {selectedBook.pdf_url ? (
                   <button
@@ -709,21 +817,20 @@ export default function MyLibrary() {
                       setReadingPdfTitle(selectedBook.title);
                       setIsMobileDetailOpen(false);
                     }}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gold text-midnight hover:bg-yellow-400 text-xs font-black py-2.5 transition-all shadow-md"
+                    className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-midnight)] text-[var(--brand-gold)] text-xs font-black py-2.5 transition-opacity hover:opacity-90 shadow-sm"
                   >
-                    <Download size={13} /> PDF
+                    <Play size={11} className="fill-current" /> PDF
                   </button>
                 ) : (
                   <button
                     disabled
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gray-100 text-gray-400 text-xs font-bold py-2.5 cursor-not-allowed dark:bg-gray-800"
+                    className="inline-flex items-center justify-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 text-xs font-bold py-2.5 cursor-not-allowed"
                   >
                     Bientôt
                   </button>
                 )}
               </div>
             </div>
-            
           </div>
         </div>
       )}
@@ -743,4 +850,3 @@ export default function MyLibrary() {
     </div>
   );
 }
-
