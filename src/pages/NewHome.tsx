@@ -35,7 +35,7 @@ const fallbackHeroSlides: HeroSlide[] = [
     subtitle: 'Pas d’importation. Pas de dépendance. Juste de l’innovation qui vient du terrain.',
     image: '/hero1.webp',
     primary_cta_text: 'MIDEESSI Learn',
-    primary_cta_link: '/learn',
+    primary_cta_link: '/library',
     secondary_cta_text: 'Nos projets',
     secondary_cta_link: '/projects',
     order: 0,
@@ -733,7 +733,7 @@ const NewHome = () => {
                 </div>
               </div>
               <a
-                href="/learn"
+                href="/library"
                 className="inline-flex items-center px-6 sm:px-8 py-3 sm:py-4 bg-[#ffd700] text-[#191970] font-bold rounded-lg hover:bg-[#ffed4e] transition-all duration-300 transform hover:scale-[1.02] shadow-lg focus:outline-none focus:ring-4 focus:ring-[#ffd700]/50 text-sm sm:text-base"
               >
                 Voir les PDFs disponibles

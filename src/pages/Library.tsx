@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Star, Users, Download, Heart, Share2, Search, Filter, Trophy, Sparkles, ChevronRight, Bookmark, Play, Gift } from 'lucide-react';
+import { BookOpen, Star, Users, Download, Heart, Share2, Search, Filter, Trophy, Sparkles, Play } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PopupDisplay from '../components/PopupDisplay';
 import { useAuth } from '../contexts/AuthContext';
@@ -181,16 +181,24 @@ const Library = () => {
             </div>
           )}
           
-          <div className="relative flex flex-col md:flex-row gap-6 p-6 sm:p-8 lg:p-10 z-10">
+          <div className="relative flex flex-row gap-4 sm:gap-6 p-4 sm:p-6 md:p-8 lg:p-10 z-10 items-start min-h-[160px] sm:min-h-[200px]">
             {/* Book Cover Cover */}
-            <div className="flex-shrink-0 w-full md:w-44 lg:w-48 h-60 md:h-auto rounded-2xl overflow-hidden shadow-2xl border border-white/10 group-hover:scale-102 transition-transform">
-              {book.cover_image ? (
-                <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
-                  <BookOpen className="w-16 h-16 text-gold/60" />
-                </div>
-              )}
+            <div className="flex-shrink-0">
+              <div className="w-28 sm:w-36 md:w-44 lg:w-48 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-white/10 group-hover:scale-102 transition-transform relative">
+                {book.cover_image ? (
+                  <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+                    <BookOpen className="w-12 h-12 text-gold/60" />
+                  </div>
+                )}
+              </div>
+              {/* Price badge under the featured image (mobile only) */}
+              <div className="mt-2 sm:hidden">
+                <span className="bg-white/5 border border-white/10 text-gold text-sm font-extrabold px-3 py-1 rounded-full shadow-sm inline-block">
+                  {book.price === 0 ? 'Gratuit' : `${book.price} FCFA`}
+                </span>
+              </div>
             </div>
 
             {/* Book Info Panel */}
@@ -205,14 +213,15 @@ const Library = () => {
                       NOUVEAU
                     </span>
                   )}
+                    
                   {book.level && (
                     <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getLevelColor(book.level)}`}>
                       {book.level}
                     </span>
                   )}
                 </div>
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-white mb-2 leading-tight group-hover:text-gold transition-colors">{book.title}</h2>
-                <p className="text-sm text-gray-300 leading-relaxed mb-4 max-w-xl">{book.description}</p>
+                <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-white mb-2 leading-tight group-hover:text-gold transition-colors line-clamp-2">{book.title}</h2>
+                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-4 max-w-full line-clamp-3">{book.description}</p>
                 
                 {/* Stats */}
                 <div className="flex flex-wrap gap-4 mb-6">
@@ -225,6 +234,10 @@ const Library = () => {
                     <span>{book.views ?? readerCounts[book.id] ?? 0} lecteur{(book.views ?? readerCounts[book.id] ?? 0) !== 1 ? 's' : ''}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-gray-300 text-xs font-medium">
+                    <Download className="w-4 h-4 text-gray-300" />
+                    <span>{(book as any).downloads ? (book as any).downloads.toLocaleString() : 0} téléchargements</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-300 text-xs font-medium">
                     <BookOpen className="w-4 h-4 text-emerald-400" />
                     <span>{book.pages || 50} pages</span>
                   </div>
@@ -233,8 +246,9 @@ const Library = () => {
 
               {/* Price / CTA Buttons */}
               <div className="flex flex-wrap items-center gap-3">
-                <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
-                  <span className="text-2xl font-black text-gold flex items-center gap-1.5">{book.price === 0 ? <><Gift className="w-6 h-6" /> Gratuit</> : <>{(book.price || '1000')} <span className="text-xs text-gray-400">FCFA</span></> }</span>
+                {/* Desktop price block (visible sm+) */}
+                <div className="hidden sm:flex bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                  <span className="text-sm font-extrabold text-gold">{book.price === 0 ? 'Gratuit' : `${book.price || '1000'} FCFA`}</span>
                 </div>
                 <Link
                   to={`/library/${book.id}`}
@@ -284,11 +298,19 @@ const Library = () => {
           
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
+        </div>
+        {/* Price badge under the regular card image (all sizes) */}
+        <div className="w-full px-4 mt-2 text-center">
+          <span className="bg-white/5 border border-white/10 text-gold text-sm font-extrabold px-3 py-0.5 rounded-full shadow-sm inline-block">
+            {book.price === 0 ? 'Gratuit' : `${book.price} FCFA`}
+          </span>
+        </div>
+
           {/* New / Bestseller Labels */}
           <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
             {book.is_bestseller && (
               <span className="px-2 py-0.5 bg-red-500 text-white text-[9px] font-bold rounded shadow-sm">
-                POPULAIRE
+                BESTSELLER
               </span>
             )}
             {book.is_new && (
@@ -319,8 +341,7 @@ const Library = () => {
               <Share2 className="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
-
+        
         {/* Info panel */}
         <div className="p-4 flex flex-col flex-grow justify-between">
           <div>
@@ -356,6 +377,10 @@ const Library = () => {
                 <span>{book.views ?? readerCounts[book.id] ?? 0}</span>
               </div>
               <div className="flex items-center gap-1">
+                <Download className="w-3 h-3 text-gray-500" />
+                <span>{((book as any).downloads || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-1">
                 <BookOpen className="w-3 h-3 text-emerald-400" />
                 <span>{book.pages || 50}p</span>
               </div>
@@ -363,9 +388,7 @@ const Library = () => {
 
             {/* Price / CTA */}
             <div className="flex items-center justify-between gap-2">
-              <div className="bg-gold/10 dark:bg-gold/5 px-2 py-1 rounded">
-                <span className="text-sm font-black text-gold">{book.price === 0 ? 'Gratuit' : `${book.price || '1000'} F`}</span>
-              </div>
+              {/* Price shown under cover image now; inline price hidden */}
               <span className="flex-grow inline-flex items-center justify-center gap-1 bg-[var(--brand-midnight)] hover:bg-[var(--brand-midnight-dark)] text-[var(--brand-gold)] font-bold py-1.5 px-3 rounded-lg transition-all text-[10px]">
                 <Play className="w-3 h-3 fill-current" /> Voir le livre
               </span>

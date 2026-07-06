@@ -21,4 +21,17 @@ if (rootElement.hasChildNodes()) {
   );
 }
 
-// Service Worker disabled: prevents interference with Google OAuth flows.
+if ('serviceWorker' in navigator) {
+  // Disable service worker: unregister any existing registrations and
+  // prevent new registration from being created.
+  window.addEventListener('load', async () => {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const r of registrations) await r.unregister();
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) await reg.unregister();
+    } catch (e) {
+      // ignore failures during unregister
+    }
+  });
+}

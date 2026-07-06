@@ -329,6 +329,93 @@ app.use((req, res, next) => {
 
 app.use('/api', generalLimiter);
 
+// Background download starter
+app.post('/api/download', sensitiveLimiter, async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) return res.status(401).json({ error: 'Missing token' });
+
+    // verify user from token
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+    if (userError || !userData?.user) return res.status(401).json({ error: 'Invalid token' });
+    const user = userData.user;
+
+    const { book_id } = req.body || {};
+    if (!book_id) return res.status(400).json({ error: 'Missing book_id' });
+
+    // fetch book metadata
+    const { data: bookData, error: bookError } = await supabaseAdmin
+      .from('books')
+      .select('*')
+      .eq('id', book_id)
+      .maybeSingle();
+
+    if (bookError || !bookData) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    // Record download (will increment downloads via trigger)
+    await supabaseAdmin.from('book_downloads').insert({ book_id, user_id: user.id, ip: getClientIp(req) });
+
+    // Ensure the book is saved in user's library (so it appears in My Library)
+    try {
+      await supabaseAdmin.from('book_saves').upsert({ book_id, user_id: user.id, created_at: new Date().toISOString() }, { onConflict: 'book_id,user_id' });
+    } catch (e) {
+      console.warn('Could not upsert book_saves:', e.message || e);
+    }
+
+    // Start background fetch/upload (fire-and-forget)
+    (async () => {
+      try {
+        if (!bookData.pdf_url) return;
+        const fetchRes = await fetch(bookData.pdf_url);
+        if (!fetchRes.ok) throw new Error('Failed fetching remote PDF');
+        const arrayBuffer = await fetchRes.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        // Upload to Cloudinary (preferred) or fallback to Supabase storage
+        if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+          try {
+            const timestamp = Math.floor(Date.now() / 1000);
+            const publicId = `${user.id}/${book_id}`;
+            const toSign = `timestamp=${timestamp}`;
+            const signature = crypto.createHash('sha1').update(toSign + CLOUDINARY_API_SECRET).digest('hex');
+
+            const form = new FormData();
+            form.append('file', `data:application/pdf;base64,${buffer.toString('base64')}`);
+            form.append('api_key', CLOUDINARY_API_KEY);
+            form.append('timestamp', String(timestamp));
+            form.append('signature', signature);
+            form.append('public_id', publicId);
+
+            const cloudUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+            const cloudRes = await fetch(cloudUrl, { method: 'POST', body: form });
+            const cloudJson = await cloudRes.json().catch(() => ({}));
+            if (!cloudRes.ok) {
+              console.error('Cloudinary upload failed', cloudRes.status, cloudJson);
+            }
+          } catch (e) {
+            console.error('Cloudinary upload error:', e?.message || e);
+          }
+        } else {
+          // Fallback to Supabase storage if Cloudinary not configured
+          const path = `${user.id}/${book_id}.pdf`;
+          const { error: uploadError } = await supabaseAdmin.storage.from('user-library').upload(path, buffer, { contentType: 'application/pdf', upsert: true });
+          if (uploadError) console.error('Upload error:', uploadError.message || uploadError);
+        }
+      } catch (err) {
+        console.error('Background download error:', err?.message || err);
+      }
+    })();
+
+    return res.status(202).json({ status: 'accepted' });
+  } catch (err) {
+    console.error('Download API error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ============================================================
 // STATIC FILES - Simple serving
 // ============================================================

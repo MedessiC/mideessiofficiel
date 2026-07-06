@@ -50,6 +50,7 @@ interface Book {
   week_added?: string;
   created_at?: string;
   updated_at?: string;
+  downloads?: number;
 }
 
 const LEVEL_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -61,7 +62,7 @@ const LEVEL_STYLES: Record<string, { bg: string; text: string; label: string }> 
 export default function BookDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   const [book, setBook] = useState<Book | null>(null);
   const [relatedBooks, setRelatedBooks] = useState<Book[]>([]);
@@ -75,6 +76,7 @@ export default function BookDetail() {
   const [shareToast, setShareToast] = useState(false);
   const [topReaders, setTopReaders] = useState<TopReader[]>([]);
   const [readerCount, setReaderCount] = useState(0);
+  const [downloadCount, setDownloadCount] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
@@ -115,6 +117,7 @@ export default function BookDetail() {
 
       if (fetchError) throw fetchError;
       setBook(data);
+        setDownloadCount(data.downloads || 0);
 
       // Fetch related books
       if (data?.category) {
@@ -231,6 +234,17 @@ export default function BookDetail() {
     setDownloadSuccess(false);
     
     try {
+      // notify server to start background download and save to user's library
+      if (user && session?.access_token) {
+        fetch('/api/download', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ book_id: book.id }),
+        }).catch(() => {});
+      }
       // Pour Cloudinary, ajouter le paramètre fl_attachment pour forcer le téléchargement
       const isCloudinary = book.pdf_url.includes('cloudinary.com');
       const downloadUrl = isCloudinary ? `${book.pdf_url}?fl_attachment` : book.pdf_url;
@@ -295,6 +309,23 @@ export default function BookDetail() {
         setDownloadSuccess(false);
         setDownloadProgress(0);
       }, 2000);
+      // Incrémenter le compteur de téléchargements via RPC (fire-and-forget)
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('increment_book_download', {
+          p_book_id: book.id,
+          p_user_id: user?.id ?? null,
+          p_ip: null,
+        });
+        if (!rpcError) {
+          const newCount = Number(rpcData) || (downloadCount + 1);
+          setDownloadCount(newCount);
+        } else {
+          // optimistic fallback
+          setDownloadCount((c) => c + 1);
+        }
+      } catch (err) {
+        setDownloadCount((c) => c + 1);
+      }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Erreur inconnue';
       console.error('Download error:', err);
@@ -414,8 +445,8 @@ export default function BookDetail() {
                     </span>
                   )}
                   {book.is_bestseller && (
-                    <span className="px-3 py-1 bg-[var(--brand-gold)] text-[var(--brand-midnight)] text-xs font-black rounded-full flex items-center gap-1">
-                      <Award className="w-3 h-3" /> BESTSELLER
+                    <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-[var(--brand-gold)] text-[var(--brand-midnight)] text-[10px] sm:text-xs font-black rounded-full flex items-center gap-1">
+                      <Award className="w-3 h-3 sm:w-4 sm:h-4" /> BESTSELLER
                     </span>
                   )}
                   {book.is_new && (
@@ -610,7 +641,7 @@ export default function BookDetail() {
             <div className="space-y-6">
 
               {/* Quick info card */}
-              <div className="bg-white dark:bg-slate-800/70 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700/50 sticky top-24">
+              <div className="bg-white dark:bg-slate-800/70 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700/50">
                 <h3 className="font-bold text-gray-900 dark:text-white mb-4 text-base flex items-center gap-2">
                   <BarChart2 className="w-4 h-4 text-[var(--brand-gold)]" /> Infos du livre
                 </h3>
@@ -619,7 +650,8 @@ export default function BookDetail() {
                   {[
                     { icon: Star, label: 'Note', value: book.rating ? `${book.rating} / 5` : '—', color: 'text-yellow-500' },
                     { icon: FileText, label: 'Pages', value: book.pages ? `${book.pages} pages` : '—', color: 'text-blue-500' },
-                    { icon: Users, label: 'Lecteurs', value: readerCount.toLocaleString(), color: 'text-emerald-500' },
+                      { icon: Users, label: 'Lecteurs', value: readerCount.toLocaleString(), color: 'text-emerald-500' },
+                      { icon: Download, label: 'Téléchargements', value: downloadCount.toLocaleString(), color: 'text-purple-500' },
                     { icon: BookOpen, label: 'Niveau', value: book.level || '—', color: 'text-purple-500' },
                     { icon: Clock, label: 'Ajouté', value: book.week_added || '—', color: 'text-gray-400' },
                   ].map(({ icon: Icon, label, value, color }) => (
