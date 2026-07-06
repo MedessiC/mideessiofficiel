@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Star, Users, Download, Heart, Share2, Search, Filter, Trophy, Sparkles, Play } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -23,12 +23,41 @@ interface Book {
   buy_url?: string;
 }
 
+const CATEGORIES = ['Tous', 'Développement', 'Design', 'Entrepreneuriat', 'Cybersécurité'];
+
+const getLevelColor = (level?: string) => {
+  switch (level) {
+    case 'Débutant':
+      return 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-500/20';
+    case 'Intermédiaire':
+      return 'bg-blue-500/10 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-500/20';
+    case 'Avancé':
+      return 'bg-purple-500/10 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 border border-purple-500/20';
+    default:
+      return 'bg-gray-500/10 text-gray-700 dark:bg-gray-800/30 dark:text-gray-400 border border-gray-500/20';
+  }
+};
+
+// --- Skeleton shown while books are loading, avoids layout jump ---
+const BookCardSkeleton = () => (
+  <div className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 animate-pulse">
+    <div className="aspect-[3/4] bg-gray-200 dark:bg-gray-800" />
+    <div className="p-4 space-y-2">
+      <div className="h-2 w-1/3 bg-gray-200 dark:bg-gray-800 rounded" />
+      <div className="h-3 w-4/5 bg-gray-200 dark:bg-gray-800 rounded" />
+      <div className="h-2 w-full bg-gray-200 dark:bg-gray-800 rounded" />
+      <div className="h-2 w-2/3 bg-gray-200 dark:bg-gray-800 rounded" />
+    </div>
+  </div>
+);
+
 const Library = () => {
   const { user } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [likedBooks, setLikedBooks] = useState<Set<string>>(new Set());
   const [shareToast, setShareToast] = useState(false);
   const [readerCounts, setReaderCounts] = useState<Record<string, number>>({});
@@ -40,6 +69,12 @@ const Library = () => {
     }
   }, [user]);
 
+  // Debounce search input so filtering doesn't re-run on every keystroke
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery), 200);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
   const fetchBooks = async () => {
     setLoading(true);
     try {
@@ -47,7 +82,7 @@ const Library = () => {
         .from('books')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) {
         console.error('Erreur:', error);
       } else {
@@ -58,7 +93,7 @@ const Library = () => {
             .from('book_progress')
             .select('book_id')
             .gte('progress_percent', 1);
-          
+
           if (progressData) {
             const counts: Record<string, number> = {};
             progressData.forEach((row: { book_id: string }) => {
@@ -94,14 +129,12 @@ const Library = () => {
 
   const toggleLike = async (bookId: string) => {
     if (!user) {
-      // Prompt sign in
       window.location.assign(`/login?redirect=/library`);
       return;
     }
 
     const isLiked = likedBooks.has(bookId);
-    
-    // Optimistic UI update
+
     setLikedBooks(prev => {
       const next = new Set(prev);
       if (next.has(bookId)) {
@@ -114,19 +147,12 @@ const Library = () => {
 
     try {
       if (isLiked) {
-        await supabase
-          .from('book_likes')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('book_id', bookId);
+        await supabase.from('book_likes').delete().eq('user_id', user.id).eq('book_id', bookId);
       } else {
-        await supabase
-          .from('book_likes')
-          .insert({ user_id: user.id, book_id: bookId });
+        await supabase.from('book_likes').insert({ user_id: user.id, book_id: bookId });
       }
     } catch (err) {
       console.error('Error toggling like:', err);
-      // Revert UI on failure
       fetchLikedBooks();
     }
   };
@@ -144,144 +170,135 @@ const Library = () => {
     }
   };
 
-  const categories = ['Tous', 'Développement', 'Design', 'Entrepreneuriat', 'Cybersécurité'];
-  
-  const filteredBooks = books.filter(book => {
-    const matchesCategory = selectedCategory === 'Tous' || book.category === selectedCategory;
-    const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          book.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const filteredBooks = useMemo(() => {
+    const q = debouncedQuery.trim().toLowerCase();
+    return books.filter(book => {
+      const matchesCategory = selectedCategory === 'Tous' || book.category === selectedCategory;
+      const matchesSearch =
+        !q || book.title.toLowerCase().includes(q) || book.description.toLowerCase().includes(q);
+      return matchesCategory && matchesSearch;
+    });
+  }, [books, selectedCategory, debouncedQuery]);
 
-  const featuredBook = filteredBooks.find(b => b.is_bestseller) ?? filteredBooks[0] ?? null;
-  const regularBooks = featuredBook
-    ? filteredBooks.filter(b => b.id !== featuredBook.id)
-    : filteredBooks;
-
-  const getLevelColor = (level?: string) => {
-    switch(level) {
-      case 'Débutant': return 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-500/20';
-      case 'Intermédiaire': return 'bg-blue-500/10 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-500/20';
-      case 'Avancé': return 'bg-purple-500/10 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 border border-purple-500/20';
-      default: return 'bg-gray-500/10 text-gray-700 dark:bg-gray-800/30 dark:text-gray-400 border border-gray-500/20';
-    }
-  };
+  const featuredBook = debouncedQuery === '' ? (filteredBooks.find(b => b.is_bestseller) ?? filteredBooks[0] ?? null) : null;
+  const regularBooks = featuredBook ? filteredBooks.filter(b => b.id !== featuredBook.id) : filteredBooks;
 
   const BookCard = ({ book, featured = false }: { book: Book; featured?: boolean }) => {
     const isLiked = likedBooks.has(book.id);
+    const readerCount = book.views ?? readerCounts[book.id] ?? 0;
 
-    if (featured) {
-      return (
-        <div className="group relative bg-[var(--brand-midnight)] rounded-3xl overflow-hidden shadow-xl border border-gold/20 mb-10 transition-all duration-300">
-          {/* Background image decoration */}
-          {book.cover_image && (
-            <div className="absolute inset-0 pointer-events-none">
-              <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover opacity-15 blur-[2px]" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-midnight)] via-[var(--brand-midnight)]/90 to-transparent" />
+ if (featured) {
+  return (
+    <div className="group relative bg-[var(--brand-midnight)] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl border border-gold/20 mb-8 sm:mb-10 transition-all duration-300">
+      {/* Background image decoration */}
+      {book.cover_image && (
+        <div className="absolute inset-0 pointer-events-none">
+          <img src={book.cover_image} alt="" aria-hidden="true" className="w-full h-full object-cover opacity-15 blur-[2px]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-midnight)] via-[var(--brand-midnight)]/90 to-transparent" />
+        </div>
+      )}
+
+      <div className="relative flex flex-col sm:flex-row gap-5 sm:gap-6 p-5 sm:p-6 md:p-8 lg:p-10 z-10 items-center sm:items-start">
+        {/* Cover image */}
+        <div className="w-32 sm:w-36 md:w-44 lg:w-48 aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-white/10 group-hover:scale-102 transition-transform flex-shrink-0">
+          {book.cover_image ? (
+            <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+              <BookOpen className="w-10 h-10 sm:w-12 sm:h-12 text-gold/60" />
             </div>
           )}
-          
-          <div className="relative flex flex-row gap-4 sm:gap-6 p-4 sm:p-6 md:p-8 lg:p-10 z-10 items-start min-h-[160px] sm:min-h-[200px]">
-            {/* Book Cover Cover */}
-            <div className="flex-shrink-0">
-              <div className="w-28 sm:w-36 md:w-44 lg:w-48 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-white/10 group-hover:scale-102 transition-transform relative">
-                {book.cover_image ? (
-                  <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
-                    <BookOpen className="w-12 h-12 text-gold/60" />
-                  </div>
-                )}
-              </div>
-              {/* Price badge under the featured image (mobile only) */}
-              <div className="mt-2 sm:hidden">
-                <span className="bg-white/5 border border-white/10 text-gold text-sm font-extrabold px-3 py-1 rounded-full shadow-sm inline-block">
-                  {book.price === 0 ? 'Gratuit' : `${book.price} FCFA`}
+        </div>
+
+        {/* Info panel */}
+        <div className="flex flex-col justify-between flex-grow w-full min-w-0 text-center sm:text-left">
+          <div>
+            {/* Badges row */}
+            <div className="flex flex-wrap justify-center sm:justify-start items-center gap-1.5 mb-3">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gold/10 border border-gold/30 text-gold text-[10px] sm:text-xs font-bold rounded-full whitespace-nowrap">
+                <Trophy className="w-3 h-3" /> BESTSELLER
+              </span>
+              {book.is_new && (
+                <span className="inline-flex items-center px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] sm:text-xs font-bold rounded-full whitespace-nowrap">
+                  NOUVEAU
                 </span>
-              </div>
+              )}
+              {book.level && (
+                <span className={`inline-flex items-center px-2.5 py-1 text-[10px] sm:text-xs font-semibold rounded-full whitespace-nowrap ${getLevelColor(book.level)}`}>
+                  {book.level}
+                </span>
+              )}
             </div>
 
-            {/* Book Info Panel */}
-            <div className="flex flex-col justify-between flex-grow">
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gold/10 border border-gold/30 text-gold text-xs font-bold rounded-full">
-                    <Trophy className="w-3 h-3" /> BESTSELLER
-                  </span>
-                  {book.is_new && (
-                    <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-full">
-                      NOUVEAU
-                    </span>
-                  )}
-                    
-                  {book.level && (
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getLevelColor(book.level)}`}>
-                      {book.level}
-                    </span>
-                  )}
-                </div>
-                <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-white mb-2 leading-tight group-hover:text-gold transition-colors line-clamp-2">{book.title}</h2>
-                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-4 max-w-full line-clamp-3">{book.description}</p>
-                
-                {/* Stats */}
-                <div className="flex flex-wrap gap-4 mb-6">
-                  <div className="flex items-center gap-1.5 text-gray-300 text-xs font-medium">
-                    <Star className="w-4 h-4 text-gold fill-gold" />
-                    <span>Note : {book.rating || 4.8} / 5</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-gray-300 text-xs font-medium">
-                    <Users className="w-4 h-4 text-blue-400" />
-                    <span>{book.views ?? readerCounts[book.id] ?? 0} lecteur{(book.views ?? readerCounts[book.id] ?? 0) !== 1 ? 's' : ''}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-gray-300 text-xs font-medium">
-                    <Download className="w-4 h-4 text-gray-300" />
-                    <span>{(book as any).downloads ? (book as any).downloads.toLocaleString() : 0} téléchargements</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-gray-300 text-xs font-medium">
-                    <BookOpen className="w-4 h-4 text-emerald-400" />
-                    <span>{book.pages || 50} pages</span>
-                  </div>
-                </div>
-              </div>
+            <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-white mb-2 leading-snug sm:leading-tight tracking-tight group-hover:text-gold transition-colors line-clamp-2">
+              {book.title}
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-4 line-clamp-2 sm:line-clamp-3">
+              {book.description}
+            </p>
 
-              {/* Price / CTA Buttons */}
-              <div className="flex flex-wrap items-center gap-3">
-                {/* Desktop price block (visible sm+) */}
-                <div className="hidden sm:flex bg-white/5 border border-white/10 rounded-xl px-3 py-2">
-                  <span className="text-sm font-extrabold text-gold">{book.price === 0 ? 'Gratuit' : `${book.price || '1000'} FCFA`}</span>
-                </div>
-                <Link
-                  to={`/library/${book.id}`}
-                  className="flex-grow sm:flex-none inline-flex items-center justify-center gap-2 bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight font-black py-3 px-6 rounded-xl transition-all shadow-lg active:scale-95 text-xs sm:text-sm"
-                >
-                  <Play className="w-4 h-4 fill-current" />
-                  Voir le livre
-                </Link>
-                {book.buy_url && (
-                  <a
-                    href={book.buy_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center justify-center gap-1.5 border border-white/20 hover:border-white/40 text-white font-semibold py-3 px-5 rounded-xl transition-all text-xs sm:text-sm"
-                  >
-                    <Download className="w-4 h-4" />
-                    Acheter
-                  </a>
-                )}
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-2 sm:gap-4 mb-5 sm:mb-6 justify-items-center sm:justify-items-start">
+              <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
+                <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold fill-gold flex-shrink-0" />
+                <span>Note : {book.rating || 4.8} / 5</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
+                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />
+                <span>{book.views ?? readerCounts[book.id] ?? 0} lecteur{(book.views ?? readerCounts[book.id] ?? 0) !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-300 flex-shrink-0" />
+                <span>{((book as any).downloads || 0).toLocaleString()} téléch.</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
+                <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0" />
+                <span>{book.pages || 50} pages</span>
               </div>
             </div>
           </div>
+
+          {/* Price + CTA */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 w-full">
+            <div className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 order-1 sm:order-none">
+              <span className="text-sm font-extrabold text-gold whitespace-nowrap">
+                {book.price === 0 ? 'Gratuit' : `${book.price || '1000'} FCFA`}
+              </span>
+            </div>
+            <div className="flex items-center gap-2.5 w-full sm:w-auto order-2 sm:order-none">
+              <Link
+                to={`/library/${book.id}`}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight font-black py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl transition-all shadow-lg active:scale-95 text-xs sm:text-sm whitespace-nowrap"
+              >
+                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
+                Voir le livre
+              </Link>
+              {book.buy_url && (
+                
+                  <a href={book.buy_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 border border-white/20 hover:border-white/40 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-5 rounded-xl transition-all text-xs sm:text-sm whitespace-nowrap"
+                >
+                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Acheter
+                </a>
+              )}
+            </div>
+          </div>
         </div>
-      );
-    }
+      </div>
+    </div>
+  );
+}
 
     return (
       <Link
         to={`/library/${book.id}`}
         className="group bg-white dark:bg-gray-900 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-800 hover:border-gold/30 flex flex-col h-full cursor-pointer"
       >
-        {/* Cover Preview Image Container */}
+        {/* Cover */}
         <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
           {book.cover_image ? (
             <img
@@ -295,16 +312,7 @@ const Library = () => {
               <BookOpen className="w-10 h-10 text-white/50" />
             </div>
           )}
-          
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-
-        </div>
-        {/* Price badge under the regular card image (all sizes) */}
-        <div className="w-full px-4 mt-2 text-center">
-          <span className="bg-white/5 border border-white/10 text-gold text-sm font-extrabold px-3 py-0.5 rounded-full shadow-sm inline-block">
-            {book.price === 0 ? 'Gratuit' : `${book.price} FCFA`}
-          </span>
-        </div>
 
           {/* New / Bestseller Labels */}
           <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
@@ -320,61 +328,76 @@ const Library = () => {
             )}
           </div>
 
-          {/* Interactive Share / Like */}
-          <div className="absolute bottom-2.5 right-2.5 flex gap-1.5 z-10">
+          {/* Like / Share */}
+          <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleLike(book.id); }}
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleLike(book.id);
+              }}
               className={`p-2 rounded-xl shadow transition-all active:scale-95 ${
-                isLiked
-                  ? 'bg-red-500 text-white'
-                  : 'bg-white/90 dark:bg-gray-900/90 text-gray-700 hover:text-red-500'
+                isLiked ? 'bg-red-500 text-white' : 'bg-white/90 dark:bg-gray-900/90 text-gray-700 hover:text-red-500'
               }`}
-              aria-label="Sauvegarder"
+              aria-label={isLiked ? 'Retirer des favoris' : 'Sauvegarder'}
+              aria-pressed={isLiked}
             >
               <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current' : ''}`} />
             </button>
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleShare(book, e); }}
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleShare(book, e);
+              }}
               className="p-2 bg-white/90 dark:bg-gray-900/90 text-gray-700 rounded-xl shadow hover:bg-gold hover:text-midnight transition-all active:scale-95"
               aria-label="Partager"
             >
               <Share2 className="w-3.5 h-3.5" />
             </button>
           </div>
-        
+        </div>
+
+        {/* Price badge under image */}
+        <div className="w-full px-3 sm:px-4 mt-2 text-center">
+          <span className="bg-white/5 border border-white/10 text-gold text-[11px] sm:text-sm font-extrabold px-2.5 sm:px-3 py-0.5 rounded-full shadow-sm inline-block">
+            {book.price === 0 ? 'Gratuit' : `${book.price} FCFA`}
+          </span>
+        </div>
+
         {/* Info panel */}
-        <div className="p-4 flex flex-col flex-grow justify-between">
+        <div className="p-3 sm:p-4 flex flex-col flex-grow justify-between">
           <div>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-[9px] uppercase tracking-wider text-gold font-bold">
+            <div className="flex items-center justify-between gap-2 mb-1.5 sm:mb-2">
+              <span className="text-[9px] uppercase tracking-wider text-gold font-bold truncate">
                 {book.category || 'Guide'}
               </span>
               {book.level && (
-                <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${getLevelColor(book.level)}`}>
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded flex-shrink-0 ${getLevelColor(book.level)}`}>
                   {book.level}
                 </span>
               )}
             </div>
 
-            <h3 className="text-sm sm:text-base font-bold text-midnight dark:text-white mb-1.5 leading-snug line-clamp-1 group-hover:text-gold transition-colors">
+            <h3 className="text-[13px] sm:text-base font-bold text-midnight dark:text-white mb-1.5 leading-snug line-clamp-2 sm:line-clamp-1 group-hover:text-gold transition-colors">
               {book.title}
             </h3>
 
-            <p className="text-gray-500 dark:text-gray-400 text-[11px] sm:text-xs line-clamp-2 mb-3 leading-relaxed">
+            <p className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs line-clamp-2 mb-3 leading-relaxed">
               {book.description}
             </p>
           </div>
 
           <div>
             {/* Stats row */}
-            <div className="flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400 mb-3.5 pb-2.5 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400 mb-3 pb-2.5 border-b border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-1 font-bold text-gray-700 dark:text-white">
                 <Star className="w-3 h-3 text-gold fill-gold" />
                 <span>{book.rating || 4.8}</span>
               </div>
-                <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1">
                 <Users className="w-3 h-3 text-blue-400" />
-                <span>{book.views ?? readerCounts[book.id] ?? 0}</span>
+                <span>{readerCount}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Download className="w-3 h-3 text-gray-500" />
@@ -386,13 +409,10 @@ const Library = () => {
               </div>
             </div>
 
-            {/* Price / CTA */}
-            <div className="flex items-center justify-between gap-2">
-              {/* Price shown under cover image now; inline price hidden */}
-              <span className="flex-grow inline-flex items-center justify-center gap-1 bg-[var(--brand-midnight)] hover:bg-[var(--brand-midnight-dark)] text-[var(--brand-gold)] font-bold py-1.5 px-3 rounded-lg transition-all text-[10px]">
-                <Play className="w-3 h-3 fill-current" /> Voir le livre
-              </span>
-            </div>
+            {/* CTA */}
+            <span className="flex items-center justify-center gap-1 bg-[var(--brand-midnight)] hover:bg-[var(--brand-midnight-dark)] text-[var(--brand-gold)] font-bold py-1.5 px-3 rounded-lg transition-all text-[10px]">
+              <Play className="w-3 h-3 fill-current" /> Voir le livre
+            </span>
           </div>
         </div>
       </Link>
@@ -401,73 +421,73 @@ const Library = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-page)] dark:bg-gray-950 pb-20 sm:pb-8 font-poppins">
-      
-      {/* Toast Alert */}
+      {/* Toast */}
       {shareToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[var(--brand-midnight)] text-white px-4 py-2 rounded-full text-xs font-bold shadow-xl flex items-center gap-1.5">
+        <div
+          role="status"
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[var(--brand-midnight)] text-white px-4 py-2 rounded-full text-xs font-bold shadow-xl flex items-center gap-1.5"
+        >
           <span>Lien copié dans le presse-papiers</span>
         </div>
       )}
 
-      {/* Hero Section */}
-      <section className="relative text-white pt-20 sm:pt-24 pb-12 sm:pb-16 overflow-hidden bg-[var(--brand-midnight)]">
+      {/* Hero */}
+      <section className="relative text-white pt-20 sm:pt-24 pb-10 sm:pb-16 overflow-hidden bg-[var(--brand-midnight)]">
         <div className="absolute inset-0 pointer-events-none opacity-10">
           <div className="absolute top-0 right-0 w-80 h-80 bg-gold rounded-full blur-[100px]" />
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-600 rounded-full blur-[100px]" />
         </div>
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
-        
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-1.5 mb-4 px-3 py-1 bg-gold/10 rounded-full border border-gold/30">
             <BookOpen className="w-3.5 h-3.5 text-gold" />
             <span className="text-[10px] font-bold text-gold uppercase tracking-wider">BIBLIOTHÈQUE MIDEESSI</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 leading-tight tracking-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black mb-3 leading-tight tracking-tight">
             Accélérez vos <span className="text-gold">Compétences</span>
           </h1>
-          <p className="text-sm sm:text-base text-gray-300 mb-2 max-w-xl mx-auto">
+          <p className="text-xs sm:text-base text-gray-300 mb-2 max-w-xl mx-auto px-2">
             Découvrez nos guides pratiques et ebooks thématiques optimisés pour votre apprentissage.
           </p>
-          <p className="text-xs text-gray-400 mb-8">
+          <p className="text-[10px] sm:text-xs text-gray-400 mb-6 sm:mb-8">
             Fichiers PDF accessibles immédiatement • Mises à jour incluses
           </p>
 
-          {/* Quick Metrics shelf */}
-          <div className="flex justify-center gap-8 max-w-md mx-auto border-t border-white/10 pt-6">
+          {/* Quick metrics */}
+          <div className="flex justify-center gap-6 sm:gap-8 max-w-md mx-auto border-t border-white/10 pt-5 sm:pt-6">
             {[
               { value: books.length || '12', label: 'Ressources' },
               { value: '4.8 / 5', label: 'Satisfaction' },
               { value: '500+', label: 'Lecteurs' },
             ].map((stat, i) => (
               <div key={i} className="text-center">
-                <div className="text-lg sm:text-xl font-black text-gold">{stat.value}</div>
-                <div className="text-[10px] text-gray-400 mt-0.5">{stat.label}</div>
+                <div className="text-base sm:text-xl font-black text-gold">{stat.value}</div>
+                <div className="text-[9px] sm:text-[10px] text-gray-400 mt-0.5">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Search & Sticky Filter bar */}
+      {/* Search & Filter bar */}
       <section className="sticky top-16 z-30 bg-white/95 dark:bg-gray-950/95 border-b border-[var(--border)] shadow-sm backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4">
           <div className="flex flex-col sm:flex-row gap-3 items-center">
-            {/* Search Input */}
             <div className="relative w-full sm:flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Rechercher par titre, mot-clé..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl focus:outline-none focus:border-gold text-xs font-medium placeholder-gray-400"
               />
             </div>
 
-            {/* Quick Category slider */}
             <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
               <Filter className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-              {categories.map((cat) => (
+              {CATEGORIES.map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -485,26 +505,29 @@ const Library = () => {
         </div>
       </section>
 
-      {/* Main Grid Section */}
-      <section className="py-10 max-w-7xl mx-auto px-4">
+      {/* Main grid */}
+      <section className="py-8 sm:py-10 max-w-7xl mx-auto px-4">
         {loading ? (
-          <div className="text-center py-20 bg-white dark:bg-gray-900 border border-[var(--border)] rounded-3xl shadow-sm">
-            <div className="inline-block animate-spin w-8 h-8 border-4 border-gold border-t-transparent rounded-full mb-3"></div>
-            <p className="text-xs font-bold text-gray-500">Chargement de la bibliothèque...</p>
+          <div>
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <BookCardSkeleton key={i} />
+              ))}
+            </div>
           </div>
         ) : filteredBooks.length === 0 ? (
-          <div className="text-center py-20 bg-white dark:bg-gray-900 border border-[var(--border)] rounded-3xl shadow-sm">
+          <div className="text-center py-16 sm:py-20 bg-white dark:bg-gray-900 border border-[var(--border)] rounded-3xl shadow-sm">
             <BookOpen className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
             <h3 className="text-base font-bold text-midnight dark:text-white mb-1.5">Aucune ressource trouvée</h3>
-            <p className="text-xs text-gray-500 max-w-xs mx-auto">
-              {searchQuery ? "Votre recherche n'a retourné aucun résultat." : "Les guides et PDF arrivent très prochainement."}
+            <p className="text-xs text-gray-500 max-w-xs mx-auto px-4">
+              {searchQuery ? "Votre recherche n'a retourné aucun résultat." : 'Les guides et PDF arrivent très prochainement.'}
             </p>
           </div>
         ) : (
           <>
-            {/* Spotlight Book */}
-            {featuredBook && searchQuery === '' && (
-              <div className="mb-10">
+            {/* Spotlight */}
+            {featuredBook && (
+              <div className="mb-8 sm:mb-10">
                 <div className="flex items-center gap-1.5 mb-4">
                   <Sparkles className="w-4 h-4 text-gold" />
                   <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">A la Une</h2>
@@ -513,19 +536,19 @@ const Library = () => {
               </div>
             )}
 
-            {/* Standard Grid */}
+            {/* Grid */}
             {regularBooks.length > 0 && (
               <div>
-                {searchQuery === '' && featuredBook && (
-                  <div className="flex items-center gap-1.5 mb-5 pb-2.5 border-b border-[var(--border)]">
+                {featuredBook && (
+                  <div className="flex items-center gap-1.5 mb-4 sm:mb-5 pb-2.5 border-b border-[var(--border)]">
                     <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tous nos guides</h2>
                     <span className="ml-auto text-[10px] font-bold bg-[var(--bg-surface)] border border-[var(--border)] px-2 py-0.5 rounded text-gray-500">
                       {regularBooks.length} ressources
                     </span>
                   </div>
                 )}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {(searchQuery !== '' || !featuredBook ? filteredBooks : regularBooks).map((book) => (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {(searchQuery !== '' || !featuredBook ? filteredBooks : regularBooks).map(book => (
                     <BookCard key={book.id} book={book} />
                   ))}
                 </div>

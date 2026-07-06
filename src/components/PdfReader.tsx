@@ -47,11 +47,25 @@ const decodePdfBytes = (base64: string) => {
 
 const savePdfToSessionCache = (url: string, bytes: ArrayBuffer) => {
   if (typeof window === 'undefined') return;
-  try {
-    const encoded = encodePdfBytes(new Uint8Array(bytes));
-    window.sessionStorage.setItem(getPdfCacheKey(url), encoded);
-  } catch (err) {
-    console.warn('Unable to cache PDF in session storage:', err);
+  // Avoid blocking the main thread for large files — do encoding in idle time
+  const job = () => {
+    try {
+      const maxSize = 5 * 1024 * 1024; // 5MB threshold for sessionStorage encoding
+      if (bytes.byteLength > maxSize) {
+        // Skip sessionStorage encoding for large PDFs
+        return;
+      }
+      const encoded = encodePdfBytes(new Uint8Array(bytes));
+      window.sessionStorage.setItem(getPdfCacheKey(url), encoded);
+    } catch (err) {
+      console.warn('Unable to cache PDF in session storage:', err);
+    }
+  };
+
+  if ((window as any).requestIdleCallback) {
+    (window as any).requestIdleCallback(job, { timeout: 2000 });
+  } else {
+    setTimeout(job, 0);
   }
 };
 
@@ -70,23 +84,39 @@ const loadPdfFromSessionCache = (url: string) => {
 const savePdfToPersistentCache = async (url: string, bytes: ArrayBuffer) => {
   if (typeof window === 'undefined') return;
 
-  try {
-    const encoded = encodePdfBytes(new Uint8Array(bytes));
-    window.localStorage.setItem(getPdfPersistentCacheKey(url), encoded);
-  } catch (err) {
-    console.warn('Unable to persist PDF in localStorage:', err);
-  }
-
-  try {
-    if ('caches' in window) {
-      const cache = await window.caches.open('mideessi-pdf-cache-v1');
-      const response = new Response(bytes, {
-        headers: { 'content-type': 'application/pdf' },
-      });
-      await cache.put(url, response);
+  // Persisting to localStorage can be very slow for large PDFs; do in idle time and skip if too large
+  const job = async () => {
+    try {
+      const maxLocalSize = 2 * 1024 * 1024; // 2MB threshold for localStorage
+      if (bytes.byteLength <= maxLocalSize) {
+        try {
+          const encoded = encodePdfBytes(new Uint8Array(bytes));
+          window.localStorage.setItem(getPdfPersistentCacheKey(url), encoded);
+        } catch (err) {
+          console.warn('Unable to persist PDF in localStorage:', err);
+        }
+      }
+    } catch (err) {
+      console.warn('Persistent cache job error:', err);
     }
-  } catch (err) {
-    console.warn('Unable to persist PDF in Cache API:', err);
+
+    try {
+      if ('caches' in window) {
+        const cache = await window.caches.open('mideessi-pdf-cache-v1');
+        const response = new Response(bytes, {
+          headers: { 'content-type': 'application/pdf' },
+        });
+        await cache.put(url, response);
+      }
+    } catch (err) {
+      console.warn('Unable to persist PDF in Cache API:', err);
+    }
+  };
+
+  if ((window as any).requestIdleCallback) {
+    (window as any).requestIdleCallback(() => { void job(); }, { timeout: 3000 });
+  } else {
+    setTimeout(() => { void job(); }, 0);
   }
 };
 
@@ -452,7 +482,10 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
             return { doc, pageCount: doc.numPages };
           }
 
-          const response = await fetch(urlToFetch, { cache: 'force-cache' });
+          const controller = new AbortController();
+          // Save controller to allow abort on unmount
+          (loadPdf as any)._controller = controller;
+          const response = await fetch(urlToFetch, { cache: 'force-cache', signal: controller.signal });
           if (!response.ok) throw new Error(`PDF download failed: ${response.status}`);
 
           const contentLength = Number(response.headers.get('content-length') || '0');
@@ -465,14 +498,17 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            chunks.push(value);
-            received += value.length;
+            if (value) {
+              chunks.push(value);
+              received += value.length;
 
-            if (contentLength > 0) {
-              const percent = Math.min(85, Math.round((received / contentLength) * 85));
-              setDownloadProgress(prev => Math.max(prev, percent));
-            } else {
-              setDownloadProgress(prev => Math.min(85, prev + 2));
+              if (contentLength > 0) {
+                const percent = Math.min(85, Math.round((received / contentLength) * 85));
+                // Batch updates to avoid too many re-renders
+                setDownloadProgress(prev => Math.max(prev, percent));
+              } else {
+                setDownloadProgress(prev => Math.min(85, prev + 3));
+              }
             }
           }
 
@@ -547,6 +583,10 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
 
     return () => {
       cancelled = true;
+      try {
+        const controller = (loadPdf as any)._controller as AbortController | undefined;
+        if (controller) controller.abort();
+      } catch {}
     };
   }, [effectiveUrl, pdfUrl, isCloudinary, loadSavedProgress]);
 
