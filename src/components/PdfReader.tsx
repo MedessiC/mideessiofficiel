@@ -47,12 +47,10 @@ const decodePdfBytes = (base64: string) => {
 
 const savePdfToSessionCache = (url: string, bytes: ArrayBuffer) => {
   if (typeof window === 'undefined') return;
-  // Avoid blocking the main thread for large files — do encoding in idle time
   const job = () => {
     try {
-      const maxSize = 5 * 1024 * 1024; // 5MB threshold for sessionStorage encoding
+      const maxSize = 5 * 1024 * 1024;
       if (bytes.byteLength > maxSize) {
-        // Skip sessionStorage encoding for large PDFs
         return;
       }
       const encoded = encodePdfBytes(new Uint8Array(bytes));
@@ -84,10 +82,9 @@ const loadPdfFromSessionCache = (url: string) => {
 const savePdfToPersistentCache = async (url: string, bytes: ArrayBuffer) => {
   if (typeof window === 'undefined') return;
 
-  // Persisting to localStorage can be very slow for large PDFs; do in idle time and skip if too large
   const job = async () => {
     try {
-      const maxLocalSize = 2 * 1024 * 1024; // 2MB threshold for localStorage
+      const maxLocalSize = 2 * 1024 * 1024;
       if (bytes.byteLength <= maxLocalSize) {
         try {
           const encoded = encodePdfBytes(new Uint8Array(bytes));
@@ -191,7 +188,14 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const isCloudinary = pdfUrl.includes('cloudinary.com');
   const effectiveUrl = isCloudinary ? `/api/proxy-pdf?url=${encodeURIComponent(pdfUrl)}` : pdfUrl;
   const requiresAuth = !user;
-  const guestAccess = getPdfGuestAccessState({ pageNum, isAuthenticated: !!user, maxFreePages: MAX_FREE_PDF_PAGES });
+
+  // On n'évalue le verrouillage invité qu'une fois le nombre de pages connu.
+  // Sinon, isGuestLocked pouvait devenir vrai prématurément et bloquer
+  // tout rendu, y compris celui des pages gratuites, pour un visiteur
+  // non connecté qui vient d'arriver sur la page.
+  const guestAccess = pageCount > 0
+    ? getPdfGuestAccessState({ pageNum, isAuthenticated: !!user, maxFreePages: MAX_FREE_PDF_PAGES })
+    : { isLocked: false, effectivePage: pageNum };
   const isGuestLocked = requiresAuth && guestAccess.isLocked;
 
   useEffect(() => {
@@ -242,14 +246,12 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     if (typeof window === 'undefined') return;
     try {
       const key = `book_read_logged:${bookId}`;
-      if (localStorage.getItem(key)) return; // already recorded in this browser
+      if (localStorage.getItem(key)) return;
       await supabase.rpc('increment_book_views', { p_book_id: bookId });
-      // Also insert a detailed read event for audit and public metrics
-      const sessionKey = `s:${Math.random().toString(36).slice(2,9)}`;
+      const sessionKey = `s:${Math.random().toString(36).slice(2, 9)}`;
       try {
         await supabase.from('book_reads').insert([{ book_id: bookId, user_id: user?.id ?? null, session_key: sessionKey }]);
       } catch (err) {
-        // non-fatal
         console.warn('Could not insert into book_reads:', err);
       }
       localStorage.setItem(key, sessionKey);
@@ -314,19 +316,14 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       }
 
       setCompletionConfirmed(true);
-      // persist local completed flag for both logged and anonymous users
       try { window.localStorage.setItem(`pdf_completed_${getBookIdentifier()}`, '1'); } catch {}
 
-      // Trigger confetti + applause animation once
       setShowConfetti(true);
       setApplauseAnim(true);
       playApplauseSound();
-      // hide applause animation after short time
       setTimeout(() => setApplauseAnim(false), 1400);
-      // stop confetti after a while
       setTimeout(() => setShowConfetti(false), 5200);
 
-      // send analytics if available
       try {
         const meta = { book_id: currentBookId, pdf_url: pdfUrl };
         if ((window as any).gtag) {
@@ -374,7 +371,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
 
         if (bookData?.id) {
           setCurrentBookId(bookData.id);
-          // Record that this browser started reading this book (increments public views)
           recordRead(bookData.id);
           const { data: progressData } = await supabase
             .from('book_progress')
@@ -400,7 +396,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         console.error('Error loading progress:', err);
       }
     } else {
-      // Pour les utilisateurs anonymes, on essaye aussi de charger le bookId en base pour les quizz
       supabase
         .from('books')
         .select('id')
@@ -420,11 +415,18 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       if (completed) setCompletionConfirmed(true);
     }
 
+    // Pour un visiteur non connecté, on ne restaure pas une page sauvegardée
+    // au-delà de la limite gratuite — sinon il resterait bloqué sans rien voir.
+    if (!user) {
+      const maxFree = MAX_FREE_PDF_PAGES || doc.numPages;
+      savedPage = Math.min(savedPage, maxFree, doc.numPages);
+    }
+
     if (savedPage >= 1 && savedPage <= doc.numPages) {
       setPageNum(savedPage);
       setPageInput(String(savedPage));
     }
-  }, [user, pdfUrl, getBookIdentifier]);
+  }, [user, pdfUrl, getBookIdentifier, recordRead]);
 
   // Verrouillage du scroll
   useEffect(() => {
@@ -483,7 +485,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           }
 
           const controller = new AbortController();
-          // Save controller to allow abort on unmount
           (loadPdf as any)._controller = controller;
           const response = await fetch(urlToFetch, { cache: 'force-cache', signal: controller.signal });
           if (!response.ok) throw new Error(`PDF download failed: ${response.status}`);
@@ -504,7 +505,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
 
               if (contentLength > 0) {
                 const percent = Math.min(85, Math.round((received / contentLength) * 85));
-                // Batch updates to avoid too many re-renders
                 setDownloadProgress(prev => Math.max(prev, percent));
               } else {
                 setDownloadProgress(prev => Math.min(85, prev + 3));
@@ -593,13 +593,18 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   // Rendu de page(s) et prefetching en arrière-plan
   const renderSinglePage = useCallback(async (num: number, canvas: HTMLCanvasElement) => {
     if (!pdfDoc) return;
-    if (isGuestLocked && num > guestAccess.effectivePage) return;
+    // On bloque uniquement le rendu des pages au-delà de la limite gratuite
+    // pour un visiteur non connecté — pas tout le document.
+    if (requiresAuth && pageCount > 0) {
+      const access = getPdfGuestAccessState({ pageNum: num, isAuthenticated: false, maxFreePages: MAX_FREE_PDF_PAGES });
+      if (access.isLocked && num > access.effectivePage) return;
+    }
     try {
       const page = await pdfDoc.getPage(num);
       const viewport = page.getViewport({ scale, rotation });
       const context = canvas.getContext('2d');
       const ratio = window.devicePixelRatio || 1;
-      
+
       canvas.width = Math.floor(viewport.width * ratio);
       canvas.height = Math.floor(viewport.height * ratio);
       canvas.style.width = `${Math.floor(viewport.width)}px`;
@@ -611,19 +616,18 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     } catch (err) {
       console.error(`Render page ${num} error`, err);
     }
-  }, [pdfDoc, scale, rotation, isGuestLocked, guestAccess.effectivePage]);
-
-  // Do not clamp the page number for guests — allow them to navigate past
-  // the free limit so we can display the login overlay when they do.
-  // The actual rendering of pages is blocked in `renderSinglePage` when the
-  // guest limit is reached.
+  }, [pdfDoc, scale, rotation, requiresAuth, pageCount]);
 
   // Gérer le rendu et le prefetching en tâche de fond (instant-switching cache)
   useEffect(() => {
     if (!pdfDoc) return;
 
-    if (isGuestLocked) {
+    // On ne bloque le rendu que si la page DEMANDÉE dépasse la limite gratuite —
+    // pas tout le document. Ça permet à un visiteur non connecté de voir
+    // normalement les pages qui lui sont autorisées.
+    if (isGuestLocked && pageNum > guestAccess.effectivePage) {
       setLoading(false);
+      setRendering(false);
       return;
     }
 
@@ -637,12 +641,10 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
             setDownloadProgress(100);
             setLoading(false);
             // Prefetch / Pré-rendu en arrière-plan des pages adjacentes
-            // Page suivante
             if (pageNum < pageCount) {
               const nextCanvas = canvasRefs.current[pageNum + 1];
               if (nextCanvas) renderSinglePage(pageNum + 1, nextCanvas);
             }
-            // Page précédente
             if (pageNum > 1) {
               const prevCanvas = canvasRefs.current[pageNum - 1];
               if (prevCanvas) renderSinglePage(pageNum - 1, prevCanvas);
@@ -657,11 +659,14 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
         setLoading(false);
       }
     } else {
-      // Mode défilement (scroll) - Rendre toutes les pages en arrière-plan
+      // Mode défilement (scroll) - Rendre toutes les pages autorisées en arrière-plan
       const renderAll = async () => {
         setRendering(true);
         try {
-          for (let i = 1; i <= pageCount; i++) {
+          const maxRenderablePage = requiresAuth && guestAccess.isLocked
+            ? Math.min(guestAccess.effectivePage, pageCount)
+            : pageCount;
+          for (let i = 1; i <= maxRenderablePage; i++) {
             const canvas = canvasRefs.current[i];
             if (canvas) {
               await renderSinglePage(i, canvas);
@@ -675,7 +680,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       };
       renderAll();
     }
-  }, [pdfDoc, pageNum, readerMode, scale, rotation, pageCount, renderSinglePage, isGuestLocked]);
+  }, [pdfDoc, pageNum, readerMode, scale, rotation, pageCount, renderSinglePage, isGuestLocked, guestAccess.effectivePage, requiresAuth]);
 
   // Keyboard navigation & page flip animation
   useEffect(() => {
@@ -759,7 +764,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       const ctx = new AudioCtx();
       const now = ctx.currentTime;
 
-      // Two quick detuned oscillators for a pleasant chime
       const o1 = ctx.createOscillator();
       const o2 = ctx.createOscillator();
       const g = ctx.createGain();
@@ -777,7 +781,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       o1.start(now); o2.start(now);
       o1.stop(now + 1.2); o2.stop(now + 1.2);
 
-      // close context after sound
       setTimeout(() => { try { ctx.close(); } catch {} }, 1400);
     } catch (e) {
       // ignore sound errors
@@ -844,14 +847,12 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     if (currentPage !== pageNum) {
       setPageNum(currentPage);
       setPageInput(String(currentPage));
-      // If user scrolled to the extra completion element (index > pageCount)
       if (currentPage > pageCount) {
-        // mark as complete (force)
         saveProgress(pageCount, true);
       } else {
         saveProgress(currentPage);
       }
-      setQuizTriggered(true); // Tentative initiale, effect ci-dessous validera si on doit vraiment afficher
+      setQuizTriggered(true);
     }
   }, [readerMode, pageCount, pageNum, saveProgress]);
 
@@ -866,7 +867,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   // Navigation
   const prev = useCallback(() => {
     setPageNum(p => {
-      // allow navigating back from the completion page to the last PDF page
       if (pageCount > 0 && p === pageCount + 1) {
         const prevP = pageCount;
         saveProgress(prevP);
@@ -881,10 +881,8 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
   const next = useCallback(() => {
     setPageNum(p => {
       if (!pageCount) return p + 1;
-      // allow one extra page index after the last PDF page for completion
       const maxIndex = pageCount + 1;
       const nextP = Math.min(maxIndex, p + 1);
-      // if moving onto the completion page, mark complete (force)
       if (p === pageCount && nextP === pageCount + 1) {
         saveProgress(pageCount, true);
       } else {
@@ -902,7 +900,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
     const num = parseInt(value, 10);
     if (!isNaN(num) && num >= 1 && num <= (pageCount ? pageCount + 1 : num)) {
       setPageNum(num);
-      // If jumping to the completion extra page, force-complete
       if (pageCount && num === pageCount + 1) {
         saveProgress(pageCount, true);
       } else {
@@ -927,7 +924,6 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       if (!currentBookId) return;
 
       try {
-        // Find quiz for this book + page
         const { data: quizData } = await supabase
           .from('book_quizzes')
           .select('id')
@@ -940,13 +936,11 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           return;
         }
 
-        // If user not logged in, keep existing behavior (allow anon quizzes)
         if (!user) {
-          if (!cancelled) setQuizTriggered(prev => prev); // leave as-is
+          if (!cancelled) setQuizTriggered(prev => prev);
           return;
         }
 
-        // Check if user already has an attempt
         const { data: attempt } = await supabase
           .from('user_quiz_attempts')
           .select('id')
@@ -991,7 +985,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (readerMode !== 'page' || touchStartX.current === null || touchStartY.current === null) return;
-    
+
     const touch = e.changedTouches[0];
     const diffX = touch.clientX - touchStartX.current;
     const diffY = touch.clientY - touchStartY.current;
@@ -1014,59 +1008,55 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       window.location.href = '/login';
       return;
     }
-    
+
     setIsDownloading(true);
     setDownloadProgress(0);
     setDownloadError(null);
     setDownloadSuccess(false);
-    
+
     try {
-      // Pour Cloudinary, ajouter le paramètre fl_attachment pour forcer le téléchargement
       const downloadUrl = isCloudinary ? `${pdfUrl}?fl_attachment` : pdfUrl;
-      
+
       const response = await fetch(downloadUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/pdf',
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`Erreur HTTP ${response.status}`);
       }
-      
-      // Récupérer la taille totale
+
       const contentLength = response.headers.get('content-length');
       const total = parseInt(contentLength || '0', 10);
-      
-      // Lire le contenu avec progression
+
       const reader = response.body?.getReader();
       if (!reader) throw new Error('Impossible de lire le fichier');
-      
+
       const chunks: Uint8Array[] = [];
       let received = 0;
-      
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         chunks.push(value);
         received += value.length;
-        
+
         if (total > 0) {
           const progress = Math.round((received / total) * 100);
           setDownloadProgress(progress);
         }
       }
-      
-      // Créer le blob avec le type MIME explicite
+
       const arrayBuffer = new Uint8Array(received);
       let position = 0;
       for (const chunk of chunks) {
         arrayBuffer.set(chunk, position);
         position += chunk.length;
       }
-      
+
       const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1076,11 +1066,10 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       setDownloadProgress(100);
       setDownloadSuccess(true);
-      
-      // Réinitialiser après 2 secondes
+
       if (downloadTimeoutRef.current) clearTimeout(downloadTimeoutRef.current);
       downloadTimeoutRef.current = setTimeout(() => {
         setDownloadSuccess(false);
@@ -1090,8 +1079,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
       const errorMsg = err instanceof Error ? err.message : 'Erreur inconnue';
       console.error('Download error:', err);
       setDownloadError(errorMsg);
-      
-      // Réinitialiser après 3 secondes
+
       if (downloadTimeoutRef.current) clearTimeout(downloadTimeoutRef.current);
       downloadTimeoutRef.current = setTimeout(() => {
         setDownloadError(null);
@@ -1358,13 +1346,13 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
                 <Download size={16} />
               )}
             </button>
-            
+
             {/* Tooltip avec progression */}
             {isDownloading && (
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 dark:bg-white/10 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-1.5 bg-black/30 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-gradient-to-r from-[#ffd700] to-yellow-300 transition-all duration-300"
                       style={{ width: `${downloadProgress}%` }}
                     />
@@ -1373,14 +1361,14 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
                 </div>
               </div>
             )}
-            
+
             {/* Toast de succès */}
             {downloadSuccess && (
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-green-500/90 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none animate-bounce z-50">
                 PDF téléchargé ✓
               </div>
             )}
-            
+
             {/* Toast d'erreur */}
             {downloadError && (
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-red-500/90 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none z-50 max-w-xs">
@@ -1464,7 +1452,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           <div className="flex flex-col items-center w-full h-fit">
             {readerMode === 'page' ? (
               <div className="relative my-auto flex flex-col items-center justify-center w-full">
-              
+
                 {rendering && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-gray-900/40 z-10 rounded-lg backdrop-blur-xs">
                     <Loader2 className="w-6 h-6 text-[var(--brand-gold)] animate-spin" />
@@ -1533,7 +1521,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
                   <div className="w-full flex justify-center py-16 relative">
                     {showConfetti && <Confetti />}
                     <div className="max-w-3xl w-full rounded-3xl p-10 bg-white dark:bg-gray-900 border border-[var(--border)] shadow-lg text-center">
-                      <h2 className="text-3xl font-black text-midnight dark:text-white mb-4">Félicitations ! Vous avez terminé ce livre</h2>
+                      <h2 className="text-3xl font-black text-midnight dark:text-white mb-4">Félicitations ! Vous avez terminé ce livre</h2>
                       <p className="text-sm text-[var(--text-secondary)] mb-6">Confirmez la lecture pour que votre bibliothèque et votre profil soient mis à jour.</p>
                       <div className="flex items-center justify-center gap-3">
                         {!completionConfirmed ? (
