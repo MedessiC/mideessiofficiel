@@ -214,7 +214,7 @@ export default function BookDetail() {
 
   const handleReadClick = () => {
     if (book?.pdf_url) {
-      setShowPdfModal(true);
+      navigate(`/library/${book.id}/read`, { state: { bookTitle: book.title, pdfUrl: book.pdf_url } });
     }
   };
 
@@ -356,18 +356,6 @@ export default function BookDetail() {
         type="article"
         keywords={['ebook', 'PDF', book.category || '', book.level || '', 'MIDEESSI']}
       />
-
-      {/* ── PDF Reader Modal ── */}
-      {showPdfModal && book.pdf_url && (
-        <Suspense fallback={<PdfReaderFallback />}>
-          <LazyPdfReader
-            pdfUrl={book.pdf_url}
-            title={book.title}
-            modal
-            onClose={() => setShowPdfModal(false)}
-          />
-        </Suspense>
-      )}
 
       {/* ── Share toast ── */}
       {shareToast && (
@@ -600,7 +588,7 @@ export default function BookDetail() {
                       <Eye className="w-5 h-5 text-[var(--brand-gold)]" /> Lecteur intégré
                     </h2>
                     <button
-                      onClick={() => setShowPdfModal(true)}
+                      onClick={handleReadClick}
                       className="text-xs text-[var(--brand-midnight)] dark:text-[var(--brand-gold)] hover:underline flex items-center gap-1"
                     >
                       Plein écran <Zap className="w-3 h-3" />

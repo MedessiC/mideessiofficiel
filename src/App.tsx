@@ -18,6 +18,7 @@ import About from './pages/About';
 import Learn from './pages/Learn';
 import Library from './pages/Library';
 import BookDetail from './pages/BookDetail';
+import PdfReaderPage from './pages/PdfReaderPage';
 import Solutions from './pages/Solutions';
 import Projects from './pages/Projects';
 import SolutionDetail from './pages/SolutionDetail';
@@ -111,6 +112,7 @@ function AppContent() {
           <Route path ="/learn" element={<Learn />} />
           <Route path="/library" element={<Library />} />
           <Route path="/library/:id" element={<Suspense fallback={<RouteFallback />}><LazyBookDetail /></Suspense>} />
+          <Route path="/library/:id/read" element={<Suspense fallback={<RouteFallback />}><PdfReaderPage /></Suspense>} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/careers/apply/:offerId" element={<OfferApplication />} />
