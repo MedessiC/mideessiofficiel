@@ -31,8 +31,6 @@ export default function Login() {
     const redirectTarget = getRedirectTargetFromLocation(location);
     if (redirectTarget) {
       persistRedirectTarget(redirectTarget);
-    } else {
-      clearStoredRedirectTarget();
     }
   }, [searchParams, location]);
 

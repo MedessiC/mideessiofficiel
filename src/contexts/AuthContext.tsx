@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { getStoredRedirectTarget, clearStoredRedirectTarget } from '../utils/authRedirect';
 import { User, Session } from '@supabase/supabase-js';
 import { normalizeEmail, sanitizeUsername, validatePassword } from '../utils/authProfile';
 import { getProviderAvatarUrl } from '../utils/providerProfile';
@@ -164,6 +165,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
 
+        // If a redirect target was persisted before OAuth, navigate there now
+        if (session?.user) {
+          try {
+            const target = getStoredRedirectTarget();
+            if (target && typeof window !== 'undefined') {
+              // clear before navigating to avoid loops
+              clearStoredRedirectTarget();
+              if (window.location.pathname !== target) {
+                window.location.replace(target);
+                return;
+              }
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+
         if (session?.user) {
           const role = await detectRole(session.user.id);
           setUserRole(role);
@@ -189,6 +207,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         setSession(session);
         setUser(session?.user ?? null);
+
+        // After auth state changes (e.g., OAuth redirect), if a redirect target exists, navigate there
+        if (session?.user) {
+          try {
+            const target = getStoredRedirectTarget();
+            if (target && typeof window !== 'undefined') {
+              clearStoredRedirectTarget();
+              if (window.location.pathname !== target) {
+                window.location.replace(target);
+                return;
+              }
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
 
         if (session?.user) {
           const role = await detectRole(session.user.id);
