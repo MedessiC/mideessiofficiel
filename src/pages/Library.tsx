@@ -25,6 +25,11 @@ interface Book {
 
 const CATEGORIES = ['Tous', 'Développement', 'Design', 'Entrepreneuriat', 'Cybersécurité'];
 
+// Cache en mémoire qui survit aux montages/démontages du composant
+// (évite de réafficher le skeleton à chaque retour sur la page)
+let booksCache: Book[] | null = null;
+let readerCountsCache: Record<string, number> = {};
+
 const getLevelColor = (level?: string) => {
   switch (level) {
     case 'Débutant':
@@ -38,7 +43,7 @@ const getLevelColor = (level?: string) => {
   }
 };
 
-// --- Skeleton shown while books are loading, avoids layout jump ---
+// Skeleton affiché uniquement au tout premier chargement (rien en cache)
 const BookCardSkeleton = () => (
   <div className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 animate-pulse">
     <div className="aspect-[3/4] bg-gray-200 dark:bg-gray-800" />
@@ -53,30 +58,34 @@ const BookCardSkeleton = () => (
 
 const Library = () => {
   const { user } = useAuth();
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [books, setBooks] = useState<Book[]>(booksCache || []);
+  const [loading, setLoading] = useState(booksCache === null);
   const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [likedBooks, setLikedBooks] = useState<Set<string>>(new Set());
   const [shareToast, setShareToast] = useState(false);
-  const [readerCounts, setReaderCounts] = useState<Record<string, number>>({});
+  const [readerCounts, setReaderCounts] = useState<Record<string, number>>(readerCountsCache);
 
   useEffect(() => {
     fetchBooks();
     if (user) {
       fetchLikedBooks();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  // Debounce search input so filtering doesn't re-run on every keystroke
+  // Debounce la recherche pour éviter de refiltrer à chaque frappe
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(searchQuery), 200);
     return () => clearTimeout(t);
   }, [searchQuery]);
 
   const fetchBooks = async () => {
-    setLoading(true);
+    // Skeleton uniquement si on n'a encore rien à montrer
+    if (booksCache === null) {
+      setLoading(true);
+    }
     try {
       const { data, error } = await supabase
         .from('books')
@@ -86,9 +95,12 @@ const Library = () => {
       if (error) {
         console.error('Erreur:', error);
       } else {
-        setBooks(data || []);
-        // If books.views is missing, fall back to progress-based reader counts
-        if (data && data.length > 0 && !data.every((book: any) => typeof book.views === 'number')) {
+        const nextBooks = data || [];
+        booksCache = nextBooks;
+        setBooks(nextBooks);
+
+        // Si books.views est absent, on retombe sur le nombre de lecteurs par progression
+        if (nextBooks.length > 0 && !nextBooks.every((book: any) => typeof book.views === 'number')) {
           const { data: progressData } = await supabase
             .from('book_progress')
             .select('book_id')
@@ -99,6 +111,7 @@ const Library = () => {
             progressData.forEach((row: { book_id: string }) => {
               counts[row.book_id] = (counts[row.book_id] || 0) + 1;
             });
+            readerCountsCache = counts;
             setReaderCounts(counts);
           }
         }
@@ -180,118 +193,119 @@ const Library = () => {
     });
   }, [books, selectedCategory, debouncedQuery]);
 
-  const featuredBook = debouncedQuery === '' ? (filteredBooks.find(b => b.is_bestseller) ?? filteredBooks[0] ?? null) : null;
+  const featuredBook =
+    debouncedQuery === '' ? filteredBooks.find(b => b.is_bestseller) ?? filteredBooks[0] ?? null : null;
   const regularBooks = featuredBook ? filteredBooks.filter(b => b.id !== featuredBook.id) : filteredBooks;
 
   const BookCard = ({ book, featured = false }: { book: Book; featured?: boolean }) => {
     const isLiked = likedBooks.has(book.id);
     const readerCount = book.views ?? readerCounts[book.id] ?? 0;
 
- if (featured) {
-  return (
-    <div className="group relative bg-[var(--brand-midnight)] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl border border-gold/20 mb-8 sm:mb-10 transition-all duration-300">
-      {/* Background image decoration */}
-      {book.cover_image && (
-        <div className="absolute inset-0 pointer-events-none">
-          <img src={book.cover_image} alt="" aria-hidden="true" className="w-full h-full object-cover opacity-15 blur-[2px]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-midnight)] via-[var(--brand-midnight)]/90 to-transparent" />
-        </div>
-      )}
-
-      <div className="relative flex flex-col sm:flex-row gap-5 sm:gap-6 p-5 sm:p-6 md:p-8 lg:p-10 z-10 items-center sm:items-start">
-        {/* Cover image */}
-        <div className="w-32 sm:w-36 md:w-44 lg:w-48 aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-white/10 group-hover:scale-102 transition-transform flex-shrink-0">
-          {book.cover_image ? (
-            <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
-              <BookOpen className="w-10 h-10 sm:w-12 sm:h-12 text-gold/60" />
+    if (featured) {
+      return (
+        <div className="group relative bg-[var(--brand-midnight)] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl border border-gold/20 mb-8 sm:mb-10 transition-all duration-300">
+          {/* Background image decoration */}
+          {book.cover_image && (
+            <div className="absolute inset-0 pointer-events-none">
+              <img src={book.cover_image} alt="" aria-hidden="true" className="w-full h-full object-cover opacity-15 blur-[2px]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-midnight)] via-[var(--brand-midnight)]/90 to-transparent" />
             </div>
           )}
-        </div>
 
-        {/* Info panel */}
-        <div className="flex flex-col justify-between flex-grow w-full min-w-0 text-center sm:text-left">
-          <div>
-            {/* Badges row */}
-            <div className="flex flex-wrap justify-center sm:justify-start items-center gap-1.5 mb-3">
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gold/10 border border-gold/30 text-gold text-[10px] sm:text-xs font-bold rounded-full whitespace-nowrap">
-                <Trophy className="w-3 h-3" /> BESTSELLER
-              </span>
-              {book.is_new && (
-                <span className="inline-flex items-center px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] sm:text-xs font-bold rounded-full whitespace-nowrap">
-                  NOUVEAU
-                </span>
-              )}
-              {book.level && (
-                <span className={`inline-flex items-center px-2.5 py-1 text-[10px] sm:text-xs font-semibold rounded-full whitespace-nowrap ${getLevelColor(book.level)}`}>
-                  {book.level}
-                </span>
+          <div className="relative flex flex-col sm:flex-row gap-5 sm:gap-6 p-5 sm:p-6 md:p-8 lg:p-10 z-10 items-center sm:items-start">
+            {/* Cover image */}
+            <div className="w-32 sm:w-36 md:w-44 lg:w-48 aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-white/10 group-hover:scale-102 transition-transform flex-shrink-0">
+              {book.cover_image ? (
+                <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+                  <BookOpen className="w-10 h-10 sm:w-12 sm:h-12 text-gold/60" />
+                </div>
               )}
             </div>
 
-            <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-white mb-2 leading-snug sm:leading-tight tracking-tight group-hover:text-gold transition-colors line-clamp-2">
-              {book.title}
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-4 line-clamp-2 sm:line-clamp-3">
-              {book.description}
-            </p>
+            {/* Info panel */}
+            <div className="flex flex-col justify-between flex-grow w-full min-w-0 text-center sm:text-left">
+              <div>
+                {/* Badges row */}
+                <div className="flex flex-wrap justify-center sm:justify-start items-center gap-1.5 mb-3">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gold/10 border border-gold/30 text-gold text-[10px] sm:text-xs font-bold rounded-full whitespace-nowrap">
+                    <Trophy className="w-3 h-3" /> BESTSELLER
+                  </span>
+                  {book.is_new && (
+                    <span className="inline-flex items-center px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] sm:text-xs font-bold rounded-full whitespace-nowrap">
+                      NOUVEAU
+                    </span>
+                  )}
+                  {book.level && (
+                    <span className={`inline-flex items-center px-2.5 py-1 text-[10px] sm:text-xs font-semibold rounded-full whitespace-nowrap ${getLevelColor(book.level)}`}>
+                      {book.level}
+                    </span>
+                  )}
+                </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-2 sm:gap-4 mb-5 sm:mb-6 justify-items-center sm:justify-items-start">
-              <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
-                <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold fill-gold flex-shrink-0" />
-                <span>Note : {book.rating || 4.8} / 5</span>
+                <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-white mb-2 leading-snug sm:leading-tight tracking-tight group-hover:text-gold transition-colors line-clamp-2">
+                  {book.title}
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-4 line-clamp-2 sm:line-clamp-3">
+                  {book.description}
+                </p>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-2 sm:gap-4 mb-5 sm:mb-6 justify-items-center sm:justify-items-start">
+                  <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
+                    <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold fill-gold flex-shrink-0" />
+                    <span>Note : {book.rating || 4.8} / 5</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
+                    <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />
+                    <span>{readerCount} lecteur{readerCount !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
+                    <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-300 flex-shrink-0" />
+                    <span>{((book as any).downloads || 0).toLocaleString()} téléch.</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
+                    <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0" />
+                    <span>{book.pages || 50} pages</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
-                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />
-                <span>{book.views ?? readerCounts[book.id] ?? 0} lecteur{(book.views ?? readerCounts[book.id] ?? 0) !== 1 ? 's' : ''}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
-                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-300 flex-shrink-0" />
-                <span>{((book as any).downloads || 0).toLocaleString()} téléch.</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-gray-300 text-[11px] sm:text-xs font-medium">
-                <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0" />
-                <span>{book.pages || 50} pages</span>
+
+              {/* Price + CTA */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                <div className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 order-1 sm:order-none">
+                  <span className="text-sm font-extrabold text-gold whitespace-nowrap">
+                    {book.price === 0 ? 'Gratuit' : `${book.price || '1000'} FCFA`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5 w-full sm:w-auto order-2 sm:order-none">
+                  <Link
+                    to={`/library/${book.id}`}
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight font-black py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl transition-all shadow-lg active:scale-95 text-xs sm:text-sm whitespace-nowrap"
+                  >
+                    <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
+                    Voir le livre
+                  </Link>
+                  {book.buy_url && (
+                    
+                      <a href={book.buy_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 border border-white/20 hover:border-white/40 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-5 rounded-xl transition-all text-xs sm:text-sm whitespace-nowrap"
+                    >
+                      <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      Acheter
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-
-          {/* Price + CTA */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 w-full">
-            <div className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 order-1 sm:order-none">
-              <span className="text-sm font-extrabold text-gold whitespace-nowrap">
-                {book.price === 0 ? 'Gratuit' : `${book.price || '1000'} FCFA`}
-              </span>
-            </div>
-            <div className="flex items-center gap-2.5 w-full sm:w-auto order-2 sm:order-none">
-              <Link
-                to={`/library/${book.id}`}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-gradient-to-r from-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-midnight font-black py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl transition-all shadow-lg active:scale-95 text-xs sm:text-sm whitespace-nowrap"
-              >
-                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
-                Voir le livre
-              </Link>
-              {book.buy_url && (
-                
-                  <a href={book.buy_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 border border-white/20 hover:border-white/40 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-5 rounded-xl transition-all text-xs sm:text-sm whitespace-nowrap"
-                >
-                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Acheter
-                </a>
-              )}
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      );
+    }
 
     return (
       <Link
@@ -314,7 +328,7 @@ const Library = () => {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
-          {/* New / Bestseller Labels */}
+          {/* New / Bestseller labels */}
           <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
             {book.is_bestseller && (
               <span className="px-2 py-0.5 bg-red-500 text-white text-[9px] font-bold rounded shadow-sm">
@@ -508,12 +522,10 @@ const Library = () => {
       {/* Main grid */}
       <section className="py-8 sm:py-10 max-w-7xl mx-auto px-4">
         {loading ? (
-          <div>
-            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <BookCardSkeleton key={i} />
-              ))}
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <BookCardSkeleton key={i} />
+            ))}
           </div>
         ) : filteredBooks.length === 0 ? (
           <div className="text-center py-16 sm:py-20 bg-white dark:bg-gray-900 border border-[var(--border)] rounded-3xl shadow-sm">
