@@ -1337,7 +1337,10 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
               } ${isDownloading ? 'opacity-75 cursor-wait' : 'cursor-pointer'}`}
             >
               {isDownloading ? (
-                <Loader2 size={16} className="animate-spin" />
+                <>
+                  <span className="font-black text-sm">{downloadProgress}%</span>
+                  <div className="absolute left-0 bottom-0 h-1 bg-gradient-to-r from-[#ffd700] to-yellow-300 transition-all" style={{ width: `${downloadProgress}%` }} />
+                </>
               ) : downloadSuccess ? (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

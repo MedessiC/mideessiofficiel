@@ -520,10 +520,10 @@ export default function BookDetail() {
                           title="Télécharger le PDF"
                         >
                           {isDownloading ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              Téléchargement...
-                            </>
+                                <>
+                                  <span className="font-black text-sm">{downloadProgress}%</span>
+                                  <span className="sr-only">Téléchargement en cours</span>
+                                </>
                           ) : downloadSuccess ? (
                             <>
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -541,7 +541,7 @@ export default function BookDetail() {
                         
                         {/* Tooltip avec progression */}
                         {isDownloading && (
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-4 py-2 bg-gray-900 dark:bg-white/10 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-4 py-2 bg-gray-900 dark:bg-white/10 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
                             <div className="flex items-center gap-2">
                               <div className="w-32 h-2 bg-black/30 rounded-full overflow-hidden">
                                 <div 
@@ -701,8 +701,9 @@ export default function BookDetail() {
                         >
                           {isDownloading ? (
                             <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              Téléchargement...
+                              <span className="font-black text-sm">{downloadProgress}%</span>
+                              <span className="sr-only">Téléchargement en cours</span>
+                              <div className="absolute left-0 bottom-0 h-1 bg-gradient-to-r from-[#ffd700] to-yellow-300 transition-all" style={{ width: `${downloadProgress}%` }} />
                             </>
                           ) : downloadSuccess ? (
                             <>
