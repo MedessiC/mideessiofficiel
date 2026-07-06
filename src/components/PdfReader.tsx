@@ -22,6 +22,7 @@ type ReaderMode = 'page' | 'scroll';
 type ReaderTheme = 'midnight' | 'light' | 'sepia';
 
 const getPdfCacheKey = (url: string) => `pdf-cache:${encodeURIComponent(url)}`;
+const getPdfPersistentCacheKey = (url: string) => `pdf-persistent:${encodeURIComponent(url)}`;
 const getPdfStateKey = (url: string) => `pdf-reader-state:${encodeURIComponent(url)}`;
 
 const pdfDocumentCache = new Map<string, { doc: any; pageCount: number }>();
@@ -64,6 +65,56 @@ const loadPdfFromSessionCache = (url: string) => {
     console.warn('Unable to read cached PDF from session storage:', err);
     return null;
   }
+};
+
+const savePdfToPersistentCache = async (url: string, bytes: ArrayBuffer) => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const encoded = encodePdfBytes(new Uint8Array(bytes));
+    window.localStorage.setItem(getPdfPersistentCacheKey(url), encoded);
+  } catch (err) {
+    console.warn('Unable to persist PDF in localStorage:', err);
+  }
+
+  try {
+    if ('caches' in window) {
+      const cache = await window.caches.open('mideessi-pdf-cache-v1');
+      const response = new Response(bytes, {
+        headers: { 'content-type': 'application/pdf' },
+      });
+      await cache.put(url, response);
+    }
+  } catch (err) {
+    console.warn('Unable to persist PDF in Cache API:', err);
+  }
+};
+
+const loadPdfFromPersistentCache = async (url: string) => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const encoded = window.localStorage.getItem(getPdfPersistentCacheKey(url));
+    if (encoded) {
+      return decodePdfBytes(encoded);
+    }
+  } catch (err) {
+    console.warn('Unable to read persisted PDF from localStorage:', err);
+  }
+
+  try {
+    if ('caches' in window) {
+      const cache = await window.caches.open('mideessi-pdf-cache-v1');
+      const response = await cache.match(url);
+      if (response) {
+        return await response.arrayBuffer();
+      }
+    }
+  } catch (err) {
+    console.warn('Unable to read persisted PDF from Cache API:', err);
+  }
+
+  return null;
 };
 
 export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = false, onClose }: PdfReaderProps) {
@@ -393,8 +444,9 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.js', import.meta.url).toString();
 
           const cachedBytes = loadPdfFromSessionCache(urlToFetch);
-          if (cachedBytes) {
-            const doc = await pdfjs.getDocument({ data: cachedBytes }).promise;
+          const persistedBytes = cachedBytes || await loadPdfFromPersistentCache(urlToFetch);
+          if (persistedBytes) {
+            const doc = await pdfjs.getDocument({ data: persistedBytes }).promise;
             if (cancelled) return { doc, pageCount: doc.numPages };
             pdfDocumentCache.set(urlToFetch, { doc, pageCount: doc.numPages });
             return { doc, pageCount: doc.numPages };
@@ -432,6 +484,7 @@ export default function PdfReader({ pdfUrl, title = 'Lecture du PDF', modal = fa
           }
 
           savePdfToSessionCache(urlToFetch, arrayBuffer.buffer);
+          await savePdfToPersistentCache(urlToFetch, arrayBuffer.buffer);
 
           const loadingTask: any = pdfjs.getDocument({ data: arrayBuffer });
           loadingTask.onProgress = (progressData: { loaded?: number; total?: number }) => {
