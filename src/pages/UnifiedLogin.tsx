@@ -38,8 +38,6 @@ const UnifiedLogin = () => {
     const redirectFromLocation = getRedirectTargetFromLocation(location);
     if (redirectFromLocation) {
       persistRedirectTarget(redirectFromLocation);
-    } else {
-      clearStoredRedirectTarget();
     }
   }, [location]);
 
