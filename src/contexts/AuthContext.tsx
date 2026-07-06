@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { getStoredRedirectTarget, clearStoredRedirectTarget } from '../utils/authRedirect';
+import { getStoredRedirectTarget, clearStoredRedirectTarget, peekStoredRedirectTarget } from '../utils/authRedirect';
 import { User, Session } from '@supabase/supabase-js';
 import { normalizeEmail, sanitizeUsername, validatePassword } from '../utils/authProfile';
 import { getProviderAvatarUrl } from '../utils/providerProfile';
@@ -168,7 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // If a redirect target was persisted before OAuth, navigate there now
         if (session?.user) {
           try {
-            const target = getStoredRedirectTarget();
+            const target = peekStoredRedirectTarget();
             if (target && typeof window !== 'undefined') {
               // clear before navigating to avoid loops
               clearStoredRedirectTarget();
@@ -211,7 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // After auth state changes (e.g., OAuth redirect), if a redirect target exists, navigate there
         if (session?.user) {
           try {
-            const target = getStoredRedirectTarget();
+            const target = peekStoredRedirectTarget();
             if (target && typeof window !== 'undefined') {
               clearStoredRedirectTarget();
               if (window.location.pathname !== target) {

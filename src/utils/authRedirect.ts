@@ -62,3 +62,16 @@ export const getRedirectTargetFromLocation = (location?: Location | URL) => {
 
   return pathname && pathname !== '/login' && pathname !== '/signup' ? pathname : null;
 };
+
+export const peekStoredRedirectTarget = (): string | null => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(REDIRECT_STORAGE_KEY);
+    if (!raw) return null;
+    const value = raw.trim();
+    return value.startsWith('/') ? value : null;
+  } catch {
+    return null;
+  }
+};

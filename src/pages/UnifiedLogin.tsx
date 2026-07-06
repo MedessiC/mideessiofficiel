@@ -4,7 +4,7 @@ import { Lock, Mail, Eye, EyeOff, AlertCircle, LogIn, ChevronLeft } from 'lucide
 import { useAuth } from '../contexts/AuthContext';
 import { useClientAuth } from '../contexts/ClientContext';
 import SEO from '../components/SEO';
-import { clearStoredRedirectTarget, getStoredRedirectTarget, getRedirectTargetFromLocation, persistRedirectTarget } from '../utils/authRedirect';
+import { clearStoredRedirectTarget, getStoredRedirectTarget, getRedirectTargetFromLocation, persistRedirectTarget, peekStoredRedirectTarget } from '../utils/authRedirect';
 
 type UserType = 'user' | 'client';
 
@@ -44,7 +44,7 @@ const UnifiedLogin = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user && userRole && userType !== 'client') {
-      const storedRedirect = getStoredRedirectTarget();
+      const storedRedirect = peekStoredRedirectTarget();
       if (storedRedirect && storedRedirect !== '/login' && storedRedirect !== '/signup') {
         navigate(storedRedirect, { replace: true });
         clearStoredRedirectTarget();
@@ -59,7 +59,7 @@ const UnifiedLogin = () => {
     }
     
     if (clientUser && userType === 'client') {
-      const storedRedirect = getStoredRedirectTarget();
+      const storedRedirect = peekStoredRedirectTarget();
       if (storedRedirect && storedRedirect !== '/login' && storedRedirect !== '/signup') {
         navigate(storedRedirect, { replace: true });
         clearStoredRedirectTarget();
