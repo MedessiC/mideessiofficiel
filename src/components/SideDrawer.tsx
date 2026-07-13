@@ -9,6 +9,8 @@ interface SideDrawerProps {
 const SideDrawer = ({ isOpen, onClose }: SideDrawerProps) => {
   const location = useLocation();
 
+  if (!isOpen) return null;
+
   const isActive = (href: string) =>
     location.pathname === href || location.pathname.startsWith(href + '/');
 

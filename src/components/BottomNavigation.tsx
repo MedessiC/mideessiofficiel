@@ -1,5 +1,5 @@
 import { Home, Tag, GraduationCap, Library, Grid3X3 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useNavigation } from '../contexts/NavigationContext';
 
 interface BottomNavItem {
@@ -54,9 +54,9 @@ const BottomNavigation = () => {
             {navItems.map(({ label, href, icon: Icon }) => {
               const active = isActive(href);
               return (
-                <a
+                <Link
                   key={href}
-                  href={href}
+                  to={href}
                   className="relative flex flex-1 flex-col items-center justify-center gap-[3px] py-2 px-1 select-none"
                   aria-current={active ? 'page' : undefined}
                 >
@@ -84,7 +84,6 @@ const BottomNavigation = () => {
                           : 'text-gray-400 dark:text-gray-500'
                       }`}
                     />
-
                   </span>
 
                   {/* Label */}
@@ -95,7 +94,7 @@ const BottomNavigation = () => {
                   >
                     {label}
                   </span>
-                </a>
+                </Link>
               );
             })}
 
