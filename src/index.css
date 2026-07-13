@@ -128,6 +128,27 @@
     @apply bg-black/20 backdrop-blur-md border border-white/10;
   }
 
+
+  /* ── Glass effect — avec préfixes WebKit pour iOS Safari ── */
+  .glass {
+    background: rgba(255, 255, 255, 0.10);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.20);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
   /* ── Gradient text ── */
   .text-gradient-gold {
     @apply bg-gradient-to-r from-gold to-yellow-300 bg-clip-text;
@@ -164,4 +185,27 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
   }
+}
+
+/* ── iOS Safari — backdrop-filter webkit passthrough global ── */
+/* Tailwind génère backdrop-filter sans préfixe webkit — on le force ici */
+@supports (-webkit-backdrop-filter: blur(1px)) {
+  [class*="backdrop-blur-"] {
+    -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  }
+}
+
+/* ── GPU acceleration pour les éléments glassmorphiques critiques ── */
+.backdrop-blur-sm,
+.backdrop-blur,
+.backdrop-blur-md,
+.backdrop-blur-lg,
+.backdrop-blur-xl,
+.backdrop-blur-2xl,
+.backdrop-blur-3xl {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+  /* Isolation pour éviter les bugs de clipping Safari */
+  isolation: isolate;
 }

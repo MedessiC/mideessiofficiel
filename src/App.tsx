@@ -77,11 +77,47 @@ const LazyAdminPostEditor = lazy(() => import('./pages/AdminPostEditor'));
 const LazyBookDetail = lazy(() => import('./pages/BookDetail'));
 const LazyNewBlogPost = lazy(() => import('./pages/NewBlogPost'));
 
-const RouteFallback = () => (
-  <div className="min-h-[50vh] flex items-center justify-center py-16">
-    <LoadingSpinner size="lg" />
-  </div>
-);
+const RouteFallback = () => {
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 dark:bg-[#191970]/80 backdrop-blur-md transition-opacity duration-300">
+      {/* Glow effect in background */}
+      <div className="absolute w-72 h-72 bg-yellow-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+
+      {/* Container */}
+      <div className="flex flex-col items-center justify-center gap-6 relative z-10">
+        {/* Animated Logo Container */}
+        <div className="relative w-28 h-28 flex items-center justify-center">
+          {/* Spinning Golden Orbit Track */}
+          <div className="absolute inset-0 rounded-full border-[3px] border-gray-100 dark:border-[#1e2a4a]"></div>
+          <div className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-yellow-500 border-r-yellow-500 animate-spin" style={{ animationDuration: '1.2s' }}></div>
+          
+          {/* Inner Ring Glow */}
+          <div className="absolute inset-1.5 rounded-full border border-yellow-400/20 animate-ping" style={{ animationDuration: '2s' }}></div>
+
+          {/* Logo Image wrapper with soft pulse scale */}
+          <div className="absolute inset-3 rounded-full bg-[#0a0f1e] dark:bg-white flex items-center justify-center shadow-lg border border-gray-200/10 dark:border-white/5 overflow-hidden p-3 animate-pulse">
+            <img 
+              src="/mideessi-light.webp" 
+              alt="Logo Mideessi" 
+              className="w-full h-full object-contain dark:hidden"
+            />
+            <img 
+              src="/mideessi.webp" 
+              alt="Logo Mideessi" 
+              className="w-full h-full object-contain hidden dark:block"
+            />
+          </div>
+        </div>
+
+        {/* Premium micro text indicators */}
+        <div className="flex flex-col items-center gap-1.5 text-center">
+          <p className="text-xs uppercase tracking-[0.25em] font-black text-gray-800 dark:text-white/90">MIDEESSI</p>
+          <p className="text-[10px] text-yellow-500 dark:text-yellow-400 font-bold animate-pulse">Chargement en cours</p>
+        </div>
+      </div>
+    </div>
+  );
+};
 function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -128,8 +164,10 @@ function AppContent() {
           <Route path="/my-library" element={<ProtectedRoute><MyLibrary /></ProtectedRoute>} />
           <Route path="/search-profiles" element={<SearchProfiles />} />
           
+          <Route path="/submit-dossier" element={<SubmitDossier />} />
+          
           {/* Client Routes */}
-          <Route path="/clients/*" element={<Suspense fallback={<RouteFallback />}><LazyClientShell /></Suspense>}>
+          <Route path="/clients/*" element={<ClientShell />}>
             <Route path="onboarding" element={<ClientProtectedRoute><ClientOnboarding /></ClientProtectedRoute>} />
             <Route path="dashboard" element={<ClientProtectedRoute><ClientDashboard /></ClientProtectedRoute>} />
             <Route path="livrables" element={<ClientProtectedRoute><ClientLivrables /></ClientProtectedRoute>} />
@@ -141,7 +179,6 @@ function AppContent() {
             <Route path="reports" element={<ClientProtectedRoute><ClientReportsPage /></ClientProtectedRoute>} />
             <Route path="quotes" element={<ClientProtectedRoute><ClientQuoteRequests /></ClientProtectedRoute>} />
             <Route path="dossiers" element={<ClientProtectedRoute><ClientDossiers /></ClientProtectedRoute>} />
-            <Route path="submit-dossier" element={<SubmitDossier />} />
             <Route path="objectives" element={<ClientProtectedRoute><ClientObjectives /></ClientProtectedRoute>} />
             <Route path="compte" element={<ClientProtectedRoute><ClientCompte /></ClientProtectedRoute>} />
           </Route>

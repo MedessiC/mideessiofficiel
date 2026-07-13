@@ -120,7 +120,7 @@ const Offres = () => {
   const faqs = activeCategory === 'presence' ? FAQ_PRESENCE : FAQ_TECH;
 
   return (
-    <div className="min-h-screen pt-16 bg-[var(--bg-page)] overflow-x-hidden font-poppins selection:bg-gold selection:text-midnight">
+    <div className="min-h-screen pt-16 bg-gray-50 dark:bg-gray-900 overflow-x-hidden font-poppins selection:bg-gold selection:text-midnight transition-colors duration-300">
       <SEO
         title="Nos Offres | MIDEESSI - Agence Digitale"
         description="Services digitaux : Présence Digitale et Développement Tech. Trouvez la solution adaptée à votre business."
@@ -130,13 +130,15 @@ const Offres = () => {
       {/* ════════════════════════════════════════════
           HERO — Choix catégorie
       ════════════════════════════════════════════ */}
-      <section className="relative bg-[var(--brand-midnight)] text-white overflow-hidden">
-        {/* Decorative blobs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-gold/5 rounded-full blur-[100px]" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/3 rounded-full blur-[80px]" />
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+      <section className="relative bg-gradient-to-br from-midnight via-blue-900 to-midnight dark:from-black dark:via-gray-900 dark:to-black text-white overflow-hidden">
+        {/* Decorative blobs + geometric shapes (matching Home/About/Solutions) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
+          <div className="absolute -top-10 right-5 md:top-10 md:right-10 w-40 h-40 md:w-72 md:h-72 bg-gold rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-10 -left-5 md:bottom-10 md:left-10 w-48 h-48 md:w-80 md:h-80 bg-blue-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         </div>
+        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-midnight via-gold to-midnight" />
+        <div className="absolute top-10 left-10 w-20 h-20 border-4 border-gold opacity-20 rotate-45 animate-pulse hidden sm:block pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-32 h-32 border-4 border-gold opacity-20 rounded-full animate-pulse hidden sm:block pointer-events-none" style={{ animationDelay: '1s' }} />
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10 md:pt-16 md:pb-14">
           {/* Tagline badge */}
@@ -190,7 +192,7 @@ const Offres = () => {
               </div>
               <div className={`mt-3 flex items-center gap-1.5 text-[10px] font-semibold ${activeCategory === 'presence' ? 'text-gold/80' : 'text-gray-500'}`}>
                 <span className="px-2 py-0.5 rounded-full bg-white/10">3 packs</span>
-                <span>À partir de 30 000 FCFA/mois</span>
+                <span>À partir de 99 000 FCFA/mois</span>
               </div>
             </button>
 
@@ -223,7 +225,7 @@ const Offres = () => {
               </div>
               <div className={`mt-3 flex items-center gap-1.5 text-[10px] font-semibold ${activeCategory === 'tech' ? 'text-white/70' : 'text-gray-500'}`}>
                 <span className="px-2 py-0.5 rounded-full bg-white/10">5 services</span>
-                <span>À partir de 50 000 FCFA</span>
+                <span>À partir de 100 000 FCFA</span>
               </div>
             </button>
           </div>
@@ -246,7 +248,7 @@ const Offres = () => {
       {/* ════════════════════════════════════════════
           OFFRES CONTENT
       ════════════════════════════════════════════ */}
-      <section className="py-10 sm:py-14 lg:py-20 bg-[var(--bg-page)]">
+      <section className="py-10 sm:py-14 lg:py-20 bg-white dark:bg-gray-900 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           {/* ── PRÉSENCE DIGITALE ── */}
@@ -256,15 +258,16 @@ const Offres = () => {
                 <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/30 text-gold px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3">
                   <Globe className="w-3.5 h-3.5" /> Présence Digitale
                 </div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[var(--brand-midnight)] mb-2">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-midnight dark:text-white mb-2">
                   Choisissez votre pack
                 </h2>
-                <p className="text-sm text-[var(--text-secondary)] max-w-lg mx-auto">
+                <div className="w-16 h-1 bg-gold mx-auto rounded-full mb-3" />
+                <p className="text-sm text-gray-600 dark:text-gray-300 max-w-lg mx-auto">
                   Chaque pack est pensé pour une étape de croissance. Progressez à votre rythme.
                 </p>
                 {/* Pack progression pill */}
-                <div className="inline-flex items-center gap-1 bg-[var(--bg-card)] rounded-xl px-3 py-2 shadow-sm border border-[var(--border)] mt-4 flex-wrap justify-center">
-                  {[{ name: 'KPÈVI', color: 'text-gray-500' }, { name: 'EYA', color: 'text-[var(--brand-midnight)]' }, { name: 'JAGO', color: 'text-gold' }].map((item, i) => (
+                <div className="inline-flex items-center gap-1 bg-white dark:bg-gray-800 rounded-xl px-3 py-2 shadow-sm border border-gray-200 dark:border-gray-700 mt-4 flex-wrap justify-center">
+                  {[{ name: 'KPÈVI', color: 'text-gray-500 dark:text-gray-400' }, { name: 'EYA', color: 'text-midnight dark:text-white' }, { name: 'JAGO', color: 'text-gold' }].map((item, i) => (
                     <span key={i} className={`text-[10px] sm:text-xs font-bold flex items-center gap-1 ${item.color}`}>
                       {i > 0 && <ChevronRight className="w-3 h-3 text-gold" />}
                       {item.name}
@@ -272,7 +275,6 @@ const Offres = () => {
                   ))}
                 </div>
               </div>
-
               {/* Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6 items-stretch">
                 {offres.map((offre, index) => (
@@ -286,18 +288,18 @@ const Offres = () => {
                       </div>
                     )}
 
-                    <div className={`relative bg-[var(--bg-card)] rounded-[20px] sm:rounded-[24px] overflow-hidden flex flex-col flex-grow transition-all duration-300 border border-[var(--border)] ${
+                    <div className={`relative bg-white dark:bg-gray-800 rounded-[20px] sm:rounded-[24px] overflow-hidden flex flex-col flex-grow transition-all duration-300 border border-gray-200 dark:border-gray-700 ${
                       offre.badge
                         ? 'ring-2 ring-gold shadow-[0_8px_40px_rgba(255,215,0,0.12)] hover:shadow-[0_16px_60px_rgba(255,215,0,0.2)] hover:-translate-y-1'
-                        : 'shadow-sm hover:shadow-xl hover:border-[var(--brand-gold)]/30 hover:-translate-y-1'
+                        : 'shadow-lg hover:shadow-xl hover:border-gold/30 hover:-translate-y-1'
                     }`}>
 
                       {/* Image / Prix */}
-                      <div className="relative h-32 sm:h-40 md:h-44 overflow-hidden bg-[var(--brand-midnight)]">
+                      <div className="relative h-44 sm:h-40 md:h-44 w-full overflow-hidden bg-gradient-to-br from-midnight to-blue-900 flex-shrink-0">
                         <img
                           src={offre.image}
                           alt={offre.nom}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-70"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80"
                           loading="lazy"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
@@ -321,33 +323,33 @@ const Offres = () => {
                       </div>
 
                       {/* Body */}
-                      <div className="p-4 sm:p-5 md:p-6 flex flex-col flex-grow">
+                      <div className="p-5 sm:p-5 md:p-6 flex flex-col flex-grow">
                         <div className="mb-4">
-                          <h3 className="text-xl sm:text-2xl font-black text-[var(--brand-midnight)] leading-tight">
+                          <h3 className="text-xl sm:text-2xl font-black text-midnight dark:text-white leading-tight">
                             {offre.nom}
                           </h3>
-                          <p className="text-[11px] sm:text-xs text-[var(--text-secondary)] italic mt-1">
+                          <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 italic mt-1">
                             "{offre.signification}" — {offre.tagline}
                           </p>
                         </div>
 
                         {/* Features */}
-                        <div className="space-y-2 sm:space-y-2.5 mb-5 flex-grow">
+                        <div className="space-y-2.5 mb-5 flex-grow">
                           {offre.features.filter(f => f.included).slice(0, 5).map((feature, idx) => (
                             <div key={idx} className="flex items-start gap-2">
                               <CheckCircle2 className="w-4 h-4 text-gold flex-shrink-0 mt-0.5" />
-                              <span className="text-[11px] sm:text-sm text-[var(--text-primary)] leading-tight">{feature.name}</span>
+                              <span className="text-[11px] sm:text-sm text-gray-700 dark:text-gray-300 leading-tight">{feature.name}</span>
                             </div>
                           ))}
                           {offre.features.filter(f => !f.included).slice(0, 2).map((feature, idx) => (
                             <div key={`x-${idx}`} className="flex items-start gap-2 opacity-50">
                               <XCircle className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                              <span className="text-[11px] sm:text-sm text-gray-400 leading-tight line-through">{feature.name}</span>
+                              <span className="text-[11px] sm:text-sm text-gray-400 dark:text-gray-500 leading-tight line-through">{feature.name}</span>
                             </div>
                           ))}
                           {offre.features.filter(f => f.included).length > 5 && (
                             <div className="pt-1">
-                              <a href={`/offres/${offre.slug}`} className="text-[10px] font-bold text-[var(--brand-midnight)] hover:text-gold transition-colors underline underline-offset-2">
+                              <a href={`/offres/${offre.slug}`} className="text-[10px] font-bold text-midnight dark:text-white hover:text-gold transition-colors underline underline-offset-2">
                                 + {offre.features.filter(f => f.included).length - 5} autres avantages →
                               </a>
                             </div>
@@ -355,21 +357,21 @@ const Offres = () => {
                         </div>
 
                         {/* Who it's for */}
-                        <div className="bg-[var(--bg-surface)] rounded-xl p-3 mb-4 border border-[var(--border)]">
-                          <p className="text-[10px] sm:text-xs text-[var(--text-secondary)] leading-snug">
-                            <span className="font-bold text-[var(--brand-midnight)]">Pour qui ? </span>
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 mb-4 border border-gray-200 dark:border-gray-600">
+                          <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-300 leading-snug">
+                            <span className="font-bold text-midnight dark:text-white">Pour qui ? </span>
                             {offre.forWho.slice(0, 90)}…
                           </p>
                         </div>
 
                         {/* CTA Buttons */}
-                        <div className="space-y-2 mt-auto pt-4 border-t border-[var(--border)]">
+                        <div className="space-y-2 mt-auto pt-4 border-t border-gray-200 dark:border-gray-600">
                           <a
                             href={`/offres/${offre.slug}`}
                             className={`w-full py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${
                               offre.badge
-                                ? 'bg-gradient-to-r from-gold to-yellow-400 text-midnight shadow-md hover:shadow-lg'
-                                : 'bg-[var(--brand-midnight)] text-white hover:bg-gray-800'
+                                ? 'bg-gradient-to-r from-gold to-yellow-400 text-midnight shadow-md hover:shadow-lg hover:shadow-gold/30'
+                                : 'bg-gradient-to-r from-midnight to-blue-900 text-white hover:from-blue-900 hover:to-midnight shadow-md hover:shadow-lg'
                             }`}
                           >
                             Voir le détail <ArrowRight className="w-4 h-4" />
@@ -377,13 +379,13 @@ const Offres = () => {
                           <div className="grid grid-cols-2 gap-2">
                             <button
                               onClick={() => handleWhatsAppDevis(offre.nom)}
-                              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-[var(--bg-surface)] hover:bg-[var(--bg-page)] border border-[var(--border)] text-[var(--text-primaryr)] text-[var(--text-primary)] transition-colors active:scale-[0.98]"
+                              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 text-midnight dark:text-white transition-colors active:scale-[0.98]"
                             >
                               <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
                             </button>
                             <button
-                              onClick={() => window.location.assign(`/clients/submit-dossier?offerSlug=${offre.slug}&offerName=${encodeURIComponent(offre.nom)}&offerType=presence`)}
-                              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-[var(--bg-surface)] hover:bg-[var(--bg-page)] border border-[var(--border)] text-[var(--text-primaryr)] text-[var(--text-primary)] transition-colors active:scale-[0.98]"
+                              onClick={() => window.location.assign(`/submit-dossier?offerSlug=${offre.slug}&offerName=${encodeURIComponent(offre.nom)}&offerType=presence`)}
+                              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 text-midnight dark:text-white transition-colors active:scale-[0.98]"
                             >
                               <FileText className="w-3.5 h-3.5 text-gold" /> Dossier
                             </button>
@@ -396,18 +398,18 @@ const Offres = () => {
               </div>
 
               {/* Tableau de comparaison rapide */}
-              <div className="mt-10 md:mt-14 bg-[var(--bg-card)] rounded-[20px] border border-[var(--border)] shadow-sm overflow-hidden">
-                <div className="px-4 sm:px-6 py-4 border-b border-[var(--border)] flex items-center gap-2">
+              <div className="mt-10 md:mt-14 bg-white dark:bg-gray-800 rounded-[20px] border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden">
+                <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2 bg-gradient-to-r from-midnight/5 to-transparent dark:from-gold/5">
                   <Layers className="w-5 h-5 text-gold" />
-                  <h3 className="font-bold text-[var(--brand-midnight)]">Comparaison rapide des packs</h3>
+                    <h3 className="font-bold text-midnight dark:text-white">Comparaison rapide des packs</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm min-w-[480px]">
                     <thead>
-                      <tr className="border-b border-[var(--border)] bg-[var(--bg-surface)]">
-                        <th className="text-left py-3 px-4 font-bold text-[var(--text-secondary)] text-xs uppercase tracking-wider">Fonctionnalité</th>
+                      <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                        <th className="text-left py-3 px-4 font-bold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">Fonctionnalité</th>
                         {offres.map(o => (
-                          <th key={o.id} className="py-3 px-3 font-black text-[var(--brand-midnight)] text-center text-sm">
+                          <th key={o.id} className="py-3 px-3 font-black text-midnight dark:text-white text-center text-sm">
                             {o.nom}
                             {o.badge && <span className="block text-[9px] font-bold text-gold">{o.badge}</span>}
                           </th>
@@ -416,24 +418,24 @@ const Offres = () => {
                     </thead>
                     <tbody>
                       {offres[offres.length - 1].features.slice(0, 8).map((_, rowIdx) => (
-                        <tr key={rowIdx} className={`border-b border-[var(--border)] ${rowIdx % 2 === 0 ? '' : 'bg-[var(--bg-surface)]/50'}`}>
-                          <td className="py-2.5 px-4 text-xs text-[var(--text-secondary)] font-medium">
+                        <tr key={rowIdx} className={`border-b border-gray-200 dark:border-gray-700 ${rowIdx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-700/30'}`}>
+                          <td className="py-2.5 px-4 text-xs text-gray-600 dark:text-gray-300 font-medium">
                             {offres[offres.length - 1].features[rowIdx].name}
                           </td>
                           {offres.map(o => (
                             <td key={o.id} className="py-2.5 px-3 text-center">
                               {o.features[rowIdx]?.included
                                 ? <CheckCircle2 className="w-4 h-4 text-gold mx-auto" />
-                                : <XCircle className="w-4 h-4 text-gray-300 mx-auto" />
+                                : <XCircle className="w-4 h-4 text-gray-300 dark:text-gray-500 mx-auto" />
                               }
                             </td>
                           ))}
                         </tr>
                       ))}
-                      <tr className="bg-[var(--bg-surface)]">
-                        <td className="py-3 px-4 text-xs font-black text-[var(--brand-midnight)] uppercase tracking-wider">Prix mensuel</td>
+                      <tr className="bg-gradient-to-r from-gold/5 to-transparent dark:from-gold/10">
+                        <td className="py-3 px-4 text-xs font-black text-midnight dark:text-white uppercase tracking-wider">Prix mensuel</td>
                         {offres.map(o => (
-                          <td key={o.id} className="py-3 px-3 text-center font-black text-sm text-[var(--brand-midnight)]">
+                          <td key={o.id} className="py-3 px-3 text-center font-black text-sm text-midnight dark:text-white">
                             {formatPrice(o.prix)} F
                           </td>
                         ))}
@@ -449,13 +451,14 @@ const Offres = () => {
           {activeCategory === 'tech' && (
             <div className="animate-fade-in">
               <div className="text-center mb-8 md:mb-12">
-                <div className="inline-flex items-center gap-2 bg-[var(--brand-midnight)]/10 border border-[var(--brand-midnight)]/20 text-[var(--brand-midnight)] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3">
+                <div className="inline-flex items-center gap-2 bg-midnight/10 dark:bg-white/10 border border-midnight/20 dark:border-white/15 text-midnight dark:text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3">
                   <Code className="w-3.5 h-3.5" /> Développement Tech
                 </div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[var(--brand-midnight)] mb-2">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-midnight dark:text-white mb-2">
                   Solutions sur mesure
                 </h2>
-                <p className="text-sm text-[var(--text-secondary)] max-w-lg mx-auto">
+                <div className="w-16 h-1 bg-gold mx-auto rounded-full mb-3" />
+                <p className="text-sm text-gray-600 dark:text-gray-300 max-w-lg mx-auto">
                   Chaque projet est unique. Consultation gratuite pour un devis précis adapté à vos besoins.
                 </p>
               </div>
@@ -464,10 +467,10 @@ const Offres = () => {
                 {devServices.map((service) => (
                   <div
                     key={service.id}
-                    className="group relative bg-[var(--bg-card)] rounded-[20px] sm:rounded-[24px] overflow-hidden shadow-sm hover:shadow-xl border border-[var(--border)] hover:border-[var(--brand-gold)]/30 transition-all duration-300 flex flex-col hover:-translate-y-1"
+                    className="group relative bg-white dark:bg-gray-800 rounded-[20px] sm:rounded-[24px] overflow-hidden shadow-lg hover:shadow-xl border border-gray-200 dark:border-gray-700 hover:border-gold/30 transition-all duration-300 flex flex-col hover:-translate-y-1"
                   >
                     {/* Image */}
-                    <div className="relative h-36 sm:h-44 overflow-hidden bg-[var(--brand-midnight)]">
+                    <div className="relative h-36 sm:h-44 overflow-hidden bg-gradient-to-br from-midnight to-blue-900">
                       <img
                         src={service.image}
                         alt={service.nom}
@@ -498,46 +501,46 @@ const Offres = () => {
 
                     {/* Body */}
                     <div className="p-4 sm:p-5 md:p-6 flex flex-col flex-grow">
-                      <h3 className="text-lg sm:text-xl font-bold text-[var(--brand-midnight)] mb-2 leading-tight">
+                      <h3 className="text-lg sm:text-xl font-bold text-midnight dark:text-white mb-2 leading-tight">
                         {service.nom}
                       </h3>
-                      <p className="text-[11px] sm:text-sm text-[var(--text-secondary)] leading-relaxed mb-4 flex-grow">
+                      <p className="text-[11px] sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4 flex-grow">
                         {service.description}
                       </p>
 
                       {/* Top features */}
                       <div className="space-y-1.5 mb-4">
                         {service.features.filter(f => f.included).slice(0, 3).map((f, i) => (
-                          <div key={i} className="flex items-center gap-2 text-[11px] text-gray-600">
+                          <div key={i} className="flex items-center gap-2 text-[11px] text-gray-600 dark:text-gray-300">
                             <BadgeCheck className="w-3.5 h-3.5 text-gold flex-shrink-0" />
                             {f.name}
                           </div>
                         ))}
                         {service.features.filter(f => f.included).length > 3 && (
-                          <a href={`/dev-services/${service.slug}`} className="text-[10px] font-bold text-[var(--brand-midnight)] hover:text-gold transition-colors underline underline-offset-2">
+                          <a href={`/dev-services/${service.slug}`} className="text-[10px] font-bold text-midnight dark:text-white hover:text-gold transition-colors underline underline-offset-2">
                             + {service.features.filter(f => f.included).length - 3} fonctionnalités →
                           </a>
                         )}
                       </div>
 
                       {/* CTA */}
-                      <div className="space-y-2 mt-auto pt-4 border-t border-[var(--border)]">
+                      <div className="space-y-2 mt-auto pt-4 border-t border-gray-200 dark:border-gray-600">
                         <a
                           href={`/dev-services/${service.slug}`}
-                          className="w-full bg-[var(--brand-midnight)] hover:bg-gray-800 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors active:scale-[0.98] shadow-sm"
+                          className="w-full bg-gradient-to-r from-midnight to-blue-900 hover:from-blue-900 hover:to-midnight text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-md hover:shadow-lg"
                         >
                           Voir le service <ArrowRight className="w-4 h-4 text-gold" />
                         </a>
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => handleWhatsAppDevis(service.nom)}
-                            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-[var(--bg-surface)] hover:bg-[var(--bg-page)] border border-[var(--border)] text-[var(--text-primaryr)] text-[var(--text-primary)] transition-colors active:scale-[0.98]"
+                            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 text-midnight dark:text-white transition-colors active:scale-[0.98]"
                           >
                             <MessageCircle className="w-3.5 h-3.5" /> Devis
                           </button>
                           <button
-                            onClick={() => window.location.assign(`/clients/submit-dossier?offerSlug=${service.slug}&offerName=${encodeURIComponent(service.nom)}&offerType=tech`)}
-                            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-gold to-yellow-400 text-midnight transition-colors active:scale-[0.98]"
+                            onClick={() => window.location.assign(`/submit-dossier?offerSlug=${service.slug}&offerName=${encodeURIComponent(service.nom)}&offerType=tech`)}
+                            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-gold to-yellow-400 text-midnight transition-all active:scale-[0.98] shadow-sm hover:shadow-md"
                           >
                             <FileText className="w-3.5 h-3.5" /> Dossier
                           </button>
@@ -549,17 +552,18 @@ const Offres = () => {
               </div>
 
               {/* Package CTA */}
-              <div className="mt-10 p-5 sm:p-8 bg-[var(--brand-midnight)] rounded-[20px] text-white text-center relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gold/5 rounded-full blur-[60px] pointer-events-none" />
+              <div className="mt-10 p-5 sm:p-8 bg-gradient-to-br from-midnight via-blue-900 to-midnight rounded-[20px] text-white text-center relative overflow-hidden border-2 border-gold/20">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gold/10 rounded-full blur-[60px] pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-[40px] pointer-events-none" />
                 <div className="relative">
                   <Layers className="w-8 h-8 text-gold mx-auto mb-3" />
                   <h3 className="text-xl sm:text-2xl font-bold mb-2">Besoin d'un package complet ?</h3>
-                  <p className="text-gray-300 text-sm mb-5 max-w-md mx-auto">
+                  <p className="text-gray-200 text-sm mb-5 max-w-md mx-auto">
                     Combinez Présence Digitale + Développement Tech pour une offre intégrée avec remise spéciale.
                   </p>
                   <button
                     onClick={handleWhatsAppHelp}
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-gold to-yellow-400 text-midnight px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl active:scale-95 transition-all"
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-gold to-yellow-400 text-midnight px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:shadow-gold/30 active:scale-95 transition-all"
                   >
                     <MessageCircle className="w-4 h-4" /> Discuter d'un package
                   </button>
@@ -573,26 +577,27 @@ const Offres = () => {
       {/* ════════════════════════════════════════════
           PROCESSUS
       ════════════════════════════════════════════ */}
-      <section className="py-12 md:py-16 bg-white border-t border-[var(--border)]">
+      <section className="py-12 md:py-16 lg:py-20 bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-2xl sm:text-3xl font-black text-[var(--brand-midnight)] mb-2">Comment on travaille</h2>
-            <p className="text-sm text-[var(--text-secondary)]">Simple, transparent, efficace.</p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-midnight dark:text-white mb-2">Comment on travaille</h2>
+            <div className="w-16 h-1 bg-gold mx-auto rounded-full mb-3" />
+            <p className="text-sm text-gray-600 dark:text-gray-300">Simple, transparent, efficace.</p>
           </div>
 
           {/* Desktop: horizontal steps with connecting lines */}
           <div className="hidden sm:grid grid-cols-4 gap-0 relative">
-            <div className="absolute top-6 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-[var(--brand-midnight)] via-gold to-[var(--brand-midnight)] opacity-20" />
+            <div className="absolute top-6 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-midnight via-gold to-midnight opacity-30" />
             {STEPS.map((item) => (
               <div key={item.step} className="flex flex-col items-center text-center px-4">
-                <div className={`relative w-12 h-12 ${item.color} rounded-2xl flex items-center justify-center mb-4 shadow-md`}>
+                <div className={`relative w-12 h-12 bg-gradient-to-br from-midnight to-blue-900 rounded-2xl flex items-center justify-center mb-4 shadow-lg`}>
                   <item.icon className="w-5 h-5 text-white" />
-                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-gold text-midnight rounded-full flex items-center justify-center text-[10px] font-black shadow">
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-gold to-yellow-400 text-midnight rounded-full flex items-center justify-center text-[10px] font-black shadow">
                     {item.step}
                   </div>
                 </div>
-                <h3 className="text-sm font-bold text-[var(--brand-midnight)] mb-1">{item.title}</h3>
-                <p className="text-xs text-[var(--text-secondary)] leading-snug">{item.desc}</p>
+                <h3 className="text-sm font-bold text-midnight dark:text-white mb-1">{item.title}</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -600,14 +605,14 @@ const Offres = () => {
           {/* Mobile: compact 2x2 grid */}
           <div className="sm:hidden grid grid-cols-2 gap-3">
             {STEPS.map((item) => (
-              <div key={item.step} className="flex gap-3 p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)]">
-                <div className={`w-9 h-9 ${item.color} rounded-lg flex-shrink-0 flex items-center justify-center shadow-sm`}>
+              <div key={item.step} className="flex gap-3 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="w-9 h-9 bg-gradient-to-br from-midnight to-blue-900 rounded-lg flex-shrink-0 flex items-center justify-center shadow-sm">
                   <item.icon className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <span className="text-[9px] font-black text-gold uppercase tracking-widest block">{item.step}</span>
-                  <h3 className="text-xs font-bold text-[var(--brand-midnight)] leading-tight">{item.title}</h3>
-                  <p className="text-[10px] text-[var(--text-secondary)] leading-tight mt-0.5">{item.desc}</p>
+                  <h3 className="text-xs font-bold text-midnight dark:text-white leading-tight">{item.title}</h3>
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400 leading-tight mt-0.5">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -619,26 +624,27 @@ const Offres = () => {
       {/* ════════════════════════════════════════════
           FAQ CONTEXTUELLE
       ════════════════════════════════════════════ */}
-      <section className="py-12 md:py-16 bg-white border-t border-[var(--border)]">
+      <section className="py-12 md:py-16 lg:py-20 bg-white dark:bg-gray-900 transition-colors duration-300">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-black text-[var(--brand-midnight)] mb-2">Questions fréquentes</h2>
-            <p className="text-sm text-[var(--text-secondary)]">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-midnight dark:text-white mb-2">Questions fréquentes</h2>
+            <div className="w-16 h-1 bg-gold mx-auto rounded-full mb-3" />
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               {activeCategory === 'presence' ? 'Sur les packs Présence Digitale' : 'Sur le Développement Tech'}
             </p>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {faqs.map((faq, i) => (
-              <div key={i} className="bg-[var(--bg-surface)] rounded-[16px] border border-[var(--border)] overflow-hidden">
+              <div key={i} className="bg-gray-50 dark:bg-gray-800 rounded-[16px] border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-[var(--bg-surface)] transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
                 >
-                  <span className="text-sm font-bold text-[var(--brand-midnight)] pr-3 leading-snug">{faq.q}</span>
+                  <span className="text-sm font-bold text-midnight dark:text-white pr-3 leading-snug">{faq.q}</span>
                   <ChevronDown className={`w-4 h-4 text-gold flex-shrink-0 transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openFaq === i ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="px-4 pb-4 text-sm text-[var(--text-secondary)] leading-relaxed border-t border-[var(--border)] pt-3">
+                  <div className="px-4 pb-4 text-sm text-gray-600 dark:text-gray-300 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-3">
                     {faq.a}
                   </div>
                 </div>
@@ -651,34 +657,43 @@ const Offres = () => {
       {/* ════════════════════════════════════════════
           CTA FINAL — Multi-canal
       ════════════════════════════════════════════ */}
-      <section className="py-12 md:py-16 bg-[var(--brand-midnight)] border-t border-white/10 mb-16 md:mb-0">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <HeartHandshake className="w-10 h-10 text-gold mx-auto mb-4" />
-          <h2 className="text-2xl sm:text-3xl font-black mb-3">Besoin d'aide pour choisir ?</h2>
-          <p className="text-gray-300 text-sm sm:text-base mb-8 max-w-xl mx-auto leading-relaxed">
+      <section className="relative py-12 md:py-16 lg:py-20 bg-gradient-to-br from-midnight via-blue-900 to-midnight dark:from-black dark:via-gray-900 dark:to-black mb-16 md:mb-0 overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 pointer-events-none opacity-20">
+          <div className="absolute top-10 right-10 w-40 h-40 md:w-64 md:h-64 bg-gold rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-10 left-10 w-32 h-32 md:w-48 md:h-48 bg-blue-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+          <div className="w-16 h-16 bg-gold/20 backdrop-blur-sm border-2 border-gold/40 rounded-full flex items-center justify-center mx-auto mb-5">
+            <HeartHandshake className="w-8 h-8 text-gold" />
+          </div>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-3">Besoin d'aide pour choisir ?</h2>
+          <div className="w-16 h-1 bg-gold mx-auto rounded-full mb-4" />
+          <p className="text-gray-200 text-sm sm:text-base mb-8 max-w-xl mx-auto leading-relaxed">
             Notre équipe vous guide gratuitement. Consultation sans engagement, réponse en moins de 2 heures.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={handleWhatsAppHelp}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-gold to-yellow-400 text-midnight px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl hover:shadow-2xl active:scale-95 transition-all"
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-gold to-yellow-400 text-midnight px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl hover:shadow-2xl hover:shadow-gold/30 active:scale-95 transition-all"
             >
               <MessageCircle className="w-5 h-5" /> Chatter sur WhatsApp
             </button>
             <button
               onClick={handleBookCall}
-              className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-6 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95"
+              className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border-2 border-gold/40 text-white px-6 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 backdrop-blur-sm"
             >
               <Calendar className="w-5 h-5 text-gold" /> Prendre rendez-vous
             </button>
             <button
               onClick={handlePhoneCall}
-              className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-6 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 sm:hidden"
+              className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border-2 border-gold/40 text-white px-6 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 backdrop-blur-sm sm:hidden"
             >
               <Phone className="w-5 h-5 text-gold" /> Appeler
             </button>
           </div>
-          <p className="text-gray-500 text-xs mt-4">Aucun engagement · Réponse rapide · 100% gratuit</p>
+          <p className="text-gray-300/60 text-xs mt-4">Aucun engagement · Réponse rapide · 100% gratuit</p>
         </div>
       </section>
 

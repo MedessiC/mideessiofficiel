@@ -53,14 +53,13 @@ export const clearStoredRedirectTarget = () => {
 export const getRedirectTargetFromLocation = (location?: Location | URL) => {
   if (!location) return null;
 
-  const pathname = typeof location === 'string' ? location : location.pathname;
   const search = typeof location === 'string' ? '' : location.search;
   const params = new URLSearchParams(search);
   const redirectParam = params.get('redirect');
 
   if (redirectParam) return redirectParam;
 
-  return pathname && pathname !== '/login' && pathname !== '/signup' ? pathname : null;
+  return null;
 };
 
 export const peekStoredRedirectTarget = (): string | null => {

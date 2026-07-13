@@ -28,7 +28,7 @@ const DetailOffre = () => {
 
   // Primary action: navigate to dedicated dossier submission page
   const handleOpenSubmitPage = () => {
-    const url = `/clients/submit-dossier?offerSlug=${offre.slug}&offerName=${encodeURIComponent(offre.nom)}&offerType=presence`;
+    const url = `/submit-dossier?offerSlug=${offre.slug}&offerName=${encodeURIComponent(offre.nom)}&offerType=presence`;
     navigate(url);
   };
 
@@ -126,32 +126,32 @@ const DetailOffre = () => {
           <div className="lg:col-span-2 space-y-10">
             
             {/* Ce que vous obtenez */}
-            <section className="bg-white rounded-[28px] p-8 border border-[var(--border)] shadow-soft">
+            <section className="bg-white dark:bg-gray-800 rounded-[28px] p-8 border border-gray-200 dark:border-gray-700 shadow-soft transition-colors duration-300">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--brand-gold)] to-yellow-400 flex items-center justify-center shadow-md">
                   <Target className="w-6 h-6 text-midnight" />
                 </div>
-                <h2 className="text-2xl font-bold text-[var(--brand-midnight)]">Ce que vous obtenez</h2>
+                <h2 className="text-2xl font-bold text-midnight dark:text-white">Ce que vous obtenez</h2>
               </div>
               
               <div className="grid sm:grid-cols-2 gap-4">
-                {offre.whaYouGet.map((benefit, idx) => (
-                  <div key={idx} className="flex items-start gap-3 bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--border)]">
+                {offre.whatYouGet.map((benefit, idx) => (
+                  <div key={idx} className="flex items-start gap-3 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-2xl border border-gray-200 dark:border-gray-700">
                     <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm font-semibold text-[var(--text-primary)] leading-relaxed">{benefit}</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 leading-relaxed">{benefit}</p>
                   </div>
                 ))}
               </div>
             </section>
 
             {/* Pour qui */}
-            <section className="bg-gradient-to-r from-[var(--brand-midnight)] to-blue-900 rounded-[28px] p-8 sm:p-10 text-white relative overflow-hidden">
+            <section className="bg-gradient-to-r from-midnight to-blue-900 rounded-[28px] p-8 sm:p-10 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10">
                 <Zap className="w-32 h-32" />
               </div>
               <div className="relative z-10">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <span className="text-[var(--brand-gold)]">🎯</span> Pour qui est ce pack ?
+                  <span className="text-gold">🎯</span> Pour qui est ce pack ?
                 </h2>
                 <p className="text-lg leading-relaxed text-blue-100 font-medium">
                   {offre.forWho}
@@ -160,21 +160,21 @@ const DetailOffre = () => {
             </section>
 
             {/* Liste complète des fonctionnalités */}
-            <section className="bg-white rounded-[28px] p-8 border border-[var(--border)] shadow-soft">
-              <h2 className="text-2xl font-bold text-[var(--brand-midnight)] mb-6">Détails des prestations</h2>
-              <div className="divide-y divide-[var(--border)]">
+            <section className="bg-white dark:bg-gray-800 rounded-[28px] p-8 border border-gray-200 dark:border-gray-700 shadow-soft transition-colors duration-300">
+              <h2 className="text-2xl font-bold text-midnight dark:text-white mb-6">Détails des prestations</h2>
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {offre.features.map((feature, idx) => (
-                  <div key={idx} className="py-4 flex items-center gap-4 hover:bg-[var(--bg-surface)] -mx-4 px-4 rounded-xl transition-colors">
+                  <div key={idx} className="py-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 -mx-4 px-4 rounded-xl transition-colors">
                     {feature.included ? (
-                      <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                        <Check className="w-4 h-4 text-emerald-600" />
+                      <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       </div>
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <X className="w-4 h-4 text-gray-400" />
+                      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <X className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                       </div>
                     )}
-                    <span className={`text-base font-medium ${feature.included ? 'text-[var(--text-primary)]' : 'text-gray-400 line-through'}`}>
+                    <span className={`text-base font-medium ${feature.included ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500 line-through'}`}>
                       {feature.name}
                     </span>
                   </div>
@@ -243,10 +243,51 @@ const DetailOffre = () => {
                 </div>
               </div>
 
+              {/* Sticky Summary Card */}
+              <div className="bg-white dark:bg-gray-800 rounded-[28px] border border-gray-200 dark:border-gray-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-colors duration-300">
+                <div className="bg-gradient-to-b from-[var(--brand-gold)]/10 to-transparent p-6 text-center border-b border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-bold uppercase tracking-widest text-midnight dark:text-white mb-2">Mensualité</p>
+                  <div className="flex items-center justify-center gap-1 mb-2">
+                    <span className="text-4xl font-black text-midnight dark:text-white">
+                      {offre.prix.toLocaleString('fr-FR')}
+                    </span>
+                    <span className="text-sm font-bold text-gray-500 dark:text-gray-400 mt-2">FCFA</span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Contrat minimum de 3 mois</p>
+                </div>
+
+                <div className="p-6 bg-white dark:bg-gray-800">
+                  <button
+                    onClick={handleOpenSubmitPage}
+                    className="w-full bg-gradient-to-r from-[var(--brand-gold)] to-yellow-400 text-midnight font-bold py-4 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mb-3"
+                  >
+                    <FileText className="w-5 h-5" /> Choisir ce pack
+                  </button>
+                  <button
+                    onClick={handleWhatsApp}
+                    className="w-full bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle className="w-5 h-5" /> Échanger sur WhatsApp
+                  </button>
+
+                  <div className="mt-6 space-y-3">
+                    <div className="flex items-center gap-3 text-sm font-medium text-gray-600 dark:text-gray-300">
+                      <Check className="w-4 h-4 text-emerald-500" /> Réponse sous 24h
+                    </div>
+                    <div className="flex items-center gap-3 text-sm font-medium text-gray-600 dark:text-gray-300">
+                      <Check className="w-4 h-4 text-emerald-500" /> Audit initial offert
+                    </div>
+                    <div className="flex items-center gap-3 text-sm font-medium text-gray-600 dark:text-gray-300">
+                      <Check className="w-4 h-4 text-emerald-500" /> Accompagnement dédié
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Compare Link */}
-              <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)] p-5 text-center">
-                <p className="text-sm font-medium text-[var(--text-secondary)] mb-3">Besoin d'autres fonctionnalités ?</p>
-                <Link to="/offres" className="inline-flex items-center justify-center gap-1 text-sm font-bold text-[var(--brand-midnight)] hover:text-[var(--brand-gold)] transition-colors">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 text-center transition-colors duration-300">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Besoin d'autres fonctionnalités ?</p>
+                <Link to="/offres" className="inline-flex items-center justify-center gap-1 text-sm font-bold text-midnight dark:text-white hover:text-gold transition-colors">
                   Comparer les offres <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
@@ -258,10 +299,10 @@ const DetailOffre = () => {
       </div>
 
       {/* ── Other Offers Cross-sell ── */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 pt-16 border-t border-[var(--border)]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 pt-16 border-t border-gray-200 dark:border-gray-700">
         <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-[var(--brand-midnight)] mb-4">Ces offres pourraient aussi vous intéresser</h2>
-          <p className="text-[var(--text-secondary)]">Découvrez nos autres packs de présence digitale adaptés à d'autres stades de développement.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-midnight dark:text-white mb-4">Ces offres pourraient aussi vous intéresser</h2>
+          <p className="text-gray-600 dark:text-gray-300">Découvrez nos autres packs de présence digitale adaptés à d'autres stades de développement.</p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -269,15 +310,15 @@ const DetailOffre = () => {
             <Link
               key={other.id}
               to={`/offres/${other.slug}`}
-              className="group bg-white rounded-2xl border border-[var(--border)] p-6 hover:border-[var(--brand-gold)] hover:shadow-lg transition-all"
+              className="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 hover:border-gold dark:hover:border-gold hover:shadow-lg transition-all duration-300"
             >
-              <h3 className="text-xl font-bold text-[var(--brand-midnight)] group-hover:text-[var(--brand-gold)] transition-colors mb-1">{other.nom}</h3>
-              <p className="text-xs text-[var(--text-secondary)] italic mb-4">"{other.signification}"</p>
+              <h3 className="text-xl font-bold text-midnight dark:text-white group-hover:text-gold transition-colors mb-1">{other.nom}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 italic mb-4">"{other.signification}"</p>
               <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-2xl font-black text-[var(--brand-midnight)]">{other.prix.toLocaleString('fr-FR')}</span>
-                <span className="text-xs font-semibold text-[var(--text-secondary)]">FCFA/mois</span>
+                <span className="text-2xl font-black text-midnight dark:text-white">{other.prix.toLocaleString('fr-FR')}</span>
+                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">FCFA/mois</span>
               </div>
-              <p className="text-sm text-[var(--text-primary)] line-clamp-2">{other.description}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{other.description}</p>
             </Link>
           ))}
         </div>

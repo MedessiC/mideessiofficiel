@@ -28,6 +28,15 @@ interface ProfileData {
   is_library_public?: boolean;
 }
 
+interface QuoteRequestItem {
+  id: string;
+  email: string;
+  nom: string;
+  offre_nom: string;
+  status: string;
+  created_at: string;
+}
+
 interface ProfileStats {
   totalComments: number;
   totalLikes: number;
@@ -58,12 +67,13 @@ export default function ProfileOverview() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [formData, setFormData] = useState({ username: '', avatar_url: '', bio: '', website: '', location: '' });
   
-  const [activeTab, setActiveTab] = useState<'activity' | 'about' | 'settings'>('activity');
+  const [activeTab, setActiveTab] = useState<'activity' | 'briefs' | 'about' | 'settings'>('activity');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showReauthModal, setShowReauthModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [isLibraryPublic, setIsLibraryPublic] = useState(true);
   const [readBooks, setReadBooks] = useState<{ id: string; title: string; cover_url: string | null; progress_percent: number; is_completed?: boolean }[]>([]);
+  const [briefs, setBriefs] = useState<QuoteRequestItem[]>([]);
 
   useEffect(() => {
     fetchProfile();
@@ -188,6 +198,19 @@ export default function ProfileOverview() {
                   is_completed: Boolean(p.is_completed),
                 }))
             );
+          }
+        }
+
+        // Fetch project briefs if loading own profile
+        if (data?.id === currentUser?.id && currentUser?.email) {
+          const { data: briefData, error: briefErr } = await supabase
+            .from('quote_requests')
+            .select('*')
+            .eq('email', currentUser.email)
+            .order('created_at', { ascending: false });
+
+          if (!briefErr && briefData) {
+            setBriefs(briefData);
           }
         }
       }
@@ -423,6 +446,18 @@ export default function ProfileOverview() {
               >
                 À propos
               </button>
+              {isOwnProfile && (
+                <button
+                  onClick={() => setActiveTab('briefs')}
+                  className={`pb-1 px-3 border-b-2 transition-all ${
+                    activeTab === 'briefs' 
+                      ? 'border-[var(--brand-gold)] text-midnight dark:text-white font-black' 
+                      : 'border-transparent hover:text-midnight dark:hover:text-white'
+                  }`}
+                >
+                  Mes briefs ({briefs.length})
+                </button>
+              )}
               {isOwnProfile && (
                 <button
                   onClick={() => setActiveTab('settings')}

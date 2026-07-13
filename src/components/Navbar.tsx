@@ -9,7 +9,9 @@ import { Avatar } from './ui/Avatar';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() =>
+    document.documentElement.classList.contains('dark')
+  );
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const { user, signOut, currentUserProfile } = useAuth();
@@ -196,7 +198,7 @@ const Navbar = () => {
                       className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-3 text-sm font-medium border-b border-gold/10"
                       onClick={() => setShowMoreMenu(false)}
                     >
-                      <Rocket size={18} className="text-gold" />
+                      <Rocket size={18} className="text-[#191970] dark:text-gold" />
                       <span>Nos Projets</span>
                     </a>
                     <a
@@ -204,7 +206,7 @@ const Navbar = () => {
                       className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-3 text-sm font-medium border-b border-gold/10"
                       onClick={() => setShowMoreMenu(false)}
                     >
-                      <Users size={18} className="text-gold" />
+                      <Users size={18} className="text-[#191970] dark:text-gold" />
                       <span>Équipe</span>
                     </a>
                     <a
@@ -212,7 +214,7 @@ const Navbar = () => {
                       className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-3 text-sm font-medium border-b border-gold/10"
                       onClick={() => setShowMoreMenu(false)}
                     >
-                      <Book size={18} className="text-gold" />
+                      <Book size={18} className="text-[#191970] dark:text-gold" />
                       <span>Bibliothèque</span>
                     </a>
                     <a
@@ -220,7 +222,7 @@ const Navbar = () => {
                       className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-3 text-sm font-medium"
                       onClick={() => setShowMoreMenu(false)}
                     >
-                      <Briefcase size={18} className="text-gold" />
+                      <Briefcase size={18} className="text-[#191970] dark:text-gold" />
                       <span>Carrières</span>
                     </a>
                   </div>
@@ -242,7 +244,7 @@ const Navbar = () => {
                 aria-label="Solutions Marketplace"
                 title="Marketplace Solutions"
               >
-                <Package className="w-5 h-5 text-gold" />
+                <Package className="w-5 h-5 text-[#FFD700]" />
               </Link>
 
               {/* Theme Toggle */}
@@ -260,7 +262,7 @@ const Navbar = () => {
                     }`}
                   />
                   <Moon
-                    className={`w-5 h-5 text-gold absolute inset-0 transition-all duration-500 ${
+                    className={`w-5 h-5 text-[#FFD700] absolute inset-0 transition-all duration-500 ${
                       isDark
                         ? '-rotate-90 opacity-0 scale-0'
                         : 'rotate-0 opacity-100 scale-100'
@@ -284,7 +286,7 @@ const Navbar = () => {
                       size="xs"
                     />
                   ) : (
-                    <UserCircle className="w-5 h-5 text-gold" />
+                    <UserCircle className="w-5 h-5 text-[#FFD700]" />
                   )}
                 </button>
 
@@ -315,7 +317,7 @@ const Navbar = () => {
                           className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-2 text-sm font-medium"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <UserCircle size={18} className="text-gold" />
+                          <UserCircle size={18} className="text-[#191970] dark:text-gold" />
                           Mon Profil
                         </Link>
                         <Link
@@ -323,7 +325,7 @@ const Navbar = () => {
                           className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-2 text-sm font-medium border-b border-gold/10"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <BookOpen size={18} className="text-gold" />
+                          <BookOpen size={18} className="text-[#191970] dark:text-gold" />
                           Ma Bibliothèque
                         </Link>
                         <button
@@ -347,7 +349,7 @@ const Navbar = () => {
                           className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-2 text-sm font-medium border-b border-gold/10"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <UserCircle size={18} className="text-gold" />
+                          <UserCircle size={18} className="text-[#191970] dark:text-gold" />
                           Se connecter
                         </Link>
                         <Link
@@ -355,7 +357,7 @@ const Navbar = () => {
                           className="block px-4 py-3 text-midnight dark:text-white hover:bg-gold/10 transition-colors flex items-center gap-2 text-sm font-medium"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <UserCircle size={18} className="text-gold" />
+                          <UserCircle size={18} className="text-[#191970] dark:text-gold" />
                           S'inscrire
                         </Link>
                       </>

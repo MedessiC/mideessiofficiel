@@ -1,6 +1,27 @@
 <!DOCTYPE html>
 <html lang="fr" prefix="og: https://ogp.me/ns#">
   <head>
+    <!-- ⚡ Anti-flash dark mode — doit être le PREMIER script du <head> -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('theme');
+          var auto  = localStorage.getItem('autoMode') !== 'false';
+          var isDark;
+          if (saved && !auto) {
+            isDark = saved === 'dark';
+          } else {
+            var h = new Date().getHours();
+            isDark = h >= 18 || h < 6;
+          }
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch(e) {}
+      })();
+    </script>
     <!-- Encodage et viewport -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />

@@ -44,10 +44,13 @@ const UnifiedLogin = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user && userRole && userType !== 'client') {
+      const directRedirect = getRedirectTargetFromLocation(location);
       const storedRedirect = peekStoredRedirectTarget();
-      if (storedRedirect && storedRedirect !== '/login' && storedRedirect !== '/signup') {
-        navigate(storedRedirect, { replace: true });
+      const finalRedirect = directRedirect || storedRedirect;
+
+      if (finalRedirect && finalRedirect !== '/login' && finalRedirect !== '/signup') {
         clearStoredRedirectTarget();
+        navigate(finalRedirect, { replace: true });
         return;
       }
 
@@ -122,7 +125,15 @@ const UnifiedLogin = () => {
     }
   };
 
-  if (isLoading) {
+  // Safety timeout: if auth contexts stay loading >2s, show form anyway
+  const [safeReady, setSafeReady] = useState(!isLoading);
+  useEffect(() => {
+    if (!isLoading) { setSafeReady(true); return; }
+    const t = setTimeout(() => setSafeReady(true), 2000);
+    return () => clearTimeout(t);
+  }, [isLoading]);
+
+  if (!safeReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-page)]">
         <div className="flex flex-col items-center gap-4">

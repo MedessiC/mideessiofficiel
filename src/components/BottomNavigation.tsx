@@ -62,7 +62,7 @@ const BottomNavigation = () => {
                 >
                   {/* Active background pill */}
                   {active && (
-                    <span className="absolute inset-x-1 inset-y-0.5 rounded-[18px] bg-gradient-to-b from-gold/18 to-gold/8 dark:from-gold/22 dark:to-gold/10" />
+                    <span className="absolute inset-x-1 inset-y-0.5 rounded-[18px] bg-gradient-to-b from-[#FFD700]/20 to-[#FFD700]/8" />
                   )}
 
                   {/* Icon wrapper */}
@@ -72,7 +72,7 @@ const BottomNavigation = () => {
                       w-8 h-8 rounded-2xl
                       transition-all duration-300
                       ${active
-                        ? 'bg-gradient-to-br from-gold/30 to-yellow-300/20 dark:from-gold/25 dark:to-yellow-400/10 shadow-[0_0_12px_rgba(255,215,0,0.35)] scale-110'
+                        ? 'bg-gradient-to-br from-[#FFD700]/25 to-[#FFD700]/10 shadow-[0_0_12px_rgba(255,215,0,0.4)] scale-110'
                         : 'bg-transparent scale-100'
                       }
                     `}
@@ -80,20 +80,17 @@ const BottomNavigation = () => {
                     <Icon
                       className={`w-[18px] h-[18px] transition-all duration-300 ${
                         active
-                          ? 'text-gold drop-shadow-[0_0_6px_rgba(255,215,0,0.55)]'
+                          ? 'text-[#FFD700] drop-shadow-[0_0_6px_rgba(255,215,0,0.7)]'
                           : 'text-gray-400 dark:text-gray-500'
                       }`}
                     />
-                    {/* Active dot */}
-                    {active && (
-                      <span className="absolute -bottom-[3px] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold shadow-[0_0_4px_rgba(255,215,0,0.8)]" />
-                    )}
+
                   </span>
 
                   {/* Label */}
                   <span
                     className={`relative z-10 text-[10px] font-semibold tracking-wide transition-all duration-300 leading-none ${
-                      active ? 'text-gold' : 'text-gray-400 dark:text-gray-500'
+                      active ? 'text-[#FFD700]' : 'text-gray-400 dark:text-gray-500'
                     }`}
                   >
                     {label}
@@ -114,14 +111,14 @@ const BottomNavigation = () => {
               <span className="
                 relative z-10 flex items-center justify-center
                 w-8 h-8 rounded-2xl
-                bg-midnight/8 dark:bg-white/5
-                group-hover:bg-midnight/12 dark:group-hover:bg-white/10
-                transition-all duration-300
+                bg-[#191970]/6 dark:bg-white/5
+                group-hover:bg-[#191970]/12 dark:group-hover:bg-white/10
                 group-active:scale-90
+                transition-all duration-300
               ">
-                <Grid3X3 className="w-[18px] h-[18px] text-gray-400 dark:text-gray-500 group-hover:text-midnight dark:group-hover:text-gold transition-colors duration-200" />
+                <Grid3X3 className="w-[18px] h-[18px] text-gray-400 dark:text-gray-500 group-hover:text-[#191970] dark:group-hover:text-gold group-active:text-[#191970] dark:group-active:text-gold transition-colors duration-200" />
               </span>
-              <span className="relative z-10 text-[10px] font-semibold tracking-wide leading-none text-gray-400 dark:text-gray-500 group-hover:text-midnight dark:group-hover:text-gold transition-colors duration-200">
+              <span className="relative z-10 text-[10px] font-semibold tracking-wide leading-none text-gray-400 dark:text-gray-500 group-hover:text-[#191970] dark:group-hover:text-gold group-active:text-[#191970] dark:group-active:text-gold transition-colors duration-200">
                 Plus
               </span>
             </button>

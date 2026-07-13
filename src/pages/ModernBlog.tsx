@@ -357,7 +357,14 @@ const ModernBlog = () => {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-4 border-gold border-t-transparent rounded-full animate-spin" />
+            <div className="relative w-16 h-16 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full border-2 border-gray-100 dark:border-gray-800"></div>
+              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-yellow-500 border-r-yellow-500 animate-spin"></div>
+              <div className="absolute inset-2.5 rounded-full bg-[#0a0f1e] dark:bg-white flex items-center justify-center overflow-hidden p-1.5 animate-pulse">
+                <img src="/mideessi.webp" alt="Loading" className="w-full h-full object-contain dark:hidden" />
+                <img src="/mideessi-light.webp" alt="Loading" className="w-full h-full object-contain hidden dark:block" />
+              </div>
+            </div>
           </div>
         ) : displayedPosts.length > 0 ? (
           <>
@@ -383,7 +390,14 @@ const ModernBlog = () => {
             {hasMore && (
               <div ref={observerTarget} className="flex justify-center mt-12 py-8">
                 {loadingMore ? (
-                  <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                  <div className="relative w-10 h-10 flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-full border-2 border-gray-100 dark:border-gray-800"></div>
+                    <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-yellow-500 border-r-yellow-500 animate-spin"></div>
+                    <div className="absolute inset-1.5 rounded-full bg-[#0a0f1e] dark:bg-white flex items-center justify-center overflow-hidden p-0.5 animate-pulse">
+                      <img src="/mideessi-light.webp" alt="Loading" className="w-full h-full object-contain dark:hidden" />
+                      <img src="/mideessi.webp" alt="Loading" className="w-full h-full object-contain hidden dark:block" />
+                    </div>
+                  </div>
                 ) : (
                   <p className="text-sm font-medium text-gray-500">Chargement...</p>
                 )}
