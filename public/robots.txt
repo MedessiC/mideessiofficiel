@@ -9,7 +9,7 @@ User-agent: *
 # Autoriser toutes les pages publiques
 Allow: /
 Allow: /about
-Allow: /learn
+Allow: /apprendre
 Allow: /projects
 Allow: /blog
 Allow: /blog/*

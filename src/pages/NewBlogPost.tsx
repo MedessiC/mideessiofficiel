@@ -396,7 +396,7 @@ const NewBlogPost = () => {
   };
 
   const handleShare = () => {
-    const shareUrl = `https://share.mideessi.com/blog/${post?.slug}`;
+    const shareUrl = `https://share.mideessi.com/article/${post?.slug}`;
     if (navigator.share) {
       navigator.share({
         title: post?.title || 'MIDEESSI',
@@ -412,14 +412,14 @@ const NewBlogPost = () => {
   };
 
   const copyToClipboard = () => {
-    const shareUrl = `https://share.mideessi.com/blog/${post?.slug}`;
+    const shareUrl = `https://share.mideessi.com/article/${post?.slug}`;
     navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const shareOnSocial = (platform: string) => {
-    const shareUrl = encodeURIComponent(`https://share.mideessi.com/blog/${post?.slug}`);
+    const shareUrl = encodeURIComponent(`https://share.mideessi.com/article/${post?.slug}`);
     const title = encodeURIComponent(post?.title || '');
     
     const urls: Record<string, string> = {
@@ -519,7 +519,7 @@ const NewBlogPost = () => {
       <div className="min-h-screen pt-16 flex items-center justify-center bg-white dark:bg-gray-900">
         <div className="text-center px-4">
           <h1 className="text-3xl font-bold text-midnight dark:text-white mb-4">Article introuvable</h1>
-          <Link to="/blog" className="inline-flex items-center px-6 py-3 bg-gold text-midnight font-bold rounded-full">Retour au blog</Link>
+          <Link to="/article" className="inline-flex items-center px-6 py-3 bg-gold text-midnight font-bold rounded-full">Retour aux articles</Link>
         </div>
       </div>
     );
@@ -596,7 +596,7 @@ const NewBlogPost = () => {
         {/* Article Content */}
         <article className="flex-1 max-w-3xl w-full mx-auto lg:mx-0">
           
-          <Link to="/blog" className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-gold mb-8 transition-colors">
+          <Link to="/article" className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-gold mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" /> Retour au journal
           </Link>
 
@@ -669,7 +669,7 @@ const NewBlogPost = () => {
             </h3>
             <div className="space-y-6">
               {relatedPosts.map(related => (
-                <Link key={related.id} to={`/blog/${related.slug}`} className="group block">
+                <Link key={related.id} to={`/article/${related.slug}`} className="group block">
                   <div className="aspect-video rounded-xl overflow-hidden mb-3 bg-gray-100">
                     <img src={toCloudinaryUrl(related.image_url, { width: 600, height: 340, quality: 80, crop: 'fill' })} alt={related.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   </div>

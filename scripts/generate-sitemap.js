@@ -13,10 +13,11 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
-);
+const disableSupabase = ['DISABLE_SUPABASE', 'SUPABASE_DISABLED', 'VITE_DISABLE_SUPABASE'].some((key) => String(process.env[key] || '').toLowerCase() === 'true');
+const hasSupabaseConfig = Boolean(process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY);
+const supabase = !disableSupabase && hasSupabaseConfig
+  ? createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY)
+  : null;
 
 const BASE_URL = 'https://mideessi.com';
 
@@ -29,13 +30,13 @@ const SITE_PAGES = [
     name: 'Page d\'accueil',
   },
   {
-    url: '/about',
-    priority: 0.8,
-    changefreq: 'monthly',
-    name: 'À propos',
+    url: '/article',
+    priority: 0.7,
+    changefreq: 'weekly',
+    name: 'Articles',
   },
   {
-    url: '/learn',
+    url: '/apprendre',
     priority: 0.7,
     changefreq: 'weekly',
     name: 'Apprendre',
@@ -45,12 +46,6 @@ const SITE_PAGES = [
     priority: 0.9,
     changefreq: 'weekly',
     name: 'Projets',
-  },
-  {
-    url: '/blog',
-    priority: 0.95,
-    changefreq: 'daily',
-    name: 'Blog',
   },
   {
     url: '/contact',
@@ -91,6 +86,11 @@ async function generateSitemap() {
   console.log('🗺️  Génération du sitemap MIDEESSI.com\n');
 
   try {
+    if (!supabase) {
+      console.warn('⚠️ Supabase non configuré: génération du sitemap ignorée.');
+      return;
+    }
+
     // Récupérer les articles
     const { data: posts, error } = await supabase
       .from('blog_posts')
@@ -128,7 +128,7 @@ async function generateSitemap() {
         const changefreq = getChangeFreq(post.published_at);
         
         sitemap += `  <url>
-    <loc>${BASE_URL}/blog/${post.slug}</loc>
+    <loc>${BASE_URL}/article/${post.slug}</loc>
     <lastmod>${lastMod}</lastmod>
     <changefreq>${changefreq}</changefreq>
     <priority>${priority.toFixed(2)}</priority>
@@ -174,7 +174,7 @@ Disallow: /admin/
     // Générer sitemap.txt
     const sitemapTxt = [
       ...SITE_PAGES.map(p => `${BASE_URL}${p.url}`),
-      ...(posts?.map(p => `${BASE_URL}/blog/${p.slug}`) || []),
+      ...(posts?.map(p => `${BASE_URL}/article/${p.slug}`) || []),
     ].join('\n');
     
     const txtPath = path.join(publicDir, 'sitemap.txt');
@@ -203,8 +203,31 @@ Disallow: /admin/
     console.log('   Google Test: https://search.google.com/search-console\n');
     
   } catch (error) {
-    console.error('❌ ERREUR:', error);
-    process.exit(1);
+    console.warn('⚠️ Impossible de récupérer les articles depuis Supabase. Le sitemap sera généré sans données dynamiques.', error.message || error);
+    const publicDir = path.join(__dirname, '../public');
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+
+    const now = new Date().toISOString();
+    let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+`;
+
+    SITE_PAGES.forEach(page => {
+      sitemap += `  <url>
+    <loc>${BASE_URL}${page.url}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority.toFixed(2)}</priority>
+  </url>
+`;
+    });
+
+    sitemap += `</urlset>`;
+    fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), sitemap, 'utf-8');
+    fs.writeFileSync(path.join(publicDir, 'sitemap.txt'), SITE_PAGES.map(page => `${BASE_URL}${page.url}`).join('\n'), 'utf-8');
+    console.log('✅ sitemap de secours généré sans Supabase\n');
   }
 }
 

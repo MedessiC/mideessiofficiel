@@ -98,7 +98,7 @@ const ArticlePreview: React.FC<ArticlePreviewProps> = ({ post, children }) => {
               <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{post.author}</span>
             </div>
             <a
-              href={`/blog/${post.slug}`}
+              href={`/article/${post.slug}`}
               className="inline-flex items-center gap-1 text-gold hover:text-gold/80 transition-colors text-xs font-semibold"
             >
               Lire <ExternalLink className="w-3 h-3" />

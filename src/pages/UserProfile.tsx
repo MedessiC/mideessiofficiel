@@ -51,7 +51,7 @@ export default function UserProfile() {
       }
 
       const { data, error } = await supabase
-        .from('users')
+        .from('profiles')
         .select('*')
         .eq('username', lookupUsername)
         .maybeSingle();

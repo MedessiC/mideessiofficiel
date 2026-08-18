@@ -1,162 +1,215 @@
-import { Facebook, Linkedin, Github, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Linkedin, Github, Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-midnight dark:bg-black text-white py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div>
+    <footer style={{ backgroundColor: '#111111', color: '#FAFAFA' }}>
+
+      {/* ── Pre-footer CTA ── */}
+      <div
+        className="border-b"
+        style={{ borderColor: 'rgba(255,255,255,0.08)', padding: '80px 0' }}
+      >
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-12 text-center">
+          <p className="text-sm font-medium uppercase tracking-[0.12em] mb-4" style={{ color: 'rgba(250,250,250,0.5)' }}>
+            Prêt à démarrer ?
+          </p>
+          <h2
+            className="font-bold mb-6"
+            style={{ fontSize: 'clamp(32px, 5vw, 52px)', lineHeight: 1.1, letterSpacing: '-0.02em' }}
+          >
+            Un projet en tête ?<br />
+            <span style={{ color: 'rgba(250,250,250,0.75)' }}>Parlons-en.</span>
+          </h2>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/contact"
+              className="inline-flex items-center gap-2 bg-[#FAFAFA] text-[#191970] px-7 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-white hover:-translate-y-px"
+              style={{ boxShadow: '0 2px 12px rgba(250,250,250,0.15)' }}
+            >
+              Nous contacter
+              <ArrowRight size={16} />
+            </Link>
+            <a
+              href="mailto:contact@mideessi.com"
+              className="text-sm"
+              style={{ color: 'rgba(250,250,250,0.55)', transition: 'color 200ms' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'rgba(250,250,250,0.9)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(250,250,250,0.55)')}
+            >
+              ou écrivez directement : contact@mideessi.com
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main footer ── */}
+      <div className="max-w-[1200px] mx-auto px-6 lg:px-12 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+
+          {/* Col 1 — Brand */}
+          <div className="lg:col-span-1">
             <img
               src="/mideessi.webp"
-              alt="Logo Mideessi"
-              className="h-12 w-auto sm:h-14 md:h-16 object-contain mx-auto md:mx-0 mb-4"
+              alt="MIDEESSI"
+              className="h-9 w-auto object-contain mb-5"
               loading="lazy"
               decoding="async"
             />
-            <p className="text-gray-300 text-sm">
-              Nous sommes indépendants. Innovation locale pour l'Afrique.
+            <p className="text-sm leading-relaxed mb-6" style={{ color: 'rgba(250,250,250,0.5)' }}>
+              Initiative technologique béninoise pour la souveraineté numérique africaine.
             </p>
-          </div>
-
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Liens rapides</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a href="/" className="text-gray-300 hover:text-gold transition-colors">
-                  Accueil
-                </a>
-              </li>
-              <li>
-                <a href="/about" className="text-gray-300 hover:text-gold transition-colors">
-                  À propos
-                </a>
-              </li>
-              <li>
-                <a href="/solutions" className="text-gray-300 hover:text-gold transition-colors">
-                  Solutions
-                </a>
-              </li>
-              <li>
-                <a href="/offres" className="text-gray-300 hover:text-gold transition-colors">
-                  Nos Offres
-                </a>
-              </li>
-              <li>
-                <a href="/blog" className="text-gray-300 hover:text-gold transition-colors">
-                  Blog
-                </a>
-              </li>
-              <li>
-                <a href="/learn" className="text-gray-300 hover:text-gold transition-colors">
-                  Apprendre
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Légal</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a href="/legal" className="text-gray-300 hover:text-gold transition-colors">
-                  Mentions légales
-                </a>
-              </li>
-              <li>
-                <a href="/legal#confidentialite" className="text-gray-300 hover:text-gold transition-colors">
-                  Politique de confidentialité
-                </a>
-              </li>
-              <li>
-                <a href="/legal#conditions" className="text-gray-300 hover:text-gold transition-colors">
-                  Conditions d'utilisation
-                </a>
-              </li>
-              <li>
-                <a href="/contact" className="text-gray-300 hover:text-gold transition-colors">
-                  Contact
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Nous suivre</h4>
-            <div className="flex space-x-4 mb-4">
+            {/* Social */}
+            <div className="flex items-center gap-3">
               <a
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white/10 p-2 rounded-lg hover:bg-gold hover:text-midnight transition-colors"
                 aria-label="Facebook"
+                className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
+                style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
               >
-                <Facebook className="w-5 h-5" />
+                <Facebook size={16} />
               </a>
               <a
                 href="https://linkedin.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white/10 p-2 rounded-lg hover:bg-gold hover:text-midnight transition-colors"
                 aria-label="LinkedIn"
+                className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
+                style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
               >
-                <Linkedin className="w-5 h-5" />
+                <Linkedin size={16} />
               </a>
               <a
                 href="https://github.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white/10 p-2 rounded-lg hover:bg-gold hover:text-midnight transition-colors"
                 aria-label="GitHub"
+                className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
+                style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
               >
-                <Github className="w-5 h-5" />
+                <Github size={16} />
               </a>
               <a
                 href="mailto:contact@mideessi.com"
-                className="bg-white/10 p-2 rounded-lg hover:bg-gold hover:text-midnight transition-colors"
                 aria-label="Email"
+                className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
+                style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
               >
-                <Mail className="w-5 h-5" />
+                <Mail size={16} />
               </a>
             </div>
-            <p className="text-sm text-gray-300">contact@mideessi.com</p>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 pb-8 border-b border-white/10">
-          <div className="text-sm text-gray-400">
-            <p className="font-semibold text-white mb-4">MIDEESSI TECH SARL</p>
-            <div className="space-y-2">
+          {/* Col 2 — Navigation */}
+          <div>
+            <h4 className="text-sm font-semibold mb-5" style={{ color: '#FAFAFA', letterSpacing: '0.05em' }}>
+              Navigation
+            </h4>
+            <ul className="space-y-3">
+              {[
+                { label: 'Notre mission', href: '/about' },
+                { label: 'Solutions', href: '/solutions' },
+                { label: 'MIDEESSI Learn', href: '/apprendre' },
+                { label: 'Nos projets', href: '/projects' },
+                { label: 'Articles', href: '/article' },
+                { label: 'Ateliers', href: '/ateliers' },
+              ].map(item => (
+                <li key={item.href}>
+                  <Link
+                    to={item.href}
+                    className="text-sm transition-colors"
+                    style={{ color: 'rgba(250,250,250,0.55)' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'rgba(250,250,250,0.9)')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(250,250,250,0.55)')}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Col 3 — Légal */}
+          <div>
+            <h4 className="text-sm font-semibold mb-5" style={{ color: '#FAFAFA', letterSpacing: '0.05em' }}>
+              Légal
+            </h4>
+            <ul className="space-y-3">
+              {[
+                { label: 'Mentions légales', href: '/legal' },
+                { label: 'Confidentialité', href: '/legal#confidentialite' },
+                { label: "Conditions d'utilisation", href: '/legal#conditions' },
+                { label: 'Contact', href: '/contact' },
+              ].map(item => (
+                <li key={item.href}>
+                  <Link
+                    to={item.href}
+                    className="text-sm transition-colors"
+                    style={{ color: 'rgba(250,250,250,0.55)' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'rgba(250,250,250,0.9)')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(250,250,250,0.55)')}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Col 4 — Contact */}
+          <div>
+            <h4 className="text-sm font-semibold mb-5" style={{ color: '#FAFAFA', letterSpacing: '0.05em' }}>
+              MIDEESSI TECH SARL
+            </h4>
+            <div className="space-y-3 text-sm" style={{ color: 'rgba(250,250,250,0.55)' }}>
               <div className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 text-[#ffd700] mt-1 flex-shrink-0" />
-                <div>
-                  <p>Zogbo Maison 1953</p>
-                  <p>Cotonou, Bénin</p>
-                </div>
+                <MapPin size={14} className="mt-0.5 flex-shrink-0" style={{ color: '#FFD700' }} />
+                <span>Zogbo Maison 1953<br />Cotonou, Bénin</span>
               </div>
               <div className="flex items-center gap-3">
-                <Phone className="w-4 h-4 text-[#ffd700] flex-shrink-0" />
-                <p>+229 01 64 40 96 91</p>
+                <Phone size={14} className="flex-shrink-0" style={{ color: '#FFD700' }} />
+                <span>+229 01 64 40 96 91</span>
               </div>
               <div className="flex items-center gap-3">
-                <Mail className="w-4 h-4 text-[#ffd700] flex-shrink-0" />
-                <p>contact@mideessi.com</p>
+                <Mail size={14} className="flex-shrink-0" style={{ color: '#FFD700' }} />
+                <a
+                  href="mailto:contact@mideessi.com"
+                  className="transition-colors"
+                  onMouseEnter={e => (e.currentTarget.style.color = 'rgba(250,250,250,0.9)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(250,250,250,0.55)')}
+                >
+                  contact@mideessi.com
+                </a>
               </div>
+              <p className="text-xs pt-1" style={{ color: 'rgba(250,250,250,0.35)' }}>
+                RCCM: RB/COT/26 B 43411
+              </p>
             </div>
-            <p className="mt-4 text-xs text-gray-500">RCCM: RB/COT/26 B 43411</p>
-          </div>
-          <div className="text-sm text-gray-400">
-            <p className="font-semibold text-white mb-2">Responsable de publication</p>
-            <p className="text-base font-medium text-[#ffd700]">Coovi Vivotin Medessi</p>
-            <p className="text-xs">PDG - MIDEESSI TECH SARL</p>
-            <p className="mt-4 text-xs text-gray-500">Conformité RGPD • Souveraineté technologique • 100% Bénin</p>
           </div>
         </div>
 
-        <div className="text-center">
-          <p className="text-sm text-gray-400">
-            &copy; {currentYear} MIDEESSI TECH SARL. Tous droits réservés. Nous sommes indépendants.
+        {/* ── Bottom bar ── */}
+        <div
+          className="mt-16 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <p className="text-xs" style={{ color: 'rgba(250,250,250,0.35)' }}>
+            © {currentYear} MIDEESSI TECH SARL. Tous droits réservés.
+          </p>
+          <p className="text-sm font-medium italic" style={{ color: '#FFD700' }}>
+            Consommons béninois.
           </p>
         </div>
       </div>

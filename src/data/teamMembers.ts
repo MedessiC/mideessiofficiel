@@ -31,51 +31,14 @@ export interface Project {
 
 export const teamMembers: TeamMember[] = [
   {
-    id: 'oscar-djihokin',
-    name: 'Oscar DJIHOKIN',
-    role: 'Cybersécurité & Machine Learning',
-    shortDescription: 'Spécialiste en cybersécurité et machine learning, passionné par la science physique et mathématique.',
-    fullBio: `Oscar DJIHOKIN est un expert en cybersécurité et machine learning qui apporte une perspective fondamentale à MIDEESSI. 
-    Étudiant en 3ème année en cybersécurité, il combine sa formation académique avec une passion profonde pour les sciences 
-    physiques et mathématiques. Depuis novembre 2025, Oscar travaille avec dévouement pour renforcer la sécurité des solutions 
-    MIDEESSI et intégrer l'intelligence artificielle dans nos projets. Son approche rigoureuse et sa curiosité scientifique font 
-    de lui un atout précieux pour le mouvement.`,
-    joinDate: 'novembre 2025',
-    education: 'Étudiant en 3ème année - Cybersécurité',
-    skills: ['Cybersécurité', 'Machine Learning', 'Python', 'Analyse de données', 'Cryptographie'],
-    specialties: ['Sécurité des systèmes', 'Intelligence artificielle', 'Analyse algorithmique'],
-    passions: ['Science physique', 'Mathématique', 'Technologie émergeante', 'Innovation'],
-    image: 'https://i.imgur.com/MjMbn8R.jpeg',
-    location: 'Bénin',
-    email: 'oscar@mideessi.com',
-    socialLinks: {
-      linkedin: 'https://linkedin.com',
-      github: 'https://github.com',
-      portfolio: '#'
-    },
-    projects: [
-      {
-        title: 'Système de sécurité IoT',
-        description: 'Développement d\'un système de sécurité basé sur l\'IA pour les dispositifs connectés béninois.',
-        technologies: ['Python', 'TensorFlow', 'Socket.io']
-      },
-      {
-        title: 'Analyse prédictive des menaces',
-        description: 'Algorithme de machine learning pour prédire et prévenir les menaces de cybersécurité.',
-        technologies: ['Machine Learning', 'Data Analysis', 'Python']
-      }
-    ]
-  },
-  {
     id: 'richy-anguilet-zinvo',
     name: 'Richy ANGUILET ZINVO',
-    role: 'Développeur Web Junior',
-    shortDescription: 'Développeur web junior passionné d\'informatique et des technologies modernes.',
-    fullBio: `Richy ANGUILET ZINVO est un développeur web junior dynamique qui apporte enthousiasme et fraîcheur à MIDEESSI. 
-    Étudiant en 2ème année, il se démarque par sa passion genuine pour l'informatique et son engagement envers l'excellence. 
-    Depuis septembre 2025, Richy contribue activement au développement des solutions web de MIDEESSI, en apprenant 
-    continuellement et en se perfectionnant. Son énergie, sa curiosité et sa détermination font de lui un exemple pour 
-    les jeunes talents béninois en informatique.`,
+    role: 'Cofondateur',
+    shortDescription: 'Cofondateur de MIDEESSI, passionné d\'informatique et des technologies modernes.',
+    fullBio: `Richy ANGUILET ZINVO est cofondateur de MIDEESSI et l'un des piliers de la vision qui anime la plateforme. 
+    Passionné d'informatique et de technologies modernes, il s'implique activement dans la définition de la direction 
+    stratégique et technique de MIDEESSI depuis les premières heures du projet. Son énergie, sa vision et sa 
+    détermination sont au cœur du développement de solutions numériques innovantes pour le Bénin et l'Afrique.`,
     joinDate: 'septembre 2025',
     education: 'Étudiant en 2ème année - Informatique',
     skills: ['React', 'TypeScript', 'JavaScript', 'Tailwind CSS', 'HTML/CSS', 'Node.js'],

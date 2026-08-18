@@ -79,7 +79,7 @@ export const BlogSearchBar: React.FC<BlogSearchBarProps> = ({
   };
 
   const handleSuggestionClick = (slug: string) => {
-    window.location.href = `/blog/${slug}`;
+    window.location.href = `/article/${slug}`;
   };
 
   const clearSearch = () => {

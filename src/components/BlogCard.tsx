@@ -17,7 +17,7 @@ const BlogCard = ({ id, title, excerpt, date, author = 'MIDEESSI Team' }: BlogCa
   });
 
   return (
-    <a href={`/blog/${id}`} className="group block h-full">
+    <a href={`/article/${id}`} className="group block h-full">
       <div className="h-full bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl md:rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:scale-[1.02] border border-gray-200 dark:border-gray-700 hover:border-gold/50 flex flex-col">
         {/* Header with Accent Bar */}
         <div className="h-1 bg-gradient-to-r from-gold via-yellow-400 to-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

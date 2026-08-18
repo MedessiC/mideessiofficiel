@@ -140,12 +140,23 @@ export default function AdminPdfs() {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) { navigate('/admin/login'); return; }
-      const { data: adminData } = await supabase.from('admins').select('*').eq('id', user.id).maybeSingle();
-      if (!adminData) { await supabase.auth.signOut(); navigate('/admin/login'); return; }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, is_active, is_banned')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!profile || profile.role !== 'admin' || !profile.is_active || profile.is_banned) {
+        await supabase.auth.signOut();
+        navigate('/admin/login');
+        return;
+      }
       await fetchBooks();
     } catch { navigate('/admin/login'); }
     finally { setIsAuthenticating(false); }
   };
+
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const addToast = (type: 'success' | 'error', message: string) => {

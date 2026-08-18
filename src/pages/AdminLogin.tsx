@@ -30,13 +30,13 @@ const AdminLogin = () => {
       if (authError) throw authError;
 
       if (authData.user) {
-        const { data: adminData } = await supabase
-          .from('admins')
-          .select('id')
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, is_active, is_banned')
           .eq('id', authData.user.id)
           .maybeSingle();
 
-        if (!adminData) {
+        if (!profile || profile.role !== 'admin' || !profile.is_active || profile.is_banned) {
           await supabase.auth.signOut();
           throw new Error('Accès non autorisé. Vous devez être administrateur.');
         }

@@ -46,8 +46,8 @@ export default function SearchProfiles() {
     setSearched(true);
     try {
       const { data } = await supabase
-        .from('users')
-        .select('id, username, avatar_url, bio, location, is_library_public')
+        .from('profiles')
+        .select('id, username, avatar_url, full_name, location')
         .ilike('username', `%${q}%`)
         .limit(20);
 

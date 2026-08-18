@@ -6,7 +6,7 @@ const NotFound = () => {
     { to: '/', label: 'Accueil', icon: <Home className="w-4 h-4" /> },
     { to: '/about', label: 'À propos', icon: <Search className="w-4 h-4" /> },
     { to: '/projects', label: 'Nos Solutions', icon: <FileQuestion className="w-4 h-4" /> },
-    { to: '/blog', label: 'Blog', icon: <Search className="w-4 h-4" /> },
+    { to: '/article', label: 'Articles', icon: <Search className="w-4 h-4" /> },
   ];
 
   return (

@@ -40,8 +40,8 @@ const SideDrawer = ({ isOpen, onClose }: SideDrawerProps) => {
       title: 'Ressources',
       icon: <Library className="w-3.5 h-3.5" />,
       items: [
-        { id: 'blog',    label: 'Blog',      href: '/blog',    icon: <BookOpen className="w-5 h-5" /> },
-        { id: 'learn',   label: 'Apprendre', href: '/learn',   icon: <Lightbulb className="w-5 h-5" /> },
+        { id: 'blog',    label: 'Articles',      href: '/article',    icon: <BookOpen className="w-5 h-5" /> },
+            { id: 'learn',   label: 'Apprendre', href: '/apprendre',   icon: <Lightbulb className="w-5 h-5" /> },
         { id: 'library', label: 'Biblio.',   href: '/library', icon: <Book className="w-5 h-5" /> },
       ]
     }

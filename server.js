@@ -65,6 +65,34 @@ function createRateLimiter(maxRequests, windowMs) {
 const generalLimiter = createRateLimiter(100, 15 * 60 * 1000);
 const sensitiveLimiter = createRateLimiter(20, 15 * 60 * 1000);
 
+function createNoopSupabaseClient() {
+  const noop = async () => ({ data: null, error: null });
+  const handler = {
+    get(_target, prop) {
+      if (prop === 'then') return undefined;
+      if (prop === 'auth') {
+        return {
+          getUser: async () => ({ data: { user: null }, error: null }),
+          signOut: async () => ({ error: null }),
+          onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } }, error: null }),
+          admin: {
+            createUser: async () => ({ data: null, error: null }),
+          },
+        };
+      }
+      if (prop === 'storage') {
+        return {
+          from: () => ({ upload: async () => ({ data: null, error: null }), getPublicUrl: () => ({ data: { publicUrl: '' } }) }),
+        };
+      }
+      if (prop === 'rpc') return async () => ({ data: null, error: null });
+      return new Proxy(noop, handler);
+    },
+    apply: () => Promise.resolve({ data: null, error: null }),
+  };
+  return new Proxy(noop, handler);
+}
+
 // Configuration Supabase avec fallback pour les variables d'environnement
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
@@ -72,6 +100,7 @@ const SITE_URL = process.env.SITE_URL || 'https://mideessi.com';
 const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || process.env.VITE_CLOUDINARY_CLOUD_NAME;
 const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || process.env.VITE_CLOUDINARY_API_KEY;
 const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || process.env.VITE_CLOUDINARY_API_SECRET;
+const disableSupabase = ['DISABLE_SUPABASE', 'SUPABASE_DISABLED', 'VITE_DISABLE_SUPABASE'].some((key) => String(process.env[key] || '').toLowerCase() === 'true');
 
 // Vérifier que les variables sont chargées
 console.log('🔍 Vérification des variables d\'environnement:');
@@ -83,8 +112,7 @@ console.log('CLOUDINARY_API_KEY:', CLOUDINARY_API_KEY ? '✅ Défini' : '❌ Man
 console.log('CLOUDINARY_API_SECRET:', CLOUDINARY_API_SECRET ? '✅ Défini' : '❌ Manquant');
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('\n❌ ERREUR: SUPABASE_URL ou SUPABASE_KEY manquant — configuration requise!');
-  process.exit(1);
+  console.warn('\n⚠️  Supabase non configuré ou projet désactivé. Le site continuera en mode dégradé sans données Supabase.');
 }
 
 if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
@@ -92,11 +120,13 @@ if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
   console.warn('Ajoutez CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET, ou leurs versions VITE_CLOUDINARY_* dans votre .env.\n');
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const hasSupabaseConfig = Boolean(SUPABASE_URL && SUPABASE_KEY);
+const shouldUseSupabase = !disableSupabase && hasSupabaseConfig;
+const supabase = shouldUseSupabase ? createClient(SUPABASE_URL, SUPABASE_KEY) : createNoopSupabaseClient();
 
 // Create a server-side Supabase client using the service role key when available
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY
+const supabaseAdmin = shouldUseSupabase && SUPABASE_SERVICE_ROLE_KEY
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
   : supabase; // fallback to anon if service key not provided (less secure)
 

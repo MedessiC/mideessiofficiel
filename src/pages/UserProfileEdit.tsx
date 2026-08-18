@@ -42,8 +42,8 @@ export default function UserProfileEdit() {
     setLoading(true);
     try {
       const { data } = await supabase
-        .from('users')
-        .select('username, avatar_url, bio')
+        .from('profiles')
+        .select('username, avatar_url, full_name')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -108,13 +108,12 @@ export default function UserProfileEdit() {
       }
 
       const { error: updateError } = await supabase
-        .from('users')
+        .from('profiles')
         .upsert({
           id: user.id,
           email: user.email || '',
           username: formData.username.trim(),
           avatar_url: formData.avatar_url?.trim() || null,
-          bio: formData.bio?.trim() || null,
         }, { onConflict: 'id' });
 
       if (updateError) throw updateError;

@@ -3,238 +3,138 @@ import { supabase } from '../lib/supabase';
 import { getStoredRedirectTarget, clearStoredRedirectTarget, peekStoredRedirectTarget } from '../utils/authRedirect';
 import { User, Session } from '@supabase/supabase-js';
 import { normalizeEmail, sanitizeUsername, validatePassword } from '../utils/authProfile';
-import { getProviderAvatarUrl } from '../utils/providerProfile';
 
-export type UserRole = 'user' | 'admin' | 'client';
+// ── Types ────────────────────────────────────────────────────
+
+export type AppRole = 'admin' | 'cofondateur' | 'membre';
 
 export interface UserProfile {
   id: string;
   username: string | null;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  nationality: string | null;
   avatar_url: string | null;
-  bio: string | null;
+  role: AppRole;
+  is_active: boolean;
+  is_banned: boolean;
+  created_at: string;
 }
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  userRole: UserRole | null;
-  currentUserProfile: UserProfile | null;
-  refreshUserProfile: () => Promise<void>;
-  signUp: (email: string, password: string, username: string) => Promise<{ error: string | null }>;
+  profile: UserProfile | null;
+  isAdmin: boolean;
+  isCofondateur: boolean;
+  refreshProfile: () => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    username: string,
+    fullName?: string,
+    nationality?: string,
+    phone?: string
+  ) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signInWithProvider: (provider: 'google') => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
-  detectRole: (userId: string) => Promise<UserRole>;
 }
 
+// ── Context ──────────────────────────────────────────────────
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// ── Provider ─────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
-  // Detect user role (admin, client, or regular user)
-  const detectRole = async (userId: string): Promise<UserRole> => {
+  // ── Chargement du profil depuis la table profiles ──────────
+  const loadProfile = async (userId: string) => {
     try {
-      // Check if admin
-      const { data: adminData } = await supabase
-        .from('admins')
-        .select('id')
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, email, phone, nationality, avatar_url, role, is_active, is_banned, created_at')
         .eq('id', userId)
         .maybeSingle();
 
-      if (adminData) return 'admin';
-
-      // Check if client
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('auth_user_id', userId)
-        .maybeSingle();
-
-      if (clientData) return 'client';
-
-      // Default to regular user
-      return 'user';
-    } catch (error) {
-      console.error('Error detecting user role:', error);
-      return 'user';
-    }
-  };
-
-  const loadUserProfile = async (authUser: User) => {
-    try {
-      const { data } = await supabase
-        .from('users')
-        .select('id, username, avatar_url, bio')
-        .eq('id', authUser.id)
-        .maybeSingle();
-
-      if (data) {
-        setCurrentUserProfile({
-          id: data.id,
-          username: data.username,
-          avatar_url: data.avatar_url,
-          bio: data.bio,
-        });
-      }
-    } catch (err) {
-      console.error('Error loading user profile:', err);
-    }
-  };
-
-  const refreshUserProfile = async () => {
-    if (user) await loadUserProfile(user);
-  };
-
-  const ensureUserProfile = async (authUser: User | null) => {
-    if (!authUser) return;
-
-    try {
-      const avatarUrl = getProviderAvatarUrl(authUser.user_metadata as Record<string, unknown> | undefined);
-      const metadataUsername = (authUser.user_metadata?.username as string | undefined)?.trim();
-      const emailPrefix = authUser.email?.split('@')[0]?.toLowerCase();
-      const baseUsername = sanitizeUsername(metadataUsername || emailPrefix || `user${authUser.id.slice(0, 8)}`);
-
-      const { data: existingProfile } = await supabase
-        .from('users')
-        .select('id, avatar_url')
-        .eq('id', authUser.id)
-        .maybeSingle();
-
-      if (existingProfile) {
-        // Update avatar from provider if missing or changed
-        if (avatarUrl && (!existingProfile.avatar_url || existingProfile.avatar_url !== avatarUrl)) {
-          await supabase
-            .from('users')
-            .update({ avatar_url: avatarUrl })
-            .eq('id', authUser.id);
-        }
-        // Always refresh local profile after ensuring
-        await loadUserProfile(authUser);
+      if (error) {
+        console.error('[Auth] Erreur chargement profil:', error.message);
         return;
       }
 
-      const { error } = await supabase.rpc('ensure_user_profile', {
-        p_user_id: authUser.id,
-        p_email: authUser.email || '',
-        p_username: baseUsername,
-      });
-
-      if (!error) {
-        await supabase
-          .from('users')
-          .update({ avatar_url: avatarUrl || null })
-          .eq('id', authUser.id);
-      } else if (!error.message.toLowerCase().includes('permission') && !error.message.toLowerCase().includes('policy')) {
-        console.error('Error creating user profile:', error);
-      }
-
-      await loadUserProfile(authUser);
-    } catch (error) {
-      console.error('Error ensuring user profile:', error);
+      setProfile(data as UserProfile | null);
+    } catch (err) {
+      console.error('[Auth] Exception chargement profil:', err);
     }
   };
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        let session = null;
+  const refreshProfile = async () => {
+    if (user) await loadProfile(user.id);
+  };
 
+  // ── Gestion de l'état d'authentification ──────────────────
+  const handleSession = async (session: Session | null) => {
+    setSession(session);
+    setUser(session?.user ?? null);
+
+    if (!session?.user) {
+      setProfile(null);
+      return;
+    }
+
+    // Redirection post-OAuth si une cible avait été mémorisée
+    try {
+      const target = peekStoredRedirectTarget();
+      if (target && typeof window !== 'undefined' && window.location.pathname !== target) {
+        clearStoredRedirectTarget();
+        window.location.replace(target);
+        return;
+      }
+    } catch (_) { /* ignore */ }
+
+    await loadProfile(session.user.id);
+  };
+
+  // ── Initialisation au montage ─────────────────────────────
+  useEffect(() => {
+    const init = async () => {
+      try {
+        // Gère le retour OAuth (hash #access_token)
         if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
           const { data, error } = await supabase.auth.getSessionFromUrl();
-          if (error) {
-            console.warn('Supabase OAuth redirect error:', error);
-          }
-          session = data?.session ?? null;
-
-          if (window.location.hash) {
+          if (!error && data?.session) {
+            await handleSession(data.session);
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            return;
           }
         }
 
-        if (!session) {
-          const { data } = await supabase.auth.getSession();
-          session = data.session;
-        }
-
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        // If a redirect target was persisted before OAuth, navigate there now
-        if (session?.user) {
-          try {
-            const target = peekStoredRedirectTarget();
-            if (target && typeof window !== 'undefined') {
-              // clear before navigating to avoid loops
-              clearStoredRedirectTarget();
-              if (window.location.pathname !== target) {
-                window.location.replace(target);
-                return;
-              }
-            }
-          } catch (e) {
-            // ignore
-          }
-        }
-
-        if (session?.user) {
-          const role = await detectRole(session.user.id);
-          setUserRole(role);
-          void ensureUserProfile(session.user);
-        } else {
-          setUserRole(null);
-        }
-      } catch (error) {
-        console.error('Error initializing auth session:', error);
-        setSession(null);
+        const { data } = await supabase.auth.getSession();
+        await handleSession(data.session);
+      } catch (err) {
+        console.error('[Auth] Erreur initialisation:', err);
         setUser(null);
-        setUserRole(null);
+        setSession(null);
+        setProfile(null);
       } finally {
         setLoading(false);
       }
     };
 
-    initializeAuth();
+    init();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       try {
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        // After auth state changes (e.g., OAuth redirect), if a redirect target exists, navigate there
-        if (session?.user) {
-          try {
-            const target = peekStoredRedirectTarget();
-            if (target && typeof window !== 'undefined') {
-              clearStoredRedirectTarget();
-              if (window.location.pathname !== target) {
-                window.location.replace(target);
-                return;
-              }
-            }
-          } catch (e) {
-            // ignore
-          }
-        }
-
-        if (session?.user) {
-          const role = await detectRole(session.user.id);
-          setUserRole(role);
-          void ensureUserProfile(session.user);
-        } else {
-          setUserRole(null);
-          setCurrentUserProfile(null);
-        }
-      } catch (error) {
-        console.error('Error handling auth state change:', error);
-        setUserRole(null);
+        await handleSession(session);
+      } catch (err) {
+        console.error('[Auth] Erreur onAuthStateChange:', err);
       } finally {
         setLoading(false);
       }
@@ -243,35 +143,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription?.unsubscribe();
   }, []);
 
+  // ── Inscription ───────────────────────────────────────────
   const signUp = async (
     email: string,
     password: string,
-    username: string
+    username: string,
+    fullName?: string,
+    nationality?: string,
+    phone?: string
   ): Promise<{ error: string | null }> => {
+    const normalizedEmail = normalizeEmail(email);
+    const safeUsername = sanitizeUsername(username);
+    const passwordValidation = validatePassword(password);
+
+    if (!normalizedEmail || !password || !safeUsername) {
+      return { error: 'Tous les champs sont requis' };
+    }
+    if (!passwordValidation.valid) {
+      return { error: passwordValidation.message || 'Mot de passe invalide' };
+    }
+    if (safeUsername.length < 3) {
+      return { error: "Le nom d'utilisateur doit contenir au moins 3 caractères" };
+    }
+
     try {
-      // Valider les entrées
-      const normalizedEmail = normalizeEmail(email);
-      const safeUsername = sanitizeUsername(username);
-      const passwordValidation = validatePassword(password);
-
-      if (!normalizedEmail || !password || !safeUsername) {
-        return { error: 'Tous les champs sont requis' };
-      }
-
-      if (!passwordValidation.valid) {
-        return { error: passwordValidation.message };
-      }
-
-      if (safeUsername.length < 3) {
-        return { error: 'Le nom d\'utilisateur doit contenir au moins 3 caractères' };
-      }
-
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
         options: {
           data: {
             username: safeUsername,
+            full_name: fullName || null,
+            nationality: nationality || null,
+            phone: phone || null,
           },
         },
       });
@@ -283,46 +187,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: error.message };
       }
 
-      // Le trigger crée automatiquement le user en base
+      // Le trigger handle_new_user() crée automatiquement le profil en base
       return { error: null };
     } catch (err) {
       return { error: err instanceof Error ? err.message : 'Une erreur est survenue' };
     }
   };
 
-  const signInWithProvider = async (
-    provider: 'google'
-  ): Promise<{ error: string | null }> => {
-    try {
-      const redirectTo = import.meta.env.VITE_SUPABASE_OAUTH_REDIRECT_URL || window.location.origin;
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo,
-        },
-      });
-
-      if (error) {
-        return { error: error.message };
-      }
-
-      return { error: null };
-    } catch (err) {
-      return { error: err instanceof Error ? err.message : 'Une erreur est survenue' };
-    }
-  };
-
+  // ── Connexion ─────────────────────────────────────────────
   const signIn = async (
     email: string,
     password: string
   ): Promise<{ error: string | null }> => {
+    const normalizedEmail = normalizeEmail(email);
+
+    if (!normalizedEmail || !password) {
+      return { error: 'Email et mot de passe requis' };
+    }
+
     try {
-      const normalizedEmail = normalizeEmail(email);
-
-      if (!normalizedEmail || !password) {
-        return { error: 'Email et mot de passe requis' };
-      }
-
       const { error } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password,
@@ -341,9 +224,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ── Connexion OAuth (Google) ──────────────────────────────
+  const signInWithProvider = async (
+    provider: 'google'
+  ): Promise<{ error: string | null }> => {
+    try {
+      const redirectTo = import.meta.env.VITE_SUPABASE_OAUTH_REDIRECT_URL || window.location.origin;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo },
+      });
+
+      if (error) return { error: error.message };
+      return { error: null };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Une erreur est survenue' };
+    }
+  };
+
+  // ── Déconnexion ───────────────────────────────────────────
   const signOut = async () => {
     await supabase.auth.signOut();
+    setProfile(null);
+    setUser(null);
+    setSession(null);
   };
+
+  // ── Valeurs dérivées ──────────────────────────────────────
+  const isAdmin = profile?.role === 'admin' && profile.is_active && !profile.is_banned;
+  const isCofondateur = (profile?.role === 'cofondateur' || profile?.role === 'admin') && profile.is_active && !profile.is_banned;
 
   return (
     <AuthContext.Provider
@@ -351,14 +260,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         loading,
-        userRole,
-        currentUserProfile,
-        refreshUserProfile,
+        profile,
+        isAdmin,
+        isCofondateur,
+        refreshProfile,
         signUp,
         signIn,
         signInWithProvider,
         signOut,
-        detectRole,
       }}
     >
       {children}

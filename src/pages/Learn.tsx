@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Star, Users, Download, Heart, Share2, Search, Filter, ArrowRight, Smartphone } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { BookOpen, Search, Star, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import PopupDisplay from '../components/PopupDisplay';
+import SEO from '../components/SEO';
 
+/* ============================================================
+   TYPES
+   ============================================================ */
 interface Book {
   id: string;
   title: string;
@@ -20,18 +24,65 @@ interface Book {
   cover_color?: string;
   article_url?: string;
   buy_url?: string;
-  week_added?: string;
 }
 
+interface Course {
+  id: string;
+  title: string;
+  description?: string;
+  level?: string;
+  duration?: string;
+  price?: string | number;
+  category?: string;
+  cover?: string;
+}
+
+/* ============================================================
+   LEARN PAGE
+   ============================================================ */
 const Learn = () => {
   const [books, setBooks] = useState<Book[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('Tous');
+  const [activeTab, setActiveTab] = useState<'formations' | 'livres'>('formations');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    document.title = 'MIDEESSI Learn — Bibliothèque numérique';
     fetchBooks();
+    fetchFormations();
   }, []);
+
+  /* Scroll-reveal — identique à NewHome */
+  useEffect(() => {
+    const revealItems = document.querySelectorAll('[data-scroll-reveal]');
+    if (!revealItems.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) entry.target.classList.add('is-visible');
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -20px 0px' }
+    );
+    revealItems.forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
+  }, []);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!location) return;
+    if (location.pathname !== '/apprendre') return;
+    const hash = (location.hash || '').replace('#', '');
+    if (hash === 'livres') setActiveTab('livres');
+    else if (hash === 'formations') setActiveTab('formations');
+    else {
+      const params = new URLSearchParams(location.search);
+      const tab = params.get('tab');
+      if (tab === 'livres' || tab === 'formations') setActiveTab(tab as 'formations' | 'livres');
+    }
+  }, [location]);
 
   const fetchBooks = async () => {
     setLoading(true);
@@ -40,299 +91,491 @@ const Learn = () => {
         .from('books')
         .select('*')
         .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Erreur:', error);
-      } else {
-        setBooks(data || []);
-      }
+      if (error) console.error('Erreur Supabase books:', error);
+      else setBooks(data || []);
     } catch (err) {
-      console.error('Erreur lors du chargement:', err);
+      console.error('Erreur chargement books:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const categories = ['Tous', 'Développement', 'Design', 'Entrepreneuriat', 'Cybersécurité'];
-  
-  const filteredBooks = books.filter(book => {
-    const matchesCategory = selectedCategory === 'Tous' || book.category === selectedCategory;
-    const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          book.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
-  const getLevelColor = (level?: string) => {
-    switch(level) {
-      case 'Débutant': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
-      case 'Intermédiaire': return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
-      case 'Avancé': return 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+  const fetchFormations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('formations')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) { console.error('Erreur Supabase formations:', error); setCourses([]); }
+      else setCourses((data as Course[]) || []);
+    } catch (err) {
+      console.error('Erreur chargement formations:', err);
+      setCourses([]);
     }
   };
 
+  const featuredCourses = courses.slice(0, 4);
+
+  const filteredCourses = courses.filter((c) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      c.title.toLowerCase().includes(q) ||
+      (c.description || '').toLowerCase().includes(q) ||
+      (c.category || '').toLowerCase().includes(q)
+    );
+  });
+
+  const filteredBooks = books.filter((b) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (b.title || '').toLowerCase().includes(q) ||
+      (b.description || '').toLowerCase().includes(q) ||
+      (b.category || '').toLowerCase().includes(q)
+    );
+  });
+
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
-      {/* Hero Section */}
-      <section className="relative text-white pt-24 sm:pt-28 md:pt-32 pb-12 sm:pb-16 md:pb-20 overflow-hidden bg-gradient-to-r from-[#191970] to-[#0e1a4d]">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#ffd700] to-transparent"></div>
-        
-        <div className="absolute top-10 left-10 w-16 h-16 border-4 border-[#ffd700] opacity-10 rotate-45 hidden sm:block"></div>
-        <div className="absolute bottom-10 right-10 w-20 h-20 border-4 border-[#ffd700] opacity-10 rounded-full hidden sm:block"></div>
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 bg-[#ffd700]/10 rounded-full border border-[#ffd700]/30">
-              <BookOpen className="w-4 h-4 text-[#ffd700]" />
-              <span className="text-xs sm:text-sm font-semibold text-[#ffd700]">BIBLIOTHÈQUE MIDEESSI</span>
-            </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 leading-tight">
-              Ta bibliothèque tech
+    <>
+      <style>{`
+        /* ── Scroll reveal (same as NewHome) ── */
+        [data-scroll-reveal] {
+          opacity: 0;
+          transform: translate3d(0, 22px, 0);
+          transition: opacity 700ms cubic-bezier(0.2,0,0.2,1),
+                      transform 700ms cubic-bezier(0.2,0,0.2,1);
+          will-change: opacity, transform;
+        }
+        [data-scroll-reveal].is-visible {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [data-scroll-reveal] { opacity:1; transform:none; transition:none; }
+        }
+      `}</style>
+
+      <SEO
+        title="MIDEESSI Learn — Bibliothèque Tech Africaine"
+        description="Des guides et livres PDF pratiques pour progresser en tech, entrepreneuriat et design depuis votre smartphone."
+      />
+
+      <div style={{ backgroundColor: '#FAFAFA' }}>
+
+        {/* ═══════════════════════════════════════════════
+            HERO — même rythme que NewHome HeroSection
+            ═══════════════════════════════════════════════ */}
+        <section
+          style={{
+            backgroundColor: 'var(--color-bg-primary)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            padding: 'clamp(88px, 14vh, 132px) 0 clamp(40px, 5vh, 64px)',
+          }}
+        >
+          <div className="max-w-[1200px] mx-auto px-6 lg:px-12 w-full">
+
+            {/* Eyebrow */}
+            <p
+              className="text-sm uppercase text-center"
+              style={{
+                letterSpacing: '0.26em',
+                color: 'var(--color-text-secondary)',
+                marginBottom: '1.25rem',
+              }}
+            >
+              MIDEESSI Learn
+            </p>
+
+            {/* H1 — même scale clamp que NewHome */}
+            <h1
+              className="font-bold text-center mx-auto"
+              style={{
+                fontSize: 'clamp(36px, 7vw, 62px)',
+                lineHeight: 1.06,
+                letterSpacing: '-0.04em',
+                color: 'var(--color-text-primary)',
+                maxWidth: '780px',
+              }}
+            >
+              <span style={{ display: 'block' }}>Formations et</span>
+              <span style={{ display: 'block', color: 'var(--color-brand)' }}>Livres</span>
             </h1>
-            <p className="text-lg sm:text-xl text-gray-200 mb-2">
-              Des PDFs pour progresser depuis ton téléphone
-            </p>
-            <p className="text-base text-gray-300">
-              1000 FCFA chacun • Accès à vie • Mises à jour gratuites
-            </p>
-          </div>
-        </div>
-      </section>
 
-      {/* Search & Filter Section */}
-      <section className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm md:shadow-none transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          {/* Search Bar */}
-          <div className="mb-4 sm:mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Chercher un PDF..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 sm:py-3 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-[#ffd700] focus:outline-none transition-colors text-sm sm:text-base"
-              />
+            {/* Description */}
+            <p
+              className="text-center mx-auto"
+              style={{
+                marginTop: 'clamp(18px, 2.5vh, 28px)',
+                fontSize: 'clamp(16px, 2vw, 20px)',
+                lineHeight: 1.75,
+                color: 'var(--color-text-secondary)',
+                maxWidth: '540px',
+              }}
+            >
+              Accédez à des connaissances qui vous correspondent et vous font évoluer.
+            </p>
+
+            {/* Divider décoratif */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                marginTop: 'clamp(36px, 5vh, 56px)',
+              }}
+            >
+              <div style={{ height: '1px', width: '56px', backgroundColor: '#E5E7EB' }} />
+              <div style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: 'var(--color-brand)' }} />
+              <div style={{ height: '1px', width: '56px', backgroundColor: '#E5E7EB' }} />
             </div>
           </div>
+        </section>
 
-          {/* Categories Filter */}
-          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2">
-            <Filter className="w-4 h-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-            <div className="flex gap-2 sm:gap-3">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-semibold text-xs sm:text-sm whitespace-nowrap transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-[#ffd700] text-[#191970] shadow-lg'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* White micro-spacer — identique à NewHome */}
+        <div className="w-full bg-white" style={{ height: '20px', margin: '0 0 1px 0' }} />
 
-      {/* Main Content */}
-      <section className="py-12 sm:py-16 md:py-20 bg-white dark:bg-gray-950 transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {loading ? (
-            <div className="text-center py-12 sm:py-20">
-              <div className="inline-block">
-                <div className="animate-spin w-12 h-12 sm:w-16 sm:h-16 border-4 border-[#ffd700] border-t-transparent rounded-full"></div>
+        {/* ═══════════════════════════════════════════════
+            BARRE RECHERCHE + ONGLETS — pleine largeur
+            ═══════════════════════════════════════════════ */}
+        <section
+          data-scroll-reveal
+          style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E5E7EB', padding: '18px 0' }}
+        >
+          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+
+              {/* Barre de recherche */}
+              <div className="relative flex-1">
+                <Search
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                />
+                <input
+                  type="text"
+                  placeholder="Rechercher une formation ou un livre..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-full text-sm text-[#111827] outline-none focus:border-[var(--color-brand)] transition-colors"
+                  style={{ boxShadow: '0 2px 8px rgba(15,23,42,0.04)' }}
+                />
               </div>
-              <p className="text-gray-600 dark:text-gray-400 mt-4 text-sm sm:text-base">Chargement de la bibliothèque...</p>
-            </div>
-          ) : filteredBooks.length === 0 ? (
-            <div className="text-center py-12 sm:py-20">
-              <BookOpen className="w-16 h-16 sm:w-24 sm:h-24 text-gray-300 dark:text-gray-700 mx-auto mb-6" />
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-gray-300 mb-2">
-                Aucun PDF trouvé
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">
-                {searchQuery ? 'Essaie une autre recherche' : 'Les PDFs arrivent très bientôt'}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-              {filteredBooks.map((book) => (
-                <div
-                  key={book.id}
-                  className="group bg-white dark:bg-gray-900 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-200 dark:border-gray-800 hover:border-[#ffd700]/50 flex flex-col"
+
+              {/* Onglets */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setActiveTab('formations')}
+                  className="px-5 py-3 rounded-xl font-semibold transition-all duration-200"
+                  style={{
+                    backgroundColor: activeTab === 'formations' ? '#191970' : 'transparent',
+                    color: activeTab === 'formations' ? '#FFFFFF' : '#111111',
+                    border: activeTab === 'formations' ? 'none' : '1px solid #E5E7EB',
+                  }}
                 >
-                  {/* Cover Image */}
-                  <div className="relative h-56 sm:h-64 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 overflow-hidden">
-                    {book.cover_image ? (
-                      <img
-                        src={book.cover_image}
-                        alt={book.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  Formations
+                </button>
+                <button
+                  onClick={() => setActiveTab('livres')}
+                  className="px-5 py-3 rounded-xl font-semibold transition-all duration-200"
+                  style={{
+                    backgroundColor: activeTab === 'livres' ? '#191970' : 'transparent',
+                    color: activeTab === 'livres' ? '#FFFFFF' : '#111111',
+                    border: activeTab === 'livres' ? 'none' : '1px solid #E5E7EB',
+                  }}
+                >
+                  Livres
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════
+            VUE FORMATIONS
+            ═══════════════════════════════════════════════ */}
+        {activeTab === 'formations' && (
+          <>
+            {/* Featured — fond sombre pleine largeur comme FullwidthCardSection */}
+            <section
+              data-scroll-reveal
+              style={{
+                backgroundColor: '#0F172A',
+                paddingTop: 'clamp(30px, 4vh, 52px)',
+                paddingBottom: 'clamp(30px, 4vh, 52px)',
+              }}
+            >
+              <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+                <h2
+                  className="font-bold mb-6"
+                  style={{
+                    fontSize: 'clamp(20px, 3vw, 28px)',
+                    color: '#FFFFFF',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  FORMATIONS EN VEDETTE
+                </h2>
+                <div
+                  className="flex gap-6 overflow-x-auto py-2 snap-x snap-mandatory items-stretch"
+                  role="list"
+                  aria-label="Formations en vedette"
+                  style={{ scrollbarWidth: 'none' }}
+                >
+                  {featuredCourses.map((c) => (
+                    <div
+                      key={c.id}
+                      className="w-[90%] max-w-[520px] snap-center flex-shrink-0 rounded-2xl overflow-hidden flex flex-col"
+                      style={{
+                        position: 'relative',
+                        minHeight: '480px',
+                        border: '1px solid rgba(255,255,255,0.04)',
+                        boxShadow: '0 24px 60px rgba(15,23,42,0.18)',
+                      }}
+                      role="listitem"
+                    >
+                      <div
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ backgroundImage: `url(${c.cover})` }}
+                        aria-hidden
                       />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[#191970] to-[#ffd700] flex items-center justify-center">
-                        <BookOpen className="w-16 h-16 sm:w-20 sm:h-20 text-white opacity-90" />
-                      </div>
-                    )}
-                    
-                    {/* Badges */}
-                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-                      {book.is_bestseller && (
-                        <div className="px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1">
-                          <Star className="w-3 h-3" />
-                          BEST
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(180deg, rgba(2,6,23,0.12) 0%, rgba(2,6,23,0.65) 70%)',
+                        }}
+                        aria-hidden
+                      />
+                      <div className="p-6 flex-1 flex flex-col justify-between" style={{ position: 'relative', zIndex: 2 }}>
+                        <div>
+                          <div className="text-sm mb-1" style={{ color: 'rgba(255,255,255,0.7)' }}>{c.level}</div>
+                          <h3 className="font-bold text-2xl mb-2" style={{ color: '#FFFFFF', letterSpacing: '-0.02em' }}>{c.title}</h3>
+                          <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.75)' }}>{c.description}</p>
                         </div>
-                      )}
-                      {book.is_new && (
-                        <div className="px-2.5 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full shadow-lg animate-pulse ml-auto">
-                          NOUVEAU
+                        <div className="mt-4 flex items-center justify-between">
+                          <div className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>{c.duration}</div>
+                          <div className="flex items-center gap-3">
+                            <div className="font-semibold" style={{ color: '#FFD700' }}>{c.price}</div>
+                            <Link
+                              to={`/apprendre/formations/${c.id}`}
+                              className="m-btn-primary transition-transform duration-200 hover:scale-105"
+                            >
+                              Voir
+                            </Link>
+                          </div>
                         </div>
-                      )}
-                    </div>
-
-                    {/* Action Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
-                      <button className="p-3 bg-white dark:bg-gray-900 rounded-full hover:bg-[#ffd700] transition-all shadow-lg">
-                        <Heart className="w-5 h-5 text-[#191970]" />
-                      </button>
-                      <button className="p-3 bg-white dark:bg-gray-900 rounded-full hover:bg-[#ffd700] transition-all shadow-lg">
-                        <Share2 className="w-5 h-5 text-[#191970]" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4 sm:p-5 flex flex-col flex-grow">
-                    {/* Title & Level */}
-                    <div className="mb-2">
-                      <h3 className="text-base sm:text-lg font-bold text-[#191970] dark:text-white line-clamp-2 mb-2">
-                        {book.title}
-                      </h3>
-                      {book.level && (
-                        <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${getLevelColor(book.level)}`}>
-                          {book.level}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Description */}
-                    <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm line-clamp-2 mb-4 flex-grow">
-                      {book.description}
-                    </p>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-3 gap-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-800">
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 mb-0.5">
-                          <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ffd700] fill-[#ffd700]" />
-                          <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                            {book.rating || 4.8}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">Note</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 mb-0.5">
-                          <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
-                          <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                            {book.views ?? book.students ?? 150}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">Lus</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 mb-0.5">
-                          <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
-                          <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                            {book.pages || 50}p
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">Pages</p>
                       </div>
                     </div>
-
-                    {/* Price */}
-                    <div className="mb-4">
-                      <div className="inline-flex items-baseline gap-1 bg-[#ffd700]/10 px-3 py-2 rounded-lg">
-                        <span className="text-xl sm:text-2xl font-bold text-[#ffd700]">
-                          {book.price === 0 ? 'Gratuit' : book.price || '1000'}
-                        </span>
-                        {book.price !== 0 && <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">FCFA</span>}
-                      </div>
-                    </div>
-
-                    {/* CTA Buttons */}
-                    <div className="space-y-2 mt-auto">
-                      {book.article_url && (
-                        <a
-                          href={book.article_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block text-center px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-semibold rounded-lg transition-colors text-xs sm:text-sm"
-                        >
-                          Lire l'article
-                        </a>
-                      )}
-                      
-                      {book.buy_url && (
-                        <a
-                          href={book.buy_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block text-center px-4 py-2.5 bg-[#ffd700] hover:bg-[#ffed4e] text-[#191970] font-bold rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-[1.02] text-xs sm:text-sm flex items-center justify-center gap-2"
-                        >
-                          <Download className="w-4 h-4" />
-                          Acheter
-                        </a>
-                      )}
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            </section>
 
-          {/* Stats Footer */}
-          {filteredBooks.length > 0 && (
-            <div className="mt-12 sm:mt-16 md:mt-20 text-center">
-              <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-                Affichage de <span className="font-bold text-[#191970] dark:text-[#ffd700]">{filteredBooks.length}</span> PDF{filteredBooks.length > 1 ? 's' : ''}
-              </p>
-              <p className="text-gray-500 dark:text-gray-500 text-xs sm:text-sm mt-2">
-                Nouveaux PDFs ajoutés chaque semaine
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
+            {/* White micro-spacer */}
+            <div className="w-full bg-white" style={{ height: '20px', margin: '0 0 1px 0' }} />
 
-      {/* Newsletter CTA */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-r from-[#191970] to-[#0e1a4d] text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Smartphone className="w-12 h-12 sm:w-16 sm:h-16 text-[#ffd700] mx-auto mb-4" />
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
-            Reçois les nouveaux PDFs en avant-première
-          </h2>
-          <p className="text-base sm:text-lg text-gray-200 mb-8 max-w-2xl mx-auto">
-            Inscris-toi à notre newsletter pour être le premier à découvrir les nouveaux contenus et recevoir des offres exclusives.
-          </p>
-          <a
-            href="/#newsletter"
-            className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#ffd700] text-[#191970] font-bold rounded-lg hover:bg-[#ffed4e] transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+            {/* Catalogue */}
+            <section
+              data-scroll-reveal
+              style={{
+                backgroundColor: '#F5F5F7',
+                paddingTop: 'clamp(30px, 4vh, 52px)',
+                paddingBottom: 'clamp(30px, 4vh, 52px)',
+              }}
+            >
+              <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+                <h2
+                  className="font-bold mb-6"
+                  style={{
+                    fontSize: 'clamp(20px, 3vw, 28px)',
+                    color: '#111827',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Toutes les formations
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+                  {filteredCourses.map((c) => (
+                    <div
+                      key={c.id}
+                      className="w-full max-w-[420px] rounded-2xl overflow-hidden flex flex-col"
+                      style={{
+                        position: 'relative',
+                        minHeight: '420px',
+                        border: '1px solid #E5E7EB',
+                        boxShadow: '0 4px 16px rgba(15,23,42,0.06)',
+                      }}
+                    >
+                      <div
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ backgroundImage: `url(${c.cover})` }}
+                        aria-hidden
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(180deg, rgba(245,245,247,0.06) 0%, rgba(245,245,247,0.78) 70%)',
+                        }}
+                        aria-hidden
+                      />
+                      <div className="p-5 flex-1 flex flex-col justify-between" style={{ position: 'relative', zIndex: 2 }}>
+                        <div>
+                          <div className="text-xs mb-1" style={{ color: '#6B7280' }}>Niveau : {c.level}</div>
+                          <h3 className="font-bold text-lg mb-2" style={{ color: '#191970', letterSpacing: '-0.01em' }}>{c.title}</h3>
+                          <p className="text-sm mb-4" style={{ color: '#4B5563', lineHeight: 1.6 }}>{c.description}</p>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm" style={{ color: '#6B7280' }}>{c.duration}</div>
+                          <div className="flex items-center gap-3">
+                            <div className="font-semibold" style={{ color: '#111111' }}>{c.price}</div>
+                            <Link to={`/apprendre/formations/${c.id}`} className="m-btn-primary">Voir</Link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Parcours recommandé */}
+                <div
+                  className="mt-10 bg-white rounded-2xl border border-[#E5E7EB] p-6"
+                  style={{ boxShadow: '0 4px 16px rgba(15,23,42,0.04)' }}
+                >
+                  <h3 className="font-bold text-lg mb-3" style={{ color: '#111827', letterSpacing: '-0.01em' }}>
+                    Vous débutez ? Commencez ici.
+                  </h3>
+                  <ol className="list-decimal ml-6 space-y-2" style={{ color: '#4B5563' }}>
+                    <li>Comprendre le Web</li>
+                    <li>HTML &amp; CSS</li>
+                    <li>JavaScript</li>
+                    <li>Projet complet</li>
+                  </ol>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+
+        {/* ═══════════════════════════════════════════════
+            VUE LIVRES
+            ═══════════════════════════════════════════════ */}
+        {activeTab === 'livres' && (
+          <section
+            data-scroll-reveal
+            style={{
+              backgroundColor: '#FAFAFA',
+              paddingTop: 'clamp(30px, 4vh, 52px)',
+              paddingBottom: 'clamp(30px, 4vh, 52px)',
+            }}
           >
-            S'inscrire à la newsletter
-            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
-          </a>
-        </div>
-      </section>
+            <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+              <h2
+                className="font-bold mb-6"
+                style={{
+                  fontSize: 'clamp(20px, 3vw, 28px)',
+                  color: '#111827',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Bibliothèque
+              </h2>
 
-      <PopupDisplay currentPage="learn" />
-    </div>
+              {loading ? (
+                <div className="py-20 text-center">
+                  <p className="text-sm font-medium" style={{ color: '#6B7280' }}>
+                    Chargement des contenus MIDEESSI Learn...
+                  </p>
+                </div>
+              ) : filteredBooks.length === 0 ? (
+                <div className="py-20 text-center bg-white rounded-2xl border border-[#E5E7EB] p-12">
+                  <BookOpen size={40} className="mx-auto mb-4" style={{ color: '#6B7280' }} />
+                  <h3 className="text-lg font-semibold mb-2" style={{ color: '#191970' }}>
+                    Aucun PDF trouvé
+                  </h3>
+                  <p className="text-sm" style={{ color: '#4B5563' }}>
+                    {searchQuery ? 'Essayez un autre mot-clé' : 'De nouveaux contenus seront ajoutés très prochainement.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+                  {filteredBooks.map((book) => (
+                    <div
+                      key={book.id}
+                      className="group w-full max-w-[420px] rounded-2xl overflow-hidden border border-[#E5E7EB] flex flex-col transition-all duration-200"
+                      style={{
+                        boxShadow: '0 4px 16px rgba(15,23,42,0.06)',
+                        backgroundColor: 'var(--bg-card)',
+                        minHeight: '420px',
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#191970'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#E5E7EB'; }}
+                    >
+                      {/* Cover */}
+                      <div className="h-52 relative overflow-hidden" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                        {book.cover_image ? (
+                          <img
+                            src={book.cover_image}
+                            alt={book.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-[#191970]/5">
+                            <BookOpen size={48} style={{ color: '#191970' }} />
+                          </div>
+                        )}
+                        {book.category && (
+                          <span className="absolute top-3 left-3 bg-[#191970] text-[#FAFAFA] text-[10px] font-semibold uppercase tracking-[0.1em] px-2.5 py-1 rounded-md">
+                            {book.category}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Body */}
+                      <div className="p-6 flex flex-col flex-1 justify-between">
+                        <div>
+                          <h3 className="font-bold text-base mb-2 line-clamp-2" style={{ color: '#191970', letterSpacing: '-0.01em' }}>
+                            {book.title}
+                          </h3>
+                          <p className="text-xs leading-relaxed line-clamp-3 mb-6" style={{ color: '#4B5563' }}>
+                            {book.description}
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between pt-4 border-t border-[#E5E7EB] mb-4">
+                            <div className="flex items-center gap-1 text-xs" style={{ color: '#6B7280' }}>
+                              <Star size={14} className="fill-[#FFD700] text-[#FFD700]" />
+                              <span className="font-semibold text-[#111111]">{book.rating || 4.8}</span>
+                            </div>
+                            <span className="font-bold text-lg" style={{ color: '#191970' }}>
+                              {book.price === 0 || book.price === '0' ? 'Gratuit' : `${book.price || '1 000'} FCFA`}
+                            </span>
+                          </div>
+                          <Link
+                            to={`/library/${book.id}`}
+                            className="flex items-center justify-center gap-2 w-full rounded-xl py-2.5 text-xs font-medium transition-all hover:opacity-90"
+                            style={{ backgroundColor: '#191970', color: '#FAFAFA' }}
+                          >
+                            Consulter la fiche
+                            <ArrowRight size={14} />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+      </div>
+    </>
   );
 };
 

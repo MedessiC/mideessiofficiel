@@ -12,13 +12,79 @@ interface CommandItem {
   shortcut?: string;
 }
 
-const CommandPalette = () => {
+interface CommandPaletteProps {
+  triggerClassName?: string;
+  showKeyboardHint?: boolean;
+  buttonLabel?: string;
+}
+
+const CommandPalette = ({
+  triggerClassName = 'hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 dark:from-gray-800 dark:to-gray-700 dark:hover:from-gray-700 dark:hover:to-gray-600 rounded-lg text-gray-600 dark:text-gray-300 text-sm transition-all duration-300 hover:shadow-md border border-gray-300 dark:border-gray-600',
+  showKeyboardHint = true,
+  buttonLabel = 'Ctrl+K',
+}: CommandPaletteProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
 
   const commands: CommandItem[] = [
+    {
+      id: 'site-vitrine',
+      label: 'Site web vitrine',
+      description: 'Présence digitale premium, SEO et conversion pour votre activité',
+      href: '/solutions/site-vitrine',
+      icon: <Lightbulb className="w-4 h-4" />,
+      category: 'Services',
+    },
+    {
+      id: 'application-web',
+      label: 'Application web',
+      description: 'Outils, dashboards et automations sur mesure pour votre entreprise',
+      href: '/solutions/application-web',
+      icon: <Lightbulb className="w-4 h-4" />,
+      category: 'Services',
+    },
+    {
+      id: 'application-mobile',
+      label: 'Application mobile',
+      description: 'Expérience mobile native et sur mesure pour vos utilisateurs',
+      href: '/solutions/application-mobile',
+      icon: <Lightbulb className="w-4 h-4" />,
+      category: 'Services',
+    },
+    {
+      id: 'social-media',
+      label: 'Réseaux sociaux & marketing',
+      description: 'Gestion de contenus, visibilité et croissance sur les réseaux sociaux',
+      href: '/solutions',
+      icon: <Lightbulb className="w-4 h-4" />,
+      category: 'Services',
+    },
+    {
+      id: 'formations',
+      label: 'Formations',
+      description: 'Ateliers et formations pour monter en compétences',
+      href: '/apprendre#formations',
+      icon: <BookOpen className="w-4 h-4" />,
+      category: 'Formation',
+    },
+    {
+      id: 'livres',
+      label: 'Livres',
+      description: 'Consulter nos livres et ressources numériques',
+      href: '/apprendre#livres',
+      icon: <BookOpen className="w-4 h-4" />,
+      category: 'Livres',
+    },
+    {
+      id: 'articles',
+      label: 'Articles',
+      description: 'Lire nos articles et analyses',
+      href: '/article',
+      icon: <BookOpen className="w-4 h-4" />,
+      category: 'Contenu',
+    },
     {
       id: 'home',
       label: 'Accueil',
@@ -32,19 +98,10 @@ const CommandPalette = () => {
       id: 'learn',
       label: 'Apprendre',
       description: 'Accéder à la plateforme d\'apprentissage',
-      href: '/learn',
+      href: '/apprendre',
       icon: <BookOpen className="w-4 h-4" />,
       category: 'Principal',
       shortcut: 'A',
-    },
-    {
-      id: 'blog',
-      label: 'Blog',
-      description: 'Lire nos articles et actualités',
-      href: '/blog',
-      icon: <FileText className="w-4 h-4" />,
-      category: 'Principal',
-      shortcut: 'B',
     },
     {
       id: 'solutions',
@@ -62,14 +119,6 @@ const CommandPalette = () => {
       href: '/projects',
       icon: <Lightbulb className="w-4 h-4" />,
       category: 'Navigation',
-    },
-    {
-      id: 'library',
-      label: 'Biblio',
-      description: 'Parcourir la bibliothèque de PDFs',
-      href: '/library',
-      icon: <BookOpen className="w-4 h-4" />,
-      category: 'Ressources',
     },
     {
       id: 'about',
@@ -90,12 +139,42 @@ const CommandPalette = () => {
   ];
 
   // Filter commands based on search
-  const filteredCommands = commands.filter(
-    (cmd) =>
-      cmd.label.toLowerCase().includes(search.toLowerCase()) ||
-      cmd.description.toLowerCase().includes(search.toLowerCase()) ||
-      cmd.category.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredCommands = [...commands]
+    .filter(
+      (cmd) =>
+        cmd.label.toLowerCase().includes(search.toLowerCase()) ||
+        cmd.description.toLowerCase().includes(search.toLowerCase()) ||
+        cmd.category.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+      const categoryPriority: Record<string, number> = {
+        Services: 0,
+        Formation: 1,
+        Livres: 2,
+        Principal: 3,
+        Navigation: 4,
+      };
+
+      const aPriority = categoryPriority[a.category] ?? 99;
+      const bPriority = categoryPriority[b.category] ?? 99;
+
+      if (aPriority !== bPriority) {
+        return aPriority - bPriority;
+      }
+
+      const aLabel = a.label.toLowerCase();
+      const bLabel = b.label.toLowerCase();
+      const query = search.toLowerCase();
+
+      const aStarts = aLabel.startsWith(query) ? 0 : 1;
+      const bStarts = bLabel.startsWith(query) ? 0 : 1;
+
+      if (aStarts !== bStarts) {
+        return aStarts - bStarts;
+      }
+
+      return aLabel.localeCompare(bLabel);
+    });
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -155,17 +234,18 @@ const CommandPalette = () => {
 
   return (
     <>
-      {/* Command Palette Trigger Button - Desktop Only */}
+      {/* Command Palette Trigger Button */}
       <button
         onClick={() => {
           setIsOpen(true);
           setSelectedIndex(0);
         }}
-        className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 dark:from-gray-800 dark:to-gray-700 dark:hover:from-gray-700 dark:hover:to-gray-600 rounded-lg text-gray-600 dark:text-gray-300 text-sm transition-all duration-300 hover:shadow-md border border-gray-300 dark:border-gray-600"
+        className={triggerClassName}
         title="Appuie sur Cmd+K ou Ctrl+K pour rechercher"
+        type="button"
       >
         <Search className="w-4 h-4" />
-        <span className="hidden sm:inline min-w-fit text-xs font-semibold">Ctrl+K</span>
+        {showKeyboardHint && <span className="hidden sm:inline min-w-fit text-xs font-semibold">{buttonLabel}</span>}
       </button>
 
       {/* Command Palette Modal */}

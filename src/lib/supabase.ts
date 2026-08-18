@@ -1,13 +1,121 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const runtimeEnv = typeof import.meta !== 'undefined' ? import.meta.env ?? {} : {};
+const processEnv = typeof process !== 'undefined' ? process.env ?? {} : {};
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+const disableSupabase = [
+  processEnv.DISABLE_SUPABASE,
+  processEnv.SUPABASE_DISABLED,
+  processEnv.VITE_DISABLE_SUPABASE,
+  runtimeEnv.VITE_DISABLE_SUPABASE,
+  runtimeEnv.DISABLE_SUPABASE,
+].some(value => String(value).toLowerCase() === 'true');
+
+const supabaseUrl = String(
+  processEnv.SUPABASE_URL ||
+  processEnv.VITE_SUPABASE_URL ||
+  runtimeEnv.VITE_SUPABASE_URL ||
+  runtimeEnv.SUPABASE_URL ||
+  ''
+).trim();
+
+const supabaseAnonKey = String(
+  processEnv.SUPABASE_ANON_KEY ||
+  processEnv.VITE_SUPABASE_ANON_KEY ||
+  runtimeEnv.VITE_SUPABASE_ANON_KEY ||
+  runtimeEnv.SUPABASE_ANON_KEY ||
+  ''
+).trim();
+
+const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey);
+const shouldUseSupabase = !disableSupabase && hasSupabaseConfig;
+
+if (!shouldUseSupabase) {
+  console.warn('[supabase] Supabase is disabled or unavailable. Falling back to a no-op client.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// If env vars are missing, provide a noop/mock Supabase client to allow local dev to continue.
+function createNoopQueryBuilder() {
+  const result = { data: null, error: null };
+  const builder: Record<string, any> = {
+    then: (resolve: (value: typeof result) => unknown) => Promise.resolve(result).then(resolve),
+    catch: (onRejected: (reason?: unknown) => unknown) => Promise.resolve(result).catch(onRejected),
+    finally: (onFinally: () => void) => Promise.resolve(result).finally(onFinally),
+    select: () => builder,
+    insert: () => builder,
+    update: () => builder,
+    upsert: () => builder,
+    delete: () => builder,
+    eq: () => builder,
+    order: () => builder,
+    limit: () => builder,
+    in: () => builder,
+    or: () => builder,
+    match: () => builder,
+    filter: () => builder,
+    contains: () => builder,
+    maybeSingle: async () => result,
+    single: async () => result,
+    csv: () => builder,
+    textSearch: () => builder,
+    ilike: () => builder,
+    like: () => builder,
+    neq: () => builder,
+    gt: () => builder,
+    gte: () => builder,
+    lt: () => builder,
+    lte: () => builder,
+    is: () => builder,
+    not: () => builder,
+    range: () => builder,
+    with: () => builder,
+    onConflict: () => builder,
+  };
+
+  return new Proxy(builder, {
+    get(target, prop) {
+      if (prop === 'then') return target.then;
+      if (prop === 'catch') return target.catch;
+      if (prop === 'finally') return target.finally;
+      if (prop in target) return target[prop];
+      return (..._args: unknown[]) => builder;
+    },
+  });
+}
+
+function createNoopClient() {
+  const auth = {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    getSessionFromUrl: async () => ({ data: { session: null }, error: null }),
+    getUser: async () => ({ data: { user: null }, error: null }),
+    signInWithPassword: async () => ({ data: { user: null, session: null }, error: null }),
+    signUp: async () => ({ data: { user: null, session: null }, error: null }),
+    signOut: async () => ({ error: null }),
+    resetPasswordForEmail: async () => ({ error: null }),
+    updateUser: async () => ({ data: { user: null }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: null }, error: null }),
+  };
+
+  const storage = {
+    from: () => createNoopQueryBuilder(),
+  };
+
+  const handler = {
+    get(_target, prop) {
+      if (prop === 'then') return undefined;
+      if (prop === 'auth') return auth;
+      if (prop === 'storage') return storage;
+      if (prop === 'rpc') return async () => ({ data: null, error: null });
+      if (prop === 'from') return () => createNoopQueryBuilder();
+      return createNoopQueryBuilder();
+    },
+    apply: () => Promise.resolve({ data: null, error: null }),
+  };
+
+  return new Proxy(async () => ({ data: null, error: null }), handler);
+}
+
+export const supabase = shouldUseSupabase ? createClient(supabaseUrl, supabaseAnonKey) : createNoopClient();
 
 // lib/supabase.ts - Mettre à jour les types
 

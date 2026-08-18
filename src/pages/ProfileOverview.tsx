@@ -93,15 +93,15 @@ export default function ProfileOverview() {
       }
 
       let result = await supabase
-        .from('users')
-        .select('id,email,username,avatar_url,bio,website,location,social_links,created_at,is_library_public')
+        .from('profiles')
+        .select('id,email,username,full_name,avatar_url,location,created_at')
         .eq('username', lookupUsername)
         .maybeSingle();
 
       if (result.error && (result.error.code === '42703' || result.error.status === 400)) {
         result = await supabase
-          .from('users')
-          .select('id,email,username,avatar_url,bio,created_at')
+          .from('profiles')
+          .select('id,email,username,avatar_url,created_at')
           .eq('username', lookupUsername)
           .maybeSingle();
       }
@@ -267,8 +267,8 @@ export default function ProfileOverview() {
 
       let lastError: Error | null = null;
       for (const payload of payloadAttempts) {
-        const fullPayload = { ...payload, is_library_public: isLibraryPublic };
-        const { error } = await supabase.from('users').upsert(fullPayload, { onConflict: 'id' });
+        const fullPayload = { ...payload };
+        const { error } = await supabase.from('profiles').upsert(fullPayload, { onConflict: 'id' });
         if (!error) { lastError = null; break; }
         lastError = error as Error;
       }
@@ -302,7 +302,7 @@ export default function ProfileOverview() {
     try {
       const { error: rpcError } = await supabase.rpc('delete_user_account');
       if (rpcError) {
-        const { error: dbError } = await supabase.from('users').delete().eq('id', currentUser.id);
+        const { error: dbError } = await supabase.from('profiles').delete().eq('id', currentUser.id);
         if (dbError) throw dbError;
       }
       await signOut();

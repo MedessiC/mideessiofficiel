@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -10,16 +10,18 @@ import ClientProtectedRoute from './components/ClientProtectedRoute';
 import Navbar from './components/Navbar';
 import BottomNavigation from './components/BottomNavigation';
 import Footer from './components/Footer';
-import PageLoader from './components/PageLoader';
 import CookieConsent from './components/CookieConsent';
 import LoadingSpinner from './components/LoadingSpinner';
+import SupportButton from './components/SupportButton';
+import ScrollToTop from './components/ScrollToTop';
 import NewHome from './pages/NewHome';
 import About from './pages/About';
 import Learn from './pages/Learn';
+import Laboratoire from './pages/Laboratoire';
 import Library from './pages/Library';
 import BookDetail from './pages/BookDetail';
 import PdfReaderPage from './pages/PdfReaderPage';
-import Solutions from './pages/Solutions';
+import Solutions, { SiteWebPage } from './pages/Solutions';
 import Projects from './pages/Projects';
 import SolutionDetail from './pages/SolutionDetail';
 import Ateliers from './pages/Ateliers';
@@ -128,14 +130,19 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
-      <PageLoader />
+      <ScrollToTop />
+      {/* PageLoader removed — loading handled via context components or inline fallbacks */}
       {!isAdminRoute && !isAuthRoute && <Navbar />}
-      <main className="animate-fade-in">
+      <main id="main-content" role="main" className="animate-fade-in">
         <Routes>
           <Route path="/" element={<NewHome />} />
           <Route path="/about" element={<About />} />
+          <Route path="/mission" element={<About />} />
+          <Route path="/methode" element={<About />} />
           <Route path="/team/:id" element={<TeamMemberProfile />} />
           <Route path="/solutions" element={<Solutions />} />
+          <Route path="/siteweb" element={<SiteWebPage />} />
+          <Route path="/siteweb/:slug" element={<SolutionDetail />} />
           <Route path="/solutions/:slug" element={<SolutionDetail />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/ateliers" element={<Ateliers />} />
@@ -143,9 +150,11 @@ function AppContent() {
           <Route path="/offres" element={<Offres />} />
           <Route path="/offres/:slug" element={<DetailOffre />} />
           <Route path="/dev-services/:slug" element={<DetailDevService />} />
-          <Route path="/blog" element={<ModernBlog />} />
-          <Route path="/blog/:slug" element={<Suspense fallback={<RouteFallback />}><LazyNewBlogPost /></Suspense>} />
-          <Route path ="/learn" element={<Learn />} />
+          <Route path="/article" element={<ModernBlog />} />
+          <Route path="/article/:slug" element={<Suspense fallback={<RouteFallback />}><LazyNewBlogPost /></Suspense>} />
+          <Route path ="/apprendre" element={<Learn />} />
+          <Route path="/laboratoire" element={<Laboratoire />} />
+          <Route path="/labs" element={<Navigate to="/laboratoire" replace />} />
           <Route path="/library" element={<Library />} />
           <Route path="/library/:id" element={<Suspense fallback={<RouteFallback />}><LazyBookDetail /></Suspense>} />
           <Route path="/library/:id/read" element={<Suspense fallback={<RouteFallback />}><PdfReaderPage /></Suspense>} />
@@ -196,6 +205,7 @@ function AppContent() {
       {!isAdminRoute && !isAuthRoute && <BottomNavigation />}
       {!isAdminRoute && !isAuthRoute && <Footer />}
       {!isAdminRoute && !isAuthRoute && <CookieConsent />}
+      {!isAdminRoute && !isAuthRoute && <SupportButton />}
     </div>
   );
 }

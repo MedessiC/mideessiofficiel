@@ -1,14 +1,15 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth, UserRole } from '../contexts/AuthContext';
+import { useAuth, AppRole } from '../contexts/AuthContext';
 import LoadingSpinner from './LoadingSpinner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: UserRole;
+  /** Si fourni, l'utilisateur doit avoir ce rôle (ou 'admin') pour accéder. */
+  requiredRole?: AppRole;
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, loading, userRole } = useAuth();
+  const { user, loading, profile, isAdmin } = useAuth();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
 
@@ -16,11 +17,14 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return <LoadingSpinner fullScreen size="lg" />;
   }
 
+  // Non connecté → redirection vers la page de connexion appropriée
   if (!user) {
     return <Navigate to={isAdminRoute ? '/admin/login' : '/login'} replace />;
   }
 
-  if (requiredRole && userRole !== requiredRole) {
+  // Vérification du rôle si requis
+  // Un admin a toujours accès, même si le requiredRole est 'cofondateur' ou 'membre'
+  if (requiredRole && !isAdmin && profile?.role !== requiredRole) {
     return <Navigate to="/" replace />;
   }
 

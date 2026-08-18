@@ -325,7 +325,7 @@ const BlogPost = () => {
                   {relatedPosts.map(relatedPost => (
                     <Link
                       key={relatedPost.id}
-                      to={`/blog/${relatedPost.id}`}
+                      to={`/article/${relatedPost.id}`}
                       className="group bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden hover:shadow-lg transition-all"
                     >
                       <div className="relative h-40 sm:h-48 overflow-hidden">

@@ -434,52 +434,52 @@ const Library = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-page)] dark:bg-gray-950 pb-20 sm:pb-8 font-poppins">
+    <div className="min-h-screen bg-[#FAFAFA] pb-20 sm:pb-10 font-poppins">
       {/* Toast */}
       {shareToast && (
         <div
           role="status"
-          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[var(--brand-midnight)] text-white px-4 py-2 rounded-full text-xs font-bold shadow-xl flex items-center gap-1.5"
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#191970] text-white px-4 py-2 rounded-full text-xs font-bold shadow-xl flex items-center gap-1.5"
         >
           <span>Lien copié dans le presse-papiers</span>
         </div>
       )}
 
       {/* Hero */}
-      <section className="relative text-white pt-20 sm:pt-24 pb-10 sm:pb-16 overflow-hidden bg-[var(--brand-midnight)]">
-        <div className="absolute inset-0 pointer-events-none opacity-10">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-gold rounded-full blur-[100px]" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-600 rounded-full blur-[100px]" />
+      <section className="relative pt-20 sm:pt-24 pb-10 sm:pb-16 overflow-hidden bg-[#FAFAFA]">
+        <div className="absolute inset-0 pointer-events-none opacity-30">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-gold rounded-full blur-[90px]" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#191970] rounded-full blur-[90px]" />
         </div>
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-1.5 mb-4 px-3 py-1 bg-gold/10 rounded-full border border-gold/30">
+          <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 bg-white border border-[#E5E7EB] rounded-full shadow-sm">
             <BookOpen className="w-3.5 h-3.5 text-gold" />
-            <span className="text-[10px] font-bold text-gold uppercase tracking-wider">BIBLIOTHÈQUE MIDEESSI</span>
+            <span className="text-[10px] font-bold text-[#4B5563] uppercase tracking-wider">BIBLIOTHÈQUE MIDEESSI</span>
           </div>
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black mb-3 leading-tight tracking-tight">
-            Accélérez vos <span className="text-gold">Compétences</span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 leading-tight tracking-tight text-[#191970]">
+            Accélérez vos compétences numériques.
           </h1>
-          <p className="text-xs sm:text-base text-gray-300 mb-2 max-w-xl mx-auto px-2">
-            Découvrez nos guides pratiques et ebooks thématiques optimisés pour votre apprentissage.
+          <p className="text-sm sm:text-base text-[#4B5563] mb-4 max-w-2xl mx-auto px-2">
+            Parcourez nos guides pratiques, ebooks et ressources pour apprendre, créer et innover avec MIDEESSI.
           </p>
-          <p className="text-[10px] sm:text-xs text-gray-400 mb-6 sm:mb-8">
-            Fichiers PDF accessibles immédiatement • Mises à jour incluses
+          <p className="text-xs text-[#6B7280] mb-8 max-w-xl mx-auto px-2">
+            Tous nos contenus sont pensés pour une adoption rapide et une mise en œuvre concrète.
           </p>
 
-          {/* Quick metrics */}
-          <div className="flex justify-center gap-6 sm:gap-8 max-w-md mx-auto border-t border-white/10 pt-5 sm:pt-6">
-            {[
-              { value: books.length || '12', label: 'Ressources' },
-              { value: '4.8 / 5', label: 'Satisfaction' },
-              { value: '500+', label: 'Lecteurs' },
-            ].map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="text-base sm:text-xl font-black text-gold">{stat.value}</div>
-                <div className="text-[9px] sm:text-[10px] text-gray-400 mt-0.5">{stat.label}</div>
-              </div>
-            ))}
+          <div className="mx-auto max-w-md rounded-3xl border border-[#E5E7EB] bg-white py-5 px-6 shadow-sm">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              {[
+                { value: books.length || '12', label: 'Ressources' },
+                { value: '4.8 / 5', label: 'Satisfaction' },
+                { value: '500+', label: 'Lecteurs' },
+              ].map((stat, i) => (
+                <div key={i}>
+                  <div className="text-lg sm:text-xl font-black text-[#191970]">{stat.value}</div>
+                  <div className="text-[10px] text-[#6B7280] mt-1">{stat.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { clearStoredRedirectTarget, getStoredRedirectTarget, getRedirectTargetFromLocation, persistRedirectTarget } from '../utils/authRedirect';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Home, Moon, Sun } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Home } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -11,21 +11,16 @@ export default function Login() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [isDark, setIsDark] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { signIn } = useAuth();
 
   useEffect(() => {
-    // Vérifier le thème actuel au chargement
-    const darkMode = document.documentElement.classList.contains('dark');
-    setIsDark(darkMode);
-
-    // Afficher le message de succès si venant de signup
     if (searchParams.get('signup') === 'success') {
       setSuccessMessage('Compte créé avec succès ! Connectez-vous maintenant.');
-      setTimeout(() => setSuccessMessage(''), 5000);
+      const timer = setTimeout(() => setSuccessMessage(''), 5000);
+      return () => clearTimeout(timer);
     }
 
     const redirectTarget = getRedirectTargetFromLocation(location);
@@ -33,20 +28,6 @@ export default function Login() {
       persistRedirectTarget(redirectTarget);
     }
   }, [searchParams, location]);
-
-  const toggleTheme = () => {
-    const newTheme = !isDark;
-    setIsDark(newTheme);
-    localStorage.setItem('autoMode', 'false');
-    
-    if (newTheme) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,128 +52,111 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#191970] via-[#191970] to-[#0f0f43] dark:from-[#191970] dark:via-[#191970] dark:to-[#0f0f43] flex items-center justify-center px-4 py-12 relative overflow-hidden">
-      {/* Top Navigation Bar */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-white/5 dark:bg-black/20 backdrop-blur-md border-b border-[#ffd700]/10 flex items-center justify-between px-4 z-50">
-        <Link
-          to="/"
-          className="flex items-center gap-2 text-[#ffd700] hover:text-[#ffed4e] font-semibold transition"
-          title="Retour à l'accueil"
-        >
-          <Home size={20} />
-          <span className="hidden sm:inline">Accueil</span>
-        </Link>
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-lg bg-[#ffd700]/10 hover:bg-[#ffd700]/20 transition-all"
-          aria-label="Toggle theme"
-        >
-          {isDark ? (
-            <Sun className="w-5 h-5 text-[#ffd700]" />
-          ) : (
-            <Moon className="w-5 h-5 text-[#ffd700]" />
-          )}
-        </button>
-      </div>
+    <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,215,0,0.10),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(25,25,112,0.08),transparent_30%)]" />
 
-      {/* Decorative elements */}
-      <div className="absolute top-10 left-10 w-40 h-40 border-4 border-[#ffd700]/10 rounded-full opacity-20 animate-pulse"></div>
-      <div className="absolute bottom-20 right-10 w-64 h-64 border-4 border-[#ffd700]/10 rotate-45 opacity-20 animate-pulse" style={{ animationDelay: '1s' }}></div>
-      
-      <div className="w-full max-w-md relative z-10 mt-16">
-        <div className="bg-white/95 dark:bg-[#191970]/40 dark:backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-[#ffd700]/20">
-          <div className="text-center mb-8">
-            <img
-              src={isDark ? "/mideessi.webp" : "/mideessi-light.webp"}
-              alt="Logo MIDEESSI"
-              className="h-14 mx-auto mb-4 transition-opacity duration-500"
-            />
-            <p className="text-gray-600 dark:text-gray-300">
-              Heureux de vous revoir !
-            </p>
+      <div className="w-full max-w-md relative z-10">
+        <div className="mb-6 flex items-center justify-between">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--brand-midnight)] hover:text-[var(--brand-gold)] transition-colors"
+            title="Retour à l'accueil"
+          >
+            <Home size={18} />
+            Accueil
+          </Link>
+        </div>
+
+        <div className="bg-white rounded-[28px] border border-[var(--border)] shadow-[0_18px_45px_rgba(17,17,17,0.06)] overflow-hidden">
+          <div className="px-8 pt-8 pb-6 text-center border-b border-[var(--border)] bg-[var(--bg-surface)]">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--brand-midnight)] text-white shadow-[0_12px_25px_rgba(25,25,112,0.18)] mb-4">
+              <Lock className="w-7 h-7 text-[var(--brand-gold)]" />
+            </div>
+            <h1 className="text-2xl font-bold text-[var(--brand-midnight)] mb-1">Bon retour !</h1>
+            <p className="text-sm text-[var(--text-secondary)]">Connectez-vous pour continuer</p>
           </div>
 
-          {successMessage && (
-            <div className="mb-6 p-4 bg-green-400/20 border border-green-400 rounded-lg">
-              <p className="text-green-700 dark:text-green-300 text-sm">{successMessage}</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-400/20 border border-red-400 rounded-lg">
-              <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-[#191970] dark:text-[#ffd700] mb-2">
-                Adresse email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3.5 text-[#ffd700]" size={20} />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="votre@email.com"
-                  className="w-full pl-10 pr-4 py-3 border-2 border-[#ffd700]/30 dark:border-[#ffd700]/50 rounded-lg bg-white/90 dark:bg-[#0f0f43]/50 text-[#191970] dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#ffd700] focus:border-[#ffd700] transition"
-                />
+          <div className="p-8">
+            {successMessage && (
+              <div className="mb-6 p-4 rounded-xl border border-emerald-200 bg-emerald-50">
+                <p className="text-sm text-emerald-700">{successMessage}</p>
               </div>
-            </div>
+            )}
 
-            {/* Password avec lien "Mot de passe oublié" */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="password" className="block text-sm font-semibold text-[#191970] dark:text-[#ffd700]">
-                  Mot de passe
+            {error && (
+              <div className="mb-6 p-4 rounded-xl border border-red-200 bg-red-50 flex items-start gap-3">
+                <span className="mt-0.5 text-red-600">•</span>
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label htmlFor="email" className="block text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] mb-2">
+                  Adresse email
                 </label>
-                <Link
-                  to="/forgot-password"
-                  className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-[#ffd700]/10 hover:bg-[#ffd700]/20 text-[#ffd700] hover:text-[#ffed4e] font-semibold transition-all hover:scale-105 active:scale-95"
-                >
-                  Oublié ?
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" size={18} />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="votre@email.com"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder:text-[var(--text-hint)] focus:outline-none focus:border-[var(--brand-gold)] focus:ring-4 focus:ring-[var(--brand-gold)]/10 transition"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="password" className="block text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-primary)]">
+                    Mot de passe
+                  </label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs font-semibold text-[var(--brand-midnight)] hover:text-[var(--brand-gold)] transition-colors"
+                  >
+                    Oublié ?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" size={18} />
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-11 pr-12 py-3.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder:text-[var(--text-hint)] focus:outline-none focus:border-[var(--brand-gold)] focus:ring-4 focus:ring-[var(--brand-gold)]/10 transition"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--brand-midnight)] transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-2 py-3.5 rounded-2xl bg-[var(--brand-midnight)] text-white font-semibold shadow-[0_12px_25px_rgba(25,25,112,0.18)] hover:-translate-y-0.5 transition-transform disabled:opacity-70 disabled:pointer-events-none flex items-center justify-center gap-2"
+              >
+                {loading ? 'Connexion en cours...' : <>Se connecter <ArrowRight size={18} /></>}
+              </button>
+            </form>
+
+            <div className="mt-8 text-center border-t border-[var(--border)] pt-6">
+              <p className="text-sm text-[var(--text-secondary)]">
+                Pas encore de compte ?{' '}
+                <Link to="/signup" className="font-bold text-[var(--brand-midnight)] hover:text-[var(--brand-gold)] transition-colors">
+                  Créer un compte
                 </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3.5 text-[#ffd700]" size={20} />
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••"
-                  className="w-full pl-10 pr-10 py-3 border-2 border-[#ffd700]/30 dark:border-[#ffd700]/50 rounded-lg bg-white/90 dark:bg-[#0f0f43]/50 text-[#191970] dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#ffd700] focus:border-[#ffd700] transition"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3.5 text-[#ffd700] hover:text-[#ffed4e] transition"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
+              </p>
             </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full mt-8 bg-gradient-to-r from-[#ffd700] to-[#ffed4e] hover:from-[#ffed4e] hover:to-[#ffff99] text-[#191970] font-bold py-3 px-4 rounded-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-[#ffd700]/50"
-            >
-              {loading ? 'Connexion en cours...' : <>Se connecter <ArrowRight size={18} /></>}
-            </button>
-          </form>
-
-          <div className="mt-8 text-center border-t border-[#ffd700]/20 pt-6">
-            <p className="text-[#191970] dark:text-gray-300 text-sm">
-              Pas encore de compte ?{' '}
-              <Link to="/signup" className="text-[#ffd700] dark:text-[#ffd700] hover:text-[#ffed4e] font-bold transition">
-                S'inscrire gratuitement
-              </Link>
-            </p>
           </div>
         </div>
       </div>

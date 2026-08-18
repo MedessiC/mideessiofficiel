@@ -1,12 +1,9 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { Clock, Search, TrendingUp, BookOpen, User, Flame, MessageSquare } from 'lucide-react';
-import SEO from '../components/SEO';
-import BlogCarousel from '../components/BlogCarousel';
-import ArticlePreview from '../components/ArticlePreview';
-import BlogSearchBar from '../components/BlogSearchBar';
-import SearchStatsComponent, { SearchSuggestionsComponent } from '../components/SearchStatsComponent';
-import { supabase, BlogPost, BlogCategory } from '../lib/supabase';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Clock, User, ArrowRight, BookOpen } from 'lucide-react';
+import SEO from '../components/SEO';
+import BlogSearchBar from '../components/BlogSearchBar';
+import { supabase, BlogPost, BlogCategory } from '../lib/supabase';
 import { toCloudinaryUrl } from '../utils/cloudinaryImage';
 
 const ModernBlog = () => {
@@ -15,50 +12,15 @@ const ModernBlog = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [featuredPosts, setFeaturedPosts] = useState<BlogPost[]>([]);
-  const [displayedCount, setDisplayedCount] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [engagementMap, setEngagementMap] = useState<Record<string, { likes: number; comments: number }>>({});
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const observerTarget = useRef<HTMLDivElement>(null);
-
-  const ITEMS_PER_LOAD = isMobile ? 6 : 12;
 
   useEffect(() => {
+    document.title = 'Blog & Analyses — MIDEESSI';
     fetchData();
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  useEffect(() => {
-    setDisplayedCount(ITEMS_PER_LOAD);
-    setHasMore(true);
-  }, [selectedCategory, searchQuery, ITEMS_PER_LOAD]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && displayedCount > 0) {
-          loadMorePosts();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, loadingMore]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-
       const [postsResult, categoriesResult] = await Promise.all([
         supabase
           .from('blog_posts')
@@ -68,241 +30,71 @@ const ModernBlog = () => {
         supabase
           .from('blog_categories')
           .select('*')
-          .order('name', { ascending: true })
+          .order('name', { ascending: true }),
       ]);
 
       if (postsResult.data) {
-        const posts = postsResult.data;
-        setAllPosts(posts);
-        setFeaturedPosts(posts.slice(0, 4)); // Get 4 for the news layout
-        setDisplayedCount(ITEMS_PER_LOAD);
-        setHasMore(posts.length > ITEMS_PER_LOAD);
-
-        const postIds = posts.map(post => post.id);
-        if (postIds.length > 0) {
-          const [{ data: likesData }, { data: commentsData }] = await Promise.all([
-            supabase.from('blog_likes').select('blog_id').in('blog_id', postIds),
-            supabase.from('blog_comments').select('blog_id').in('blog_id', postIds)
-          ]);
-
-          const likesByPost = (likesData || []).reduce<Record<string, number>>((acc, like) => {
-            acc[like.blog_id] = (acc[like.blog_id] || 0) + 1;
-            return acc;
-          }, {});
-
-          const commentsByPost = (commentsData || []).reduce<Record<string, number>>((acc, comment) => {
-            acc[comment.blog_id] = (acc[comment.blog_id] || 0) + 1;
-            return acc;
-          }, {});
-
-          setEngagementMap(Object.fromEntries(postIds.map(postId => [
-            postId,
-            {
-              likes: likesByPost[postId] || 0,
-              comments: commentsByPost[postId] || 0,
-            }
-          ])));
-        } else {
-          setEngagementMap({});
-        }
+        setAllPosts(postsResult.data);
       }
-
       if (categoriesResult.data) {
         setCategories(categoriesResult.data);
       }
     } catch (err) {
-      console.error('Erreur:', err);
+      console.error('Erreur chargement blog:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadMorePosts = useCallback(() => {
-    setLoadingMore(true);
-    setTimeout(() => {
-      const nextCount = displayedCount + ITEMS_PER_LOAD;
-      setDisplayedCount(nextCount);
-      setLoadingMore(false);
-      
-      if (nextCount >= filteredPosts.length) {
-        setHasMore(false);
-      }
-    }, 300);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayedCount, ITEMS_PER_LOAD]);
-
-  const calculateReadTime = (text: string) => Math.ceil((text || '').split(' ').length / 200);
-
-  const getPostsByCategory = (categoryName: string) => {
-    return allPosts.filter(post => post.category === categoryName).slice(0, 8);
-  };
+  const calculateReadTime = (text: string) => Math.max(1, Math.ceil((text || '').split(' ').length / 200));
 
   const filteredPosts = useMemo(() => {
-    return allPosts.filter(post => {
+    return allPosts.filter((post) => {
       const matchesCategory = selectedCategory === 'all' || post.category === selectedCategory;
-      const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [allPosts, selectedCategory, searchQuery]);
 
-  const displayedPosts = useMemo(() => {
-    return filteredPosts.slice(0, displayedCount);
-  }, [filteredPosts, displayedCount]);
-
-  const getEngagement = (postId: string) => {
-    return engagementMap[postId] || { likes: 0, comments: 0 };
-  };
-
-  // ---------------------------------------------------------------------------
-  // BLOG CARD COMPONENTS
-  // ---------------------------------------------------------------------------
-  const BlogCard = ({ post, variant = 'default' }: { post: BlogPost; variant?: 'default' | 'small' | 'featured' | 'list' }) => {
-    const engagement = getEngagement(post.id);
-
-    // 1. FEATURED VARIANT (Hero Image)
-    if (variant === 'featured') {
-      return (
-        <Link
-          to={`/blog/${post.slug}`}
-          className="group relative rounded-[20px] sm:rounded-[24px] overflow-hidden bg-[var(--brand-midnight)] h-full flex flex-col justify-end transition-all duration-500 shadow-xl hover:shadow-[0_25px_60px_rgba(255,215,0,0.2)]"
-        >
-          <img
-            src={toCloudinaryUrl(post.image_url, { width: 1600, height: 900, quality: 80, crop: 'fill' })}
-            alt={post.title}
-            loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
-          
-          <div className="relative z-10 p-5 sm:p-8 md:p-10 transform group-hover:translate-y-[-5px] transition-transform duration-500">
-            <div className="flex items-center gap-3 mb-4 flex-wrap">
-              <span className="px-3 py-1 bg-[var(--brand-gold)] text-midnight text-xs font-bold uppercase tracking-wider rounded-md">
-                {post.category}
-              </span>
-              <span className="text-xs font-medium text-gray-300 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" />
-                {calculateReadTime(post.excerpt)} min
-              </span>
-            </div>
-            
-            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4 group-hover:text-[var(--brand-gold)] transition-colors duration-300 leading-tight">
-              {post.title}
-            </h3>
-            
-            <p className="hidden md:block text-sm md:text-base text-gray-300 mb-6 line-clamp-2 max-w-2xl leading-relaxed">
-              {post.excerpt}
-            </p>
-            
-            <div className="flex items-center justify-between pt-5 border-t border-white/20">
-              <div className="flex items-center gap-4 text-xs font-medium text-gray-300">
-                <div className="flex items-center gap-1.5">
-                  <User className="w-4 h-4 text-gold" />
-                  <span>{post.author}</span>
-                </div>
-                <div className="flex items-center gap-1.5 hover:text-orange-500 transition-colors">
-                  <Flame className="w-4 h-4" />
-                  <span>{engagement.likes}</span>
-                </div>
-                <div className="flex items-center gap-1.5 hover:text-gold transition-colors">
-                  <MessageSquare className="w-4 h-4" />
-                  <span>{engagement.comments}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Link>
-      );
-    }
-
-    // 2. LIST VARIANT (Sidebar news style)
-    if (variant === 'list') {
-      return (
-        <Link
-          to={`/blog/${post.slug}`}
-          className="group flex gap-4 p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
-        >
-          <div className="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden bg-gray-200">
-            <img
-              src={toCloudinaryUrl(post.image_url, { width: 600, height: 600, quality: 80, crop: 'fill' })}
-              alt={post.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            />
-          </div>
-          <div className="flex flex-col justify-center flex-grow">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gold mb-1.5">{post.category}</span>
-            <h4 className="font-bold text-sm sm:text-base text-[var(--brand-midnight)] dark:text-white mb-2 line-clamp-2 group-hover:text-gold transition-colors leading-tight">
-              {post.title}
-            </h4>
-            <div className="flex items-center gap-3 text-[11px] text-gray-500">
-              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {calculateReadTime(post.excerpt)}m</span>
-              <span className="flex items-center gap-1"><Flame className="w-3 h-3" /> {engagement.likes}</span>
-              <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" /> {engagement.comments}</span>
-            </div>
-          </div>
-        </Link>
-      );
-    }
-
-    // 3. SMALL VARIANT (Grid)
-    return (
-      <Link
-        to={`/blog/${post.slug}`}
-        className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-[0_15px_40px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full hover:-translate-y-1"
-      >
-        <div className="relative h-48 overflow-hidden bg-gray-100">
-          <img
-            src={toCloudinaryUrl(post.image_url, { width: 800, height: 500, quality: 80, crop: 'fill' })}
-            alt={post.title}
-            loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-          <div className="absolute top-3 right-3 px-2.5 py-1 bg-white/90 backdrop-blur text-midnight text-[10px] font-black uppercase tracking-wider rounded-md shadow-sm">
-            {post.category}
-          </div>
-        </div>
-        
-        <div className="p-5 flex flex-col flex-grow">
-          <h4 className="font-bold text-lg text-[var(--brand-midnight)] dark:text-white mb-2 line-clamp-2 group-hover:text-[var(--brand-gold)] transition-colors leading-snug">
-            {post.title}
-          </h4>
-          
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-grow line-clamp-2 leading-relaxed">
-            {post.excerpt}
-          </p>
-          
-          <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 font-medium">
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              {calculateReadTime(post.excerpt)} min
-            </span>
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 group-hover:text-orange-500 transition-colors"><Flame className="w-3.5 h-3.5" /> {engagement.likes}</span>
-              <span className="flex items-center gap-1 group-hover:text-blue-500 transition-colors"><MessageSquare className="w-3.5 h-3.5" /> {engagement.comments}</span>
-            </div>
-          </div>
-        </div>
-      </Link>
-    );
-  };
+  const featuredPost = filteredPosts[0];
+  const gridPosts = filteredPosts.slice(1);
 
   return (
-    <div className="min-h-screen pt-16 bg-[var(--bg-page)] dark:bg-gray-900 font-poppins selection:bg-gold selection:text-midnight">
+    <div style={{ backgroundColor: '#FAFAFA' }}>
       <SEO
-        title="Actualités & Blog | MIDEESSI"
-        description="Découvrez nos articles sur la technologie, le business et l'innovation. Analyses et insights du monde digital."
-        keywords={['blog', 'articles', 'tech', 'business', 'innovation', 'MIDEESSI']}
+        title="Blog & Analyses — MIDEESSI"
+        description="Analyses, réflexions et récits de terrain sur la technologie, la souveraineté numérique et l'innovation en Afrique."
       />
 
-      {/* HEADER SECTION */}
-      <section className="bg-[var(--brand-midnight)] text-white py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <h1 className="text-3xl md:text-5xl font-black mb-3">L'Actu <span className="text-[var(--brand-gold)]">Tech & Digital</span></h1>
-              <p className="text-gray-300 max-w-xl text-sm md:text-base">Les dernières tendances, stratégies et innovations pour propulser votre entreprise.</p>
+      {/* ── Section Hero / Header ── */}
+      <section style={{ paddingTop: 'clamp(64px, 10vh, 120px)', paddingBottom: '48px' }}>
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div className="max-w-2xl">
+              <span className="text-xs font-medium uppercase tracking-[0.14em] mb-4 block" style={{ color: '#6B7280' }}>
+                Réflexions & Analyses
+              </span>
+              <div className="w-12 h-0.5 mb-6" style={{ backgroundColor: '#E5E7EB' }} />
+              <h1
+                className="font-bold mb-4"
+                style={{
+                  fontSize: 'clamp(36px, 6vw, 64px)',
+                  lineHeight: 1.05,
+                  color: '#191970',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Le Blog MIDEESSI
+              </h1>
+              <p className="text-base leading-relaxed" style={{ color: '#4B5563', fontSize: 'clamp(16px, 2vw, 18px)' }}>
+                Perspectives sur la tech locale, le numérique utile et la souveraineté technologique africaine.
+              </p>
             </div>
-            <div className="w-full md:w-auto md:min-w-[300px]">
+
+            {/* Search Bar Container */}
+            <div className="w-full md:w-80 flex-shrink-0">
               <BlogSearchBar
                 posts={allPosts}
                 categories={categories}
@@ -316,103 +108,155 @@ const ModernBlog = () => {
         </div>
       </section>
 
-      {/* MEDIA/NEWS LAYOUT (Featured + Sidebar) */}
-      {!loading && featuredPosts.length > 0 && searchQuery === '' && selectedCategory === 'all' && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-            
-            {/* Colonne Principale (À la une) */}
-            <div className="lg:col-span-2">
-              <div className="h-[400px] sm:h-[500px] lg:h-[600px]">
-                <BlogCard post={featuredPosts[0]} variant="featured" />
-              </div>
-            </div>
+      {/* ── Main Content ── */}
+      <section style={{ backgroundColor: '#FFFFFF', borderTop: '1px solid #E5E7EB', paddingTop: 'var(--section-py)', paddingBottom: 'var(--section-py)' }}>
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
 
-            {/* Colonne Latérale (Derniers Articles) */}
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between mb-4 pb-2 border-b-2 border-gray-100 dark:border-gray-800">
-                <h2 className="text-lg font-black text-[var(--brand-midnight)] dark:text-white flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-gold" /> En continu
-                </h2>
-              </div>
-              <div className="flex flex-col gap-2">
-                {featuredPosts.slice(1, 4).map(post => (
-                  <BlogCard key={post.id} post={post} variant="list" />
+          {loading ? (
+            <div className="py-20 text-center">
+              <p className="text-sm font-medium" style={{ color: '#6B7280' }}>
+                Chargement des articles...
+              </p>
+            </div>
+          ) : filteredPosts.length === 0 ? (
+            <div className="py-20 text-center bg-[#FAFAFA] rounded-2xl border border-[#E5E7EB] p-12">
+              <BookOpen size={40} className="mx-auto mb-4" style={{ color: '#6B7280' }} />
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#191970' }}>
+                Aucun article trouvé
+              </h3>
+              <p className="text-sm" style={{ color: '#4B5563' }}>
+                Essayez d'ajuster votre recherche ou filtre.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Featured Post (Si pas de filtre de recherche spécifique) */}
+              {featuredPost && searchQuery === '' && selectedCategory === 'all' && (
+                <div className="mb-16">
+                  <Link
+                    to={`/article/${featuredPost.slug}`}
+                    className="group block bg-[#FAFAFA] rounded-2xl overflow-hidden border border-[#E5E7EB] transition-all duration-200"
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = '#191970';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = '#E5E7EB';
+                    }}
+                  >
+                    <div className="grid grid-cols-1 lg:grid-cols-12">
+                      <div className="lg:col-span-7 h-64 sm:h-80 lg:h-96 bg-[#F3F4F6] overflow-hidden">
+                        {featuredPost.image_url ? (
+                          <img
+                            src={toCloudinaryUrl(featuredPost.image_url, { width: 1200, height: 800, quality: 80, crop: 'fill' })}
+                            alt={featuredPost.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-4xl">📰</div>
+                        )}
+                      </div>
+
+                      <div className="lg:col-span-5 p-8 lg:p-12 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center gap-3 mb-4">
+                            <span className="text-xs font-semibold uppercase tracking-[0.1em]" style={{ color: '#191970' }}>
+                              À la une · {featuredPost.category}
+                            </span>
+                            <span className="text-xs flex items-center gap-1" style={{ color: '#6B7280' }}>
+                              <Clock size={12} /> {calculateReadTime(featuredPost.excerpt)} min de lecture
+                            </span>
+                          </div>
+
+                          <h2
+                            className="font-bold mb-4 line-clamp-3"
+                            style={{ fontSize: 'clamp(24px, 3vw, 32px)', color: '#111111', lineHeight: 1.2 }}
+                          >
+                            {featuredPost.title}
+                          </h2>
+
+                          <p className="text-sm leading-relaxed line-clamp-3 mb-6" style={{ color: '#4B5563' }}>
+                            {featuredPost.excerpt}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-6 border-t border-[#E5E7EB]">
+                          <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: '#6B7280' }}>
+                            <User size={13} /> {featuredPost.author}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold group-hover:gap-2.5 transition-all" style={{ color: '#191970' }}>
+                            Lire l'article <ArrowRight size={14} />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              )}
+
+              {/* Grid des articles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {(searchQuery !== '' || selectedCategory !== 'all' ? filteredPosts : gridPosts).map((post) => (
+                  <Link
+                    key={post.id}
+                    to={`/article/${post.slug}`}
+                    className="group bg-[#FAFAFA] rounded-2xl overflow-hidden border border-[#E5E7EB] flex flex-col transition-all duration-200"
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = '#191970';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = '#E5E7EB';
+                    }}
+                  >
+                    <div className="h-48 bg-[#F3F4F6] overflow-hidden">
+                      {post.image_url ? (
+                        <img
+                          src={toCloudinaryUrl(post.image_url, { width: 800, height: 500, quality: 80, crop: 'fill' })}
+                          alt={post.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-3xl">📰</div>
+                      )}
+                    </div>
+
+                    <div className="p-6 flex flex-col flex-1 justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-semibold uppercase tracking-[0.1em]" style={{ color: '#191970' }}>
+                            {post.category}
+                          </span>
+                          <span className="text-xs flex items-center gap-1" style={{ color: '#6B7280' }}>
+                            <Clock size={12} /> {calculateReadTime(post.excerpt)} min
+                          </span>
+                        </div>
+
+                        <h3 className="font-bold text-base mb-2 line-clamp-2" style={{ color: '#111111' }}>
+                          {post.title}
+                        </h3>
+
+                        <p className="text-xs leading-relaxed line-clamp-3 mb-6" style={{ color: '#4B5563' }}>
+                          {post.excerpt}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t border-[#E5E7EB]">
+                        <span className="text-xs font-medium" style={{ color: '#6B7280' }}>
+                          {post.author}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold group-hover:gap-2 transition-all" style={{ color: '#191970' }}>
+                          Lire <ArrowRight size={12} />
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
                 ))}
               </div>
-              <Link to="/blog" className="mt-4 text-center text-sm font-bold text-[var(--brand-midnight)] dark:text-white hover:text-gold transition-colors py-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                Voir tous les articles récents →
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
+            </>
+          )}
 
-      {/* GRILLE COMPLÈTE */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 border-t border-gray-200 dark:border-gray-800">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-2 h-8 bg-gold rounded-full" />
-          <h2 className="text-2xl md:text-3xl font-black text-midnight dark:text-white">Dernières publications</h2>
         </div>
-
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="relative w-16 h-16 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border-2 border-gray-100 dark:border-gray-800"></div>
-              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-yellow-500 border-r-yellow-500 animate-spin"></div>
-              <div className="absolute inset-2.5 rounded-full bg-[#0a0f1e] dark:bg-white flex items-center justify-center overflow-hidden p-1.5 animate-pulse">
-                <img src="/mideessi.webp" alt="Loading" className="w-full h-full object-contain dark:hidden" />
-                <img src="/mideessi-light.webp" alt="Loading" className="w-full h-full object-contain hidden dark:block" />
-              </div>
-            </div>
-          </div>
-        ) : displayedPosts.length > 0 ? (
-          <>
-            {(searchQuery || selectedCategory !== 'all') && (
-              <SearchStatsComponent
-                stats={{
-                  totalResults: filteredPosts.length,
-                  searchQuery,
-                  selectedCategory,
-                  totalArticles: allPosts.length
-                }}
-              />
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {displayedPosts.map(post => (
-                <ArticlePreview key={post.id} post={post}>
-                  <BlogCard post={post} variant="small" />
-                </ArticlePreview>
-              ))}
-            </div>
-
-            {hasMore && (
-              <div ref={observerTarget} className="flex justify-center mt-12 py-8">
-                {loadingMore ? (
-                  <div className="relative w-10 h-10 flex items-center justify-center">
-                    <div className="absolute inset-0 rounded-full border-2 border-gray-100 dark:border-gray-800"></div>
-                    <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-yellow-500 border-r-yellow-500 animate-spin"></div>
-                    <div className="absolute inset-1.5 rounded-full bg-[#0a0f1e] dark:bg-white flex items-center justify-center overflow-hidden p-0.5 animate-pulse">
-                      <img src="/mideessi-light.webp" alt="Loading" className="w-full h-full object-contain dark:hidden" />
-                      <img src="/mideessi.webp" alt="Loading" className="w-full h-full object-contain hidden dark:block" />
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm font-medium text-gray-500">Chargement...</p>
-                )}
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-20 bg-gray-50 dark:bg-gray-800 rounded-3xl">
-            <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-midnight dark:text-white mb-2">Aucun article trouvé</h3>
-            <p className="text-gray-500 mb-6">Essayez une autre recherche.</p>
-          </div>
-        )}
       </section>
-
     </div>
   );
 };

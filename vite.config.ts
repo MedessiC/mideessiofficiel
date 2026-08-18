@@ -22,25 +22,37 @@ export default defineConfig({
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        manualChunks(id) {
+          if (id.includes('node_modules/pdfjs-dist')) {
+            return 'pdf-vendor';
+          }
+          if (id.includes('node_modules/lucide-react')) {
+            return 'icons';
+          }
+          if (id.includes('node_modules/@supabase')) {
+            return 'supabase-vendor';
+          }
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router-dom/')) {
+            return 'react-vendor';
+          }
+        },
       },
       treeshake: true,
     },
-    chunkSizeWarningLimit: 800,
+    chunkSizeWarningLimit: 1200,
   },
   server: {
-    // En développement, désactive le cache
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
-    }
-    ,
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/api')
-      }
-    }
-  }
+        rewrite: (path) => path.replace(/^\/api/, '/api'),
+      },
+    },
+  },
 });

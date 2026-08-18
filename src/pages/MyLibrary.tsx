@@ -138,7 +138,7 @@ export default function MyLibrary() {
     try {
       const [{ data: profileData }, { data: savesData, error: savesError }, { data: likesData }] = await Promise.all([
         supabase
-          .from('users')
+          .from('profiles')
           .select('username')
           .eq('id', user.id)
           .single(),

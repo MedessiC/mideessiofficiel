@@ -32,10 +32,21 @@ const AdminDashboard = () => {
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { navigate('/admin/login'); return; }
-    const { data: adminData } = await supabase.from('admins').select('*').eq('id', user.id).maybeSingle();
-    if (!adminData) { await supabase.auth.signOut(); navigate('/admin/login'); return; }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, is_active, is_banned')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!profile || profile.role !== 'admin' || !profile.is_active || profile.is_banned) {
+      await supabase.auth.signOut();
+      navigate('/admin/login');
+      return;
+    }
     setAuthLoading(false);
   };
+
 
   const fetchPosts = async (reset = false) => {
     setPostsLoading(true);
@@ -230,7 +241,7 @@ const AdminDashboard = () => {
 
                       <div className="flex items-center gap-2 sm:self-center">
                         <Link
-                          to={`/blog/${post.slug}`}
+                          to={`/article/${post.slug}`}
                           target="_blank"
                           className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-semibold text-gray-300 transition-colors"
                           title="Voir l'article"

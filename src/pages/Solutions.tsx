@@ -1,571 +1,388 @@
-import { ArrowRight, Compass, CheckCircle2, ShieldCheck, Layers3, Sparkles, Smartphone, X, Globe2, Target, Users, TrendingUp, Award } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
-import { categories, solutions } from '../data/solutions';
-import { getIcon } from '../utils/iconMapper';
-import { getDynamicProjects, mapDynamicProjectToSolution, type DynamicProject } from '../lib/contentManagement';
-import { supabase } from '../lib/supabase';
 
-const Solutions = () => {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [selectedSolutionId, setSelectedSolutionId] = useState<string | null>(solutions[0]?.id ?? null);
-  const [showMobileDetail, setShowMobileDetail] = useState(false);
-  const [dynamicProjects, setDynamicProjects] = useState<DynamicProject[]>(getDynamicProjects());
-  const [page, setPage] = useState(0);
-  const pageSize = 10;
-  const [hasMoreProjects, setHasMoreProjects] = useState(true);
-  const [projectsLoading, setProjectsLoading] = useState(false);
-  const allSolutions = [...solutions, ...dynamicProjects.map(mapDynamicProjectToSolution)];
-  const solutionsByCategories = categories
-    .map((cat) => ({ category: cat, solutions: allSolutions.filter((item) => item.category === cat.id) }))
-    .filter((item) => item.solutions.length > 0);
-  const filteredCategories = activeCategory
-    ? solutionsByCategories.filter(item => item.category.id === activeCategory)
-    : solutionsByCategories;
-  const visibleSolutions = filteredCategories.flatMap(item => item.solutions);
-  const selectedSolution =
-    visibleSolutions.find((solution) => solution.id === selectedSolutionId) ?? visibleSolutions[0] ?? null;
+/* ============================================================
+   DATA
+   ============================================================ */
+const serviceCards = [
+  {
+    title: 'Site Web & Applications',
+    subtitle: 'Sites vitrines, boutiques et outils web sur mesure.',
+    href: '/siteweb',
+    image: '/siteweb_application.webp',
+    background: '#F5F5F7',
+    textColor: '#111111',
+    accent: '#191970',
+  },
+  {
+    title: 'Réseaux Sociaux',
+    subtitle: 'Stratégie de contenu, engagement et croissance digitale.',
+    href: '/solutions/reseaux-sociaux',
+    image: '/greseaux.webp',
+    background: '#ECEEF4',
+    textColor: '#111111',
+    accent: '#191970',
+  },
+  {
+    title: 'Couverture Événementielle',
+    subtitle: 'Captation visuelle, diffusion et présence sur scène.',
+    href: '/solutions/couverture-evenementielle',
+    image: '/cevent.webp',
+    background: '#F5F5F7',
+    textColor: '#111111',
+    accent: '#191970',
+  },
+  {
+    title: 'Automatisation & IA',
+    subtitle: 'Workflows, outils et systèmes qui font gagner du temps.',
+    href: '/solutions/automatisation-ia',
+    image: '/autoia.webp',
+    background: '#191970',
+    textColor: '#FFFFFF',
+    accent: '#FFD700',
+  },
+];
 
+const siteWebOffers = [
+  {
+    slug: 'vitrine',
+    name: 'Site Vitrine',
+    description: 'Présentez votre entreprise avec crédibilité. 5 à 7 pages sur mesure, formulaire de contact, intégration WhatsApp et nom de domaine inclus.',
+    price: '75 000 FCFA',
+    href: '/siteweb/vitrine',
+    image: '/site_vitrine_placeholder.webp',
+  },
+  {
+    slug: 'e-commerce',
+    name: 'Site E-commerce',
+    description: 'Vendez vos produits 24h/24. Catalogue complet, gestion des commandes et paiement intégré Mobile Money (MTN, Moov, Wave) & Carte.',
+    price: '150 000 FCFA',
+    href: '/siteweb/e-commerce',
+    image: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    slug: 'application-web',
+    name: 'Application Web',
+    description: 'Digitalisez la gestion de votre activité. Espace client sécurisé, tableaux de bord, gestion de dossiers et automatisations sur mesure.',
+    price: '250 000 FCFA',
+    href: '/siteweb/application-web',
+    image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    slug: 'application-mobile',
+    name: 'Application Mobile',
+    description: 'Déployez vos services directement sur les smartphones de vos utilisateurs (iOS & Android) avec une interface fluide et rapide.',
+    price: 'Sur devis',
+    href: '/siteweb/application-mobile',
+    image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=1200&q=80',
+  },
+];
+
+/* ============================================================
+   SITEWEB PAGE — même design & hiérarchie que NewHome
+   ============================================================ */
+export const SiteWebPage = () => {
   useEffect(() => {
-    // initial load
-    void fetchProjects(true);
-
-    const handler = () => {
-      void fetchProjects(true);
-    };
-
-    window.addEventListener('mideessi-content-updated', handler);
-    return () => window.removeEventListener('mideessi-content-updated', handler);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const fetchProjects = async (reset = false) => {
-    setProjectsLoading(true);
-    try {
-      const currentPage = reset ? 0 : page;
-      const start = currentPage * pageSize;
-      const end = start + pageSize - 1;
-
-      const { data, count, error } = await supabase
-        .from('dynamic_projects')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range(start, end);
-
-      if (!error && Array.isArray(data)) {
-        const mapped = data.map((row) => ({
-          id: String(row.id || `project-${Date.now()}`),
-          name: String(row.name || ''),
-          slug: String(row.slug || ''),
-          category: (row.category as any) || 'autre',
-          tagline: String(row.tagline || ''),
-          description: String(row.description || ''),
-          longDescription: String(row.long_description || ''),
-          image: String(row.image_url || row.image || ''),
-          logo: String(row.logo_url || row.logo || ''),
-          website: String(row.website || ''),
-          status: (row.status as any) || 'En cours',
-          launchDate: String(row.launch_date || ''),
-          targetAudience: Array.isArray(row.target_audience) ? row.target_audience.filter(Boolean).map((item: unknown) => String(item)) : [],
-          features: Array.isArray(row.features) ? row.features : [],
-          benefits: Array.isArray(row.benefits) ? row.benefits.filter(Boolean).map((item: unknown) => String(item)) : [],
-          technologies: Array.isArray(row.technologies) ? row.technologies.filter(Boolean).map((item: unknown) => String(item)) : [],
-          cta: { text: String(row.cta_text || 'Découvrir'), url: String(row.cta_url || row.website || '#') },
-          contact: { email: String(row.contact_email || 'contact@mideessi.com') },
-          isPublished: Boolean(row.is_published ?? true),
-          createdAt: String(row.created_at || new Date().toISOString()),
-        })) as DynamicProject[];
-
-        if (mapped.length > 0) {
-          setDynamicProjects((prev) => (reset ? mapped : [...prev, ...mapped]));
-          setHasMoreProjects(mapped.length === pageSize && (typeof count !== 'number' || start + mapped.length < count));
-          if (reset) setPage(1); else setPage((p) => p + 1);
-        } else if (reset) {
-          // fallback to local cache
-          setDynamicProjects(getDynamicProjects());
-          setHasMoreProjects(false);
-        }
-      } else {
-        // on error fallback to cached projects
-        setDynamicProjects(getDynamicProjects());
-        setHasMoreProjects(false);
-        if (error) console.error('Error fetching dynamic projects:', error);
-      }
-    } catch (err) {
-      console.error('Unexpected error fetching projects:', err);
-      setDynamicProjects(getDynamicProjects());
-      setHasMoreProjects(false);
-    } finally {
-      setProjectsLoading(false);
-    }
-  };
-
-  const handleSelectSolution = (id: string) => {
-    setSelectedSolutionId(id);
-    setShowMobileDetail(true);
-  };
+    document.title = 'Sites Web & Applications sur Mesure — MIDEESSI';
+    const revealItems = document.querySelectorAll('[data-siteweb-reveal]');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) entry.target.classList.add('is-visible');
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -20px 0px' }
+    );
+    revealItems.forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="min-h-screen pt-16 bg-white dark:bg-gray-900">
+    <>
+      <style>{`
+        [data-siteweb-reveal] {
+          opacity: 0;
+          transform: translate3d(0, 22px, 0);
+          transition: opacity 700ms cubic-bezier(0.2,0,0.2,1),
+                      transform 700ms cubic-bezier(0.2,0,0.2,1);
+          will-change: opacity, transform;
+        }
+        [data-siteweb-reveal].is-visible {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [data-siteweb-reveal] { opacity:1; transform:none; transition:none; }
+        }
+      `}</style>
+
       <SEO
-        title="Nos Solutions | MIDEESSI - MIKPLE & EKPE"
-        description="Découvrez MIKPLE, plateforme de microfinance, et EKPE, plateforme agricole. Deux solutions technologiques innovantes pour l'Afrique."
-        keywords={['MIKPLE', 'EKPE', 'solutions', 'microfinance', 'agriculture', 'MIDEESSI']}
+        title="Sites Web & Applications sur Mesure — MIDEESSI"
+        description="Sites vitrines, e-commerce et applications web sur mesure pensés pour vendre, convaincre et simplifier votre activité."
       />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-midnight via-blue-900 to-slate-900 py-16 text-white md:py-24">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute right-5 top-10 h-40 w-40 rounded-full bg-gold blur-3xl md:right-10 md:top-20 md:h-72 md:w-72"></div>
-          <div className="absolute -bottom-10 -left-5 h-48 w-48 rounded-full bg-blue-500 blur-3xl md:bottom-20 md:left-10 md:h-96 md:w-96"></div>
-        </div>
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-gray-100 backdrop-blur-sm">
-              <Compass className="h-4 w-4 text-gold" />
-              Des solutions pensées pour l’Afrique de l’Ouest
-            </div>
-            <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight md:mb-6 md:text-5xl lg:text-6xl">
-              Nos <span className="text-gold">Solutions</span>
-            </h1>
-            <p className="mx-auto max-w-3xl text-base font-light leading-relaxed text-gray-200 md:text-lg lg:text-2xl">
-              On crée des outils concrets, utiles et durables pour répondre aux vrais besoins des entrepreneurs, des familles et des communautés.
+      <div style={{ backgroundColor: '#FAFAFA' }}>
+
+        {/* ═══════════════ HERO ═══════════════ */}
+        <section
+          style={{
+            backgroundColor: 'var(--color-bg-primary)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            padding: 'clamp(88px, 14vh, 132px) 0 clamp(40px, 5vh, 64px)',
+          }}
+        >
+          <div className="max-w-[1200px] mx-auto px-6 lg:px-12 w-full">
+
+            <p className="text-sm uppercase text-center"
+              style={{ letterSpacing: '0.26em', color: 'var(--color-text-secondary)', marginBottom: '1.25rem' }}>
+              Création Web &amp; Sur-Mesure
             </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-gray-100 backdrop-blur-sm">
-                2 solutions actives
-              </span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-gray-100 backdrop-blur-sm">
-                Développées localement
-              </span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-gray-100 backdrop-blur-sm">
-                Orientées impact réel
-              </span>
-            </div>
-          </div>
 
-          <div className="mt-10 grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-3">
-            {[
-              { icon: CheckCircle2, title: 'Simple', text: 'Des parcours rapides et accessibles.' },
-              { icon: ShieldCheck, title: 'Fiable', text: 'Des services pensés pour durer.' },
-              { icon: Layers3, title: 'Adapté', text: 'Un niveau de personnalisation utile.' }
-            ].map((item, idx) => (
-              <div key={idx} className="rounded-2xl border border-white/15 bg-white/10 p-2 text-left backdrop-blur-sm sm:p-3 md:p-5">
-                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-gold/20 text-gold">
-                  <item.icon className="h-5 w-5" />
-                </div>
-                <h3 className="mb-1 text-lg font-semibold text-white">{item.title}</h3>
-                <p className="text-sm text-gray-300">{item.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            <h1 className="font-bold text-center mx-auto"
+              style={{ fontSize: 'clamp(36px, 7vw, 62px)', lineHeight: 1.06, letterSpacing: '-0.04em', color: 'var(--color-text-primary)', maxWidth: '820px' }}>
+              <span style={{ display: 'block' }}>Sites web &amp; applications</span>
+            </h1>
 
-      {/* App Store Style Solutions */}
-      <section className="bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.16),_transparent_32%),linear-gradient(135deg,_#f8fafc_0%,_#ffffff_100%)] py-20 dark:bg-gray-900">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative mb-12 overflow-hidden rounded-[2rem] border border-gray-200/80 bg-white/80 p-5 shadow-[0_25px_70px_-25px_rgba(15,23,42,0.25)] backdrop-blur md:mb-16 md:p-8 dark:border-gray-700 dark:bg-gray-900/80">
-            {selectedSolution && (
-              <div className="absolute inset-0">
-                <img
-                  src={selectedSolution.image}
-                  alt={selectedSolution.name}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/90 to-slate-950/70" />
-              </div>
-            )}
-            <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-2xl">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm font-semibold text-white backdrop-blur-sm">
-                  <Sparkles className="h-4 w-4 text-gold" />
-                  Découvrez nos solutions
-                </div>
-                <h3 className="text-2xl font-bold text-white md:text-3xl">
-                  Choisissez une solution, puis ouvrez son univers
-                </h3>
-                <p className="mt-2 text-sm text-gray-200 md:text-base">
-                  Une navigation simple, visuelle et claire pour trouver rapidement la solution qui correspond à votre besoin.
-                </p>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide flex-nowrap md:flex-wrap">
-                <button
-                  onClick={() => setActiveCategory(null)}
-                  className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-all md:px-4 md:py-2 md:text-sm ${
-                    activeCategory === null
-                      ? 'bg-gold text-midnight shadow-md'
-                      : 'bg-white/10 text-white shadow-sm backdrop-blur-sm hover:bg-gold/20 dark:bg-gray-700 dark:text-gray-300'
-                  }`}
+
+          </div>
+        </section>
+
+        <div className="w-full bg-white" style={{ height: '20px', margin: '0 0 1px 0' }} />
+
+        {/* ═══════════════ OFFRES ═══════════════ */}
+        <section
+          data-siteweb-reveal
+          style={{ backgroundColor: '#FAFAFA', paddingTop: 'clamp(30px, 4vh, 60px)', paddingBottom: 'clamp(30px, 4vh, 60px)' }}
+        >
+          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+            <div className="grid gap-8 md:grid-cols-2">
+              {siteWebOffers.map((offer, i) => (
+                <Link
+                  key={offer.slug}
+                  to={offer.href}
+                  className="group relative block h-[420px] sm:h-[460px] w-full overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1"
+                  style={{ boxShadow: '0 24px 60px rgba(15,23,42,0.08)', transitionDelay: `${i * 80}ms` }}
                 >
-                  Tout
-                </button>
-                {categories.map((cat) => {
-                  const Icon = getIcon(cat.iconName);
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveCategory(cat.id)}
-                      className={`flex-shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all md:px-4 md:py-2 md:text-sm ${
-                        activeCategory === cat.id
-                          ? 'bg-gold text-midnight shadow-md'
-                          : 'bg-white/10 text-white shadow-sm backdrop-blur-sm hover:bg-gold/20 dark:bg-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                      <span>{cat.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile: Solution detail modal overlay */}
-          {showMobileDetail && selectedSolution && (
-            <div className="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-sm" onClick={() => setShowMobileDetail(false)}>
-              <div
-                className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl overflow-y-auto max-h-[90vh]"
-                onClick={e => e.stopPropagation()}
-              >
-                {/* Handle */}
-                <div className="flex justify-center pt-3 pb-1">
-                  <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-                </div>
-                <button
-                  onClick={() => setShowMobileDetail(false)}
-                  className="absolute top-4 right-4 p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                {/* Image header */}
-                <div className="relative h-44 bg-gradient-to-br from-midnight to-blue-900 overflow-hidden">
-                  <img src={selectedSolution.image} alt={selectedSolution.name} className="h-full w-full object-cover opacity-60" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                  <div className="absolute left-5 bottom-5 right-5">
-                    <h3 className="text-2xl font-black text-white">{selectedSolution.name}</h3>
-                    <p className="text-sm text-gray-200 mt-1">{selectedSolution.tagline}</p>
-                  </div>
-                </div>
-                {/* Content */}
-                <div className="p-5">
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="rounded-full bg-gold/15 px-3 py-1 text-sm font-semibold text-gold">{selectedSolution.status}</span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">{selectedSolution.launchDate}</span>
-                  </div>
-                  <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 mb-4">{selectedSolution.description}</p>
-                  <div className="grid grid-cols-2 gap-2 mb-5">
-                    {selectedSolution.benefits.slice(0, 4).map((benefit, index) => (
-                      <div key={index} className="flex items-start gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2.5 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-800/70 dark:text-gray-300">
-                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-gold" />
-                        <span>{benefit}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex gap-3 pb-4">
-                    <a href={selectedSolution.website} target="_blank" rel="noopener noreferrer"
-                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold px-4 py-3 font-semibold text-midnight transition-transform active:scale-95 text-sm">
-                      Découvrir <ArrowRight className="h-4 w-4" />
-                    </a>
-                    <a href={`/solutions/${selectedSolution.slug}`}
-                      className="flex-1 inline-flex items-center justify-center rounded-full border border-gray-300 px-4 py-3 font-semibold text-gray-700 dark:border-gray-600 dark:text-gray-300 text-sm">
-                      Fiche complète
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="space-y-5">
-              {filteredCategories.map((item) => (
-                <div key={item.category.id} className="rounded-[2rem] border border-gray-200/80 bg-white/90 p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900/80 md:p-6">
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gold/15 text-gold">
-                      {(() => {
-                        const CategoryIcon = getIcon(item.category.iconName);
-                        return <CategoryIcon className="h-5 w-5" />;
-                      })()}
-                    </div>
+                  <img src={offer.image} alt={offer.name} loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <div className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-90"
+                    style={{ background: 'linear-gradient(180deg,rgba(0,0,0,0.82) 0%,rgba(0,0,0,0.48) 50%,rgba(0,0,0,0.78) 100%)' }} />
+                  <div className="relative z-10 flex h-full flex-col justify-between p-8 sm:p-10 text-white">
                     <div>
-                      <h4 className="text-lg font-bold text-midnight dark:text-white">{item.category.name}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.category.description}</p>
+                      <h2 className="font-extrabold text-white"
+                        style={{ fontSize: 'clamp(24px, 4vw, 36px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+                        {offer.name}
+                      </h2>
+                      <p className="mt-3 font-medium leading-relaxed max-w-md"
+                        style={{ fontSize: 'clamp(13px, 1.6vw, 15px)', color: 'rgba(255,255,255,0.85)' }}>
+                        {offer.description}
+                      </p>
+                      <div className="mt-6 inline-block rounded-lg px-4 py-2 font-bold backdrop-blur-md"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.2)', color: '#FFD700', fontSize: '15px' }}>
+                        {offer.price}
+                      </div>
+                    </div>
+                    <div className="flex items-center font-bold transition-colors group-hover:text-[#FFD700]" style={{ fontSize: '14px' }}>
+                      Découvrir l'offre →
                     </div>
                   </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {item.solutions.map((solution) => {
-                      const isActive = selectedSolution?.id === solution.id;
-                      return (
-                        <button
-                          key={solution.id}
-                          type="button"
-                          onClick={() => handleSelectSolution(solution.id)}
-                          className={`group rounded-3xl border p-4 text-left transition-all duration-300 ${
-                            isActive
-                              ? 'border-gold bg-gold/10 shadow-lg shadow-gold/10'
-                              : 'border-gray-200 bg-white hover:-translate-y-1 hover:border-gold/40 hover:shadow-md dark:border-gray-700 dark:bg-gray-800'
-                          }`}
-                        >
-                          <div className="mb-4 flex items-center justify-between gap-3">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-sm font-bold text-white shadow-lg">
-                              {solution.name.replace(/[^A-Z]/g, '').slice(0, 2)}
-                            </div>
-                            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                              {solution.status}
-                            </span>
-                          </div>
-                          <h5 className="mb-1 text-lg font-bold text-midnight transition-colors group-hover:text-gold dark:text-white">
-                            {solution.name}
-                          </h5>
-                          <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{solution.tagline}</p>
-                          <div className="flex items-center justify-between text-sm font-semibold text-gold">
-                            <span>Voir l’app</span>
-                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+        <div className="w-full bg-white" style={{ height: '20px', margin: '0 0 1px 0' }} />
+
+        {/* ═══════════════ ENGAGEMENTS ═══════════════ */}
+        <section
+          data-siteweb-reveal
+          style={{ backgroundColor: '#F5F5F7', paddingTop: 'clamp(30px, 4vh, 60px)', paddingBottom: 'clamp(30px, 4vh, 60px)' }}
+        >
+          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+            <h2 className="font-bold mb-8 text-center"
+              style={{ fontSize: 'clamp(22px, 3vw, 30px)', color: '#111827', letterSpacing: '-0.02em' }}>
+              Ce qui est inclus dans chaque projet
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { title: 'Vitesse mobile 3G/4G', body: 'Site optimisé pour charger en moins de 2 secondes sur tous les réseaux locaux.' },
+                { title: 'Hébergement & SSL offert', body: 'Nom de domaine et certificat de sécurité inclus pendant les 12 premiers mois.' },
+                { title: 'Paiement échelonné', body: 'Possibilité de régler votre commande en 2 ou 3 tranches pour votre trésorerie.' },
+                { title: 'Suivi & Support local', body: 'Une équipe basée au Bénin disponible pour mettre à jour et faire évoluer votre outil.' },
+              ].map((item) => (
+                <div key={item.title} className="bg-white rounded-2xl p-6 border border-[#E5E7EB]"
+                  style={{ boxShadow: '0 4px 16px rgba(15,23,42,0.04)' }}>
+                  <strong className="block font-semibold mb-2" style={{ color: '#111111', fontSize: '15px' }}>{item.title}</strong>
+                  <p className="text-sm leading-relaxed" style={{ color: '#4B5563' }}>{item.body}</p>
                 </div>
               ))}
-
-              {hasMoreProjects && (
-                <div className="mt-4 text-center">
-                  <button
-                    onClick={() => void fetchProjects(false)}
-                    disabled={projectsLoading}
-                    className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                  >
-                    {projectsLoading ? 'Chargement...' : 'Charger plus de solutions'}
-                  </button>
-                </div>
-              )}
-
-              {filteredCategories.length === 0 && (
-                <div className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 py-12 text-center dark:border-gray-700 dark:bg-gray-800/60">
-                  <p className="text-lg text-gray-600 dark:text-gray-400">
-                    Aucune solution dans cette catégorie pour le moment.
-                  </p>
-                </div>
-              )}
             </div>
 
-            <div className="lg:sticky lg:top-24 lg:self-start">
-              {selectedSolution ? (
-                <div className="overflow-hidden rounded-[2rem] border border-gray-200/80 bg-white shadow-[0_30px_90px_-35px_rgba(15,23,42,0.35)] dark:border-gray-700 dark:bg-gray-900">
-                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-midnight md:h-56">
-                    <img
-                      src={selectedSolution.image}
-                      alt={selectedSolution.name}
-                      className="h-full w-full object-cover opacity-70"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                    <div className="absolute left-6 top-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/95 text-lg font-black text-midnight shadow-lg">
-                      {selectedSolution.name.replace(/[^A-Z]/g, '').slice(0, 2)}
-                    </div>
-                    <div className="absolute bottom-6 left-6 right-6">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm font-semibold text-white backdrop-blur-sm">
-                        <Smartphone className="h-4 w-4" />
-                        Application {selectedSolution.category === 'finance' ? 'financière' : 'digitale'}
-                      </div>
-                      <h3 className="mt-3 text-3xl font-black text-white md:text-4xl">{selectedSolution.name}</h3>
-                      <p className="mt-2 max-w-xl text-sm text-gray-200 md:text-base">{selectedSolution.tagline}</p>
-                    </div>
-                  </div>
-
-                  <div className="p-6 md:p-8">
-                    <div className="mb-6 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-gold/15 px-3 py-1 text-sm font-semibold text-gold">
-                        {selectedSolution.status}
-                      </span>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                        {selectedSolution.launchDate}
-                      </span>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                        {selectedSolution.category === 'finance' ? 'Finance' : 'Innovation locale'}
-                      </span>
-                    </div>
-
-                    <p className="mb-6 text-base leading-relaxed text-gray-700 dark:text-gray-300">
-                      {selectedSolution.description}
-                    </p>
-
-                    <div className="mb-6 grid gap-3 sm:grid-cols-2">
-                      {selectedSolution.benefits.slice(0, 4).map((benefit, index) => (
-                        <div key={index} className="flex items-start gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800/70 dark:text-gray-300">
-                          <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-gold" />
-                          <span>{benefit}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mb-6 rounded-3xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/80 dark:to-gray-900">
-                      <div className="mb-4 flex items-center gap-2">
-                        <Globe2 className="h-4 w-4 text-gold" />
-                        <h4 className="text-base font-bold text-midnight dark:text-white">Pourquoi c’est utile</h4>
-                      </div>
-                      <div className="grid gap-3 md:grid-cols-2">
-                        {selectedSolution.features.slice(0, 4).map((feature) => (
-                          <div key={feature.id} className="rounded-2xl bg-white p-3 shadow-sm dark:bg-gray-800">
-                            <p className="text-sm font-semibold text-midnight dark:text-white">{feature.title}</p>
-                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-3">
-                      <a
-                        href={selectedSolution.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-5 py-3 font-semibold text-midnight transition-transform hover:scale-[1.02]"
-                      >
-                        Découvrir {selectedSolution.name}
-                        <ArrowRight className="h-4 w-4" />
-                      </a>
-                      <a
-                        href={`/solutions/${selectedSolution.slug}`}
-                        className="inline-flex items-center justify-center rounded-full border border-gray-300 px-5 py-3 font-semibold text-gray-700 transition-colors hover:border-gold hover:text-gold dark:border-gray-700 dark:text-gray-300"
-                      >
-                        Voir la fiche complète
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-[2rem] border border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800/60">
-                  <p className="text-gray-600 dark:text-gray-400">Sélectionne une solution pour voir ses détails.</p>
-                </div>
-              )}
+            <div className="mt-10 bg-white border border-[#E5E7EB] rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+              style={{ boxShadow: '0 4px 16px rgba(15,23,42,0.04)' }}>
+              <span className="text-sm font-medium text-center sm:text-left" style={{ color: '#6B7280' }}>
+                Vous avez un besoin spécifique ou un projet sur-mesure ?
+              </span>
+              <Link to="/contact"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl font-semibold text-sm transition-transform duration-200 hover:scale-105 hover:shadow-xl flex-shrink-0"
+                style={{ backgroundColor: '#191970', color: '#FFFFFF' }}>
+                Parler de mon projet
+              </Link>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Categories Overview Section */}
-      <section className="bg-gray-50 py-20 dark:bg-gray-800">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 text-center">
-            <h2 className="mb-4 text-4xl font-bold text-midnight dark:text-white">
-              Nos Catégories de Solutions
-            </h2>
-            <div className="mx-auto h-1 w-20 rounded-full bg-gold"></div>
-          </div>
+      </div>
+    </>
+  );
+};
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {categories.map((cat) => {
-              const count = solutionsByCategories.find(item => item.category.id === cat.id)?.solutions.length || 0;
-              if (count === 0) return null;
-              
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className="group rounded-3xl border border-gray-200/80 bg-white p-6 text-left shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:border-gray-700 dark:bg-gray-900 md:p-8"
-                >
-                  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gold/15 text-gold transition-all group-hover:scale-105">
-                    {(() => {
-                      const Icon = getIcon(cat.iconName);
-                      return <Icon className="h-7 w-7 md:h-8 md:w-8" />;
-                    })()}
-                  </div>
-                  <h3 className="mb-2 text-lg font-bold text-midnight transition-colors group-hover:text-gold dark:text-white md:text-xl">
-                    {cat.name}
-                  </h3>
-                  <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                    {cat.description}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-gold md:text-sm">
-                      {count} solution{count > 1 ? 's' : ''}
-                    </span>
-                    <ArrowRight className="h-4 w-4 text-gold transition-transform group-hover:translate-x-1 md:h-5 md:w-5" />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-      <section className="bg-gray-50 py-12 dark:bg-gray-800 md:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 text-center md:mb-16">
-            <h2 className="mb-4 text-3xl font-bold text-midnight dark:text-white md:text-4xl lg:text-5xl">
-              Pourquoi Choisir Nos Solutions ?
-            </h2>
-            <div className="mx-auto h-1 w-16 rounded-full bg-gold md:w-20"></div>
-          </div>
+/* ============================================================
+   SOLUTIONS PAGE
+   ============================================================ */
+const Solutions = () => {
+  useEffect(() => {
+    document.title = 'Nos Solutions — MIDEESSI';
 
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-8">
-            {[
-              {
-                icon: Target,
-                title: 'Vrai Impact',
-                description: 'Pas juste de la théorie. Ça marche. Les chiffres parlent.'
-              },
-              {
-                icon: Users,
-                title: 'Fait pour Nous',
-                description: 'Pensées pour les entrepreneurs béninois.\''
-              },
-              {
-                icon: TrendingUp,
-                title: 'Résultats Concrets',
-                description: 'Les revenus augmentent. C\'est mesurable, c\'est réel.'
-              },
-              {
-                icon: Award,
-                title: 'Secure & Fiable',
-                description: 'Standard international, zéro compromis sur la qualité.'
-              }
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className="group rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-gray-700 dark:bg-gray-900 md:p-8 md:rounded-3xl"
+    const revealItems = document.querySelectorAll('[data-scroll-reveal]');
+    if (!revealItems.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -20px 0px' }
+    );
+
+    revealItems.forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <>
+      <style>{`
+        [data-scroll-reveal] {
+          opacity: 0;
+          transform: translate3d(0, 22px, 0);
+          transition: opacity 700ms cubic-bezier(0.2, 0, 0.2, 1), transform 700ms cubic-bezier(0.2, 0, 0.2, 1);
+          will-change: opacity, transform;
+        }
+
+        [data-scroll-reveal].is-visible {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          [data-scroll-reveal] {
+            opacity: 1;
+            transform: none;
+            transition: none;
+          }
+        }
+      `}</style>
+
+      <div className="min-h-screen bg-[#FAFAFA] text-[#111111]">
+        <SEO
+          title="Nos Solutions — MIDEESSI"
+          description="Des solutions digitales pensées pour être visibles, crédibles et performantes dès le premier contact."
+        />
+
+        <section style={{ paddingTop: 'clamp(88px, 14vh, 132px)', paddingBottom: '20px' }}>
+          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+            <div className="max-w-3xl">
+              <span className="text-xs font-medium uppercase tracking-[0.14em] mb-4 block" style={{ color: '#6B7280' }}>
+                Solutions
+              </span>
+              <div className="w-12 h-0.5 mb-8" style={{ backgroundColor: '#E5E7EB' }} />
+              <h1
+                className="font-bold mb-6"
+                style={{
+                  fontSize: 'clamp(32px, 7vw, 58px)',
+                  lineHeight: 1.06,
+                  color: 'var(--color-text-primary)',
+                  letterSpacing: '-0.04em',
+                }}
               >
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gold/20 transition-colors group-hover:bg-gold/30 md:mb-4 md:h-14 md:w-14 md:rounded-2xl">
-                  <item.icon className="h-5 w-5 text-gold md:h-7 md:w-7" />
+                Tout ce qu'il vous faut
+              </h1>
+              <p
+                className="text-base leading-relaxed"
+                style={{ color: 'var(--color-text-secondary)', fontSize: 'clamp(16px, 2vw, 19px)' }}
+              >
+                Une suite de solutions conçues pour renforcer votre présence, vendre plus clairement et faire grandir votre activité.
+              </p>
+            </div>
+
+            <div className="mt-12 grid gap-3 md:gap-6 md:grid-cols-2">
+            {serviceCards.map((card, index) => (
+              <div key={card.title} className="w-full">
+              <Link
+                to={card.href}
+                data-scroll-reveal
+                className="group relative block overflow-hidden transition-transform duration-300 hover:-translate-y-1"
+                style={{ backgroundColor: 'transparent' }}
+              >
+                <div
+                  className="relative h-[340px] overflow-hidden"
+                  style={{ backgroundColor: card.background }}
+                >
+                  <img
+                    src={card.image}
+                    alt={card.title}
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    style={{
+                      filter: 'none',
+                      opacity: 0.92,
+                    }}
+                  />
+
+                  <div className="absolute inset-0 flex items-start justify-center p-4 md:p-6 text-center">
+                    <div data-scroll-reveal style={{ transitionDelay: `${index * 100 + 80}ms` }}>
+                      {
+                        (() => {
+                          const useLightBg = card.textColor !== '#FFFFFF';
+                                       const bg = useLightBg ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.48)';
+                          const text = card.textColor || (useLightBg ? '#111111' : '#FFFFFF');
+                          return (
+                            <div style={{ display: 'inline-block', backgroundColor: bg, padding: '0.5rem 0.75rem', borderRadius: 10 }}>
+                                            <h2 className="text-2xl font-black tracking-tight md:text-3xl lg:text-4xl" style={{ color: text }}>
+                                {card.title}
+                              </h2>
+                              <p className="mt-2 mx-auto max-w-[26rem] text-xs md:text-sm lg:text-base" style={{ color: text, opacity: 0.92, marginTop: '0.5rem' }}>
+                                {card.subtitle}
+                              </p>
+                              <div className="mt-4">
+                                <Link to={card.href} className={`inline-flex items-center gap-2 px-4 py-2 rounded-md font-semibold ${card.textColor === '#FFFFFF' ? 'bg-white text-[#191970]' : 'm-btn-primary'}`}>
+                                  En savoir plus
+                                </Link>
+                              </div>
+                            </div>
+                          );
+                        })()
+                      }
+                    </div>
+                  </div>
                 </div>
-                <h3 className="mb-1.5 text-sm font-bold leading-tight text-midnight dark:text-white md:mb-2 md:text-xl">
-                  {item.title}
-                </h3>
-                <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-300 md:text-base">
-                  {item.description}
-                </p>
+              </Link>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Call to Action */}
-      <section className="py-12 md:py-20 bg-gradient-to-br from-midnight to-blue-900 dark:from-black dark:to-gray-900 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6">Prêt pour la suite ?</h2>
-          <div className="w-16 md:w-20 h-1 bg-gold mx-auto rounded-full mb-6 md:mb-8"></div>
-          <p className="text-base md:text-lg lg:text-xl text-gray-200 mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed">
-            Des milliers de gens utilisent nos solutions pour faire bouger les choses. Rejoins le mouvement.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 flex-wrap">
-            {solutions.map((solution) => (
-              <a
-                key={solution.id}
-                href={solution.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-gold hover:bg-yellow-500 text-midnight font-bold px-6 md:px-8 py-3 md:py-4 rounded-lg transition-all duration-300 transform hover:scale-105 text-sm md:text-base"
-              >
-                Accéder à {solution.name}
-                <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
-              </a>
-            ))}
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+        
+      </div>
+    </>
   );
 };
 

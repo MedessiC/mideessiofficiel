@@ -9,8 +9,8 @@ const ShareRedirect = () => {
     const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|Discordbot|Pinterest|Googlebot|bingbot|Slurp/i.test(userAgent);
 
     const targetUrl = isCrawler
-      ? `https://mideessi-seo.onrender.com/blog/${slug}`
-      : `/blog/${slug}`;
+      ? `https://mideessi-seo.onrender.com/article/${slug}`
+      : `/article/${slug}`;
 
     window.location.href = targetUrl;
   }, [slug]);
