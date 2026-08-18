@@ -15,7 +15,7 @@ type ProductDefinition = {
   cta: string;
   isDark?: boolean;
   stories: { text: string; image: string }[];
-  projects: { name: string; detail: string; image: string }[];
+  projects?: { name: string; detail: string; image: string }[];
   otherSolutions: { name: string; description: string; href: string }[];
 };
 
@@ -42,23 +42,6 @@ const siteVitrineProduct: ProductDefinition = {
     {
       text: 'Votre site m’a donné confiance immédiatement.',
       image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80',
-    },
-  ],
-  projects: [
-    {
-      name: 'Mylight',
-      detail: 'Branding & présence digitale',
-      image: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      name: 'Kora Studio',
-      detail: 'Site vitrine premium',
-      image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      name: 'Sierra Labs',
-      detail: 'Croissance et crédibilité',
-      image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
     },
   ],
   otherSolutions: [
@@ -684,33 +667,35 @@ const SolutionDetail = () => {
       )}
 
       {/* ── Réalisations / Examples Section ── */}
-      <section id="exemples" className="mx-auto max-w-[1200px] px-4 pb-16 sm:px-6 lg:px-12">
-        <div className="mb-8 text-center">
-          <div className={`text-[11px] font-bold uppercase tracking-[0.16em] ${isDark ? 'text-[#8E9AB4]' : 'text-[#8E9AB4]'}`}>Réalisations</div>
-          <h2 className={`mt-3 text-[32px] font-black tracking-[-0.06em] sm:text-[42px] ${isDark ? 'text-white' : 'text-[#111111]'}`}>
-            Quelques exemples
-          </h2>
-        </div>
+      {product.projects && product.projects.length > 0 && (
+        <section id="exemples" className="mx-auto max-w-[1200px] px-4 pb-16 sm:px-6 lg:px-12">
+          <div className="mb-8 text-center">
+            <div className={`text-[11px] font-bold uppercase tracking-[0.16em] ${isDark ? 'text-[#8E9AB4]' : 'text-[#8E9AB4]'}`}>Réalisations</div>
+            <h2 className={`mt-3 text-[32px] font-black tracking-[-0.06em] sm:text-[42px] ${isDark ? 'text-white' : 'text-[#111111]'}`}>
+              Quelques exemples
+            </h2>
+          </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          {product.projects.map((project) => (
-            <article
-              key={project.name}
-              className={`overflow-hidden rounded-[28px] border transition-all duration-300 hover:-translate-y-1 ${
-                isDark
-                  ? 'border-slate-800 bg-[#0F172A] text-white shadow-xl'
-                  : 'border-[#191970]/10 bg-white text-[#111111] shadow-sm'
-              }`}
-            >
-              <img src={project.image} alt={project.name} className="h-[240px] w-full object-cover" />
-              <div className="p-6">
-                <h3 className="text-[22px] font-bold tracking-tight text-[#111111]">{project.name}</h3>
-                <p className={`mt-2 text-sm ${isDark ? 'text-[#8E9AB4]' : 'text-[#8E9AB4]'}`}>{project.detail}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+          <div className="grid gap-6 md:grid-cols-3">
+            {product.projects.map((project) => (
+              <article
+                key={project.name}
+                className={`overflow-hidden rounded-[28px] border transition-all duration-300 hover:-translate-y-1 ${
+                  isDark
+                    ? 'border-slate-800 bg-[#0F172A] text-white shadow-xl'
+                    : 'border-[#191970]/10 bg-white text-[#111111] shadow-sm'
+                }`}
+              >
+                <img src={project.image} alt={project.name} className="h-[240px] w-full object-cover" />
+                <div className="p-6">
+                  <h3 className="text-[22px] font-bold tracking-tight text-[#111111]">{project.name}</h3>
+                  <p className={`mt-2 text-sm ${isDark ? 'text-[#8E9AB4]' : 'text-[#8E9AB4]'}`}>{project.detail}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Other Solutions Grid ── */}
       <section className="mx-auto max-w-[1200px] px-4 pb-20 sm:px-6 lg:px-12">

@@ -403,7 +403,7 @@ function ServicesSection() {
 }
 
 function TrustBarSection() {
-  const logos = ['NOVA', 'LUMA', 'ORBIT'];
+  const logos = ['JSD', 'MILLENIUM', 'PP INFORMATIQUE'];
 
   return (
     <section
