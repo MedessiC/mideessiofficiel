@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, CreditCard as Edit, Trash2, Eye, LogOut, TrendingUp, FileText, Bell, PenTool, Tag, Film, Users, Sparkles, HelpCircle, Loader } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Eye, LogOut, TrendingUp, FileText, Bell, PenTool, Tag, Film, Users, Sparkles, HelpCircle, Loader, BookOpen } from 'lucide-react';
 import { supabase, BlogPost } from '../lib/supabase';
 import HeroManager from '../components/admin/HeroManager';
 import PopupManager from '../components/admin/PopupManager';
@@ -10,8 +10,9 @@ import AdminClientManagement from './AdminClientManagement';
 import AdminQuoteRequests from './AdminQuoteRequests';
 import AtelierManager from '../components/admin/AtelierManager';
 import ContentManager from '../components/admin/ContentManager';
+import LearningManager from '../components/admin/LearningManager';
 
-type TabType = 'blog' | 'hero' | 'slides' | 'popups' | 'promo' | 'clients' | 'quotes' | 'ateliers' | 'content';
+type TabType = 'blog' | 'learn' | 'hero' | 'slides' | 'popups' | 'promo' | 'clients' | 'quotes' | 'ateliers' | 'content';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -148,6 +149,7 @@ const AdminDashboard = () => {
         <nav className="flex flex-wrap gap-2 pb-2">
           {[
             { id: 'blog', label: 'Blog', icon: <FileText className="w-4 h-4" /> },
+            { id: 'learn', label: 'Apprendre', icon: <BookOpen className="w-4 h-4" /> },
             { id: 'clients', label: 'Clients', icon: <Users className="w-4 h-4" /> },
             { id: 'quotes', label: 'Devis', icon: <FileText className="w-4 h-4" /> },
             { id: 'hero', label: 'Hero', icon: <PenTool className="w-4 h-4" /> },
@@ -272,6 +274,7 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === 'hero' && <HeroManager />}
+        {activeTab === 'learn' && <LearningManager />}
         {activeTab === 'slides' && <HeroSlidesManager />}
         {activeTab === 'popups' && <PopupManager />}
         {activeTab === 'quotes' && <AdminQuoteRequests />}

@@ -2,6 +2,7 @@ import { ChevronRight } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigation } from '../contexts/NavigationContext';
+import { getRoute } from '../utils/routes';
 
 /* ── Custom 3D-style SVG icons ── */
 const IconHome = ({ active }: { active: boolean }) => (
@@ -119,33 +120,38 @@ interface BottomNavItem {
 }
 
 const navItems: BottomNavItem[] = [
-  { label: 'Accueil',   href: '/',           Icon3D: IconHome },
-  { label: 'Services',  href: '/solutions',  Icon3D: IconServices },
-  { label: 'Apprendre', href: '/apprendre',  Icon3D: IconLearn },
-  { label: 'Labs',      href: '/laboratoire',Icon3D: IconLabs },
+  { label: 'Accueil',   href: getRoute.home(),           Icon3D: IconHome },
+  { label: 'Services',  href: getRoute.solutions(),  Icon3D: IconServices },
+  { label: 'Apprendre', href: getRoute.apprendre(),  Icon3D: IconLearn },
+  { label: 'Labs',      href: getRoute.laboratoire(),Icon3D: IconLabs },
 ];
 
 
 const BottomNavigation = () => {
   const location = useLocation();
+  const { bottomNavHidden, setBottomNavHidden } = useNavigation();
 
-  const [hidden, setHidden] = useState(false);
+  const [hidden, setHidden] = useState(() => bottomNavHidden);
   const [showHoldHint, setShowHoldHint] = useState(false);
+  const [showRevealHint, setShowRevealHint] = useState(false);
   const startX = useRef<number | null>(null);
   const dragging = useRef(false);
   const holdTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    // reset when route changes (show nav)
-    setHidden(false);
-  }, [location.pathname]);
-
-  // sync hidden state with global navigation context
-  const { setBottomNavHidden } = useNavigation();
-
-  useEffect(() => {
     setBottomNavHidden(hidden);
   }, [hidden, setBottomNavHidden]);
+
+  useEffect(() => {
+    if (!hidden) {
+      setShowRevealHint(false);
+      return undefined;
+    }
+
+    setShowRevealHint(true);
+    const timer = window.setTimeout(() => setShowRevealHint(false), 3200);
+    return () => window.clearTimeout(timer);
+  }, [hidden]);
 
   const isActive = (href: string) =>
     href === '/'
@@ -295,34 +301,44 @@ const BottomNavigation = () => {
 
       {/* Reveal handle when hidden: small barely-visible tab at left edge */}
       {hidden && (
-        <button
-          aria-label="Afficher la navigation"
-          onClick={() => setHidden(false)}
-          onTouchStart={(e) => { startX.current = e.touches[0].clientX; dragging.current = true; }}
-          onTouchMove={(e) => {
-            if (!dragging.current || startX.current === null) return;
-            const dx = e.touches[0].clientX - startX.current;
-            if (dx > 30) {
-              setHidden(false);
-              dragging.current = false;
-            }
-          }}
-          onTouchEnd={() => { dragging.current = false; startX.current = null; }}
-          onMouseDown={(e) => { startX.current = e.clientX; dragging.current = true; }}
-          onMouseMove={(e) => {
-            if (!dragging.current || startX.current === null) return;
-            const dx = e.clientX - startX.current;
-            if (dx > 30) {
-              setHidden(false);
-              dragging.current = false;
-            }
-          }}
-          onMouseUp={() => { dragging.current = false; startX.current = null; }}
-          className="fixed left-0 bottom-6 z-50 -ml-6 flex h-12 w-12 items-center justify-center rounded-r-full bg-white/6 backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-colors"
-          style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
-        >
-          <ChevronRight className="text-[#191970] opacity-70" />
-        </button>
+        <>
+          {showRevealHint && (
+            <div
+              role="status"
+              className="fixed bottom-20 left-4 z-50 max-w-[220px] animate-fade-in rounded-2xl bg-[#191970] px-4 py-3 text-xs font-semibold leading-snug text-white shadow-[0_10px_24px_rgba(25,25,112,0.24)]"
+            >
+              Touchez la languette pour réafficher le menu
+              <span className="absolute -bottom-1 left-5 h-3 w-3 rotate-45 bg-[#191970]" aria-hidden />
+            </div>
+          )}
+          <button
+            aria-label="Afficher la navigation"
+            onClick={() => setHidden(false)}
+            onTouchStart={(e) => { startX.current = e.touches[0].clientX; dragging.current = true; }}
+            onTouchMove={(e) => {
+              if (!dragging.current || startX.current === null) return;
+              const dx = e.touches[0].clientX - startX.current;
+              if (dx > 30) {
+                setHidden(false);
+                dragging.current = false;
+              }
+            }}
+            onTouchEnd={() => { dragging.current = false; startX.current = null; }}
+            onMouseDown={(e) => { startX.current = e.clientX; dragging.current = true; }}
+            onMouseMove={(e) => {
+              if (!dragging.current || startX.current === null) return;
+              const dx = e.clientX - startX.current;
+              if (dx > 30) {
+                setHidden(false);
+                dragging.current = false;
+              }
+            }}
+            onMouseUp={() => { dragging.current = false; startX.current = null; }}
+            className="fixed left-0 bottom-6 z-50 -ml-6 flex h-12 w-12 items-center justify-center rounded-r-full border border-[#191970]/15 bg-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-sm transition-colors hover:bg-white motion-safe:animate-pulse"
+          >
+            <ChevronRight className="text-[#191970]" />
+          </button>
+        </>
       )}
 
       <div className="h-[5.2rem] md:h-0 md:hidden" aria-hidden />

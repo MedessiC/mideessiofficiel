@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
+import { getRoute } from '../utils/routes';
 
 /* ============================================================
    DATA
@@ -9,7 +10,7 @@ const serviceCards = [
   {
     title: 'Site Web & Applications',
     subtitle: 'Sites vitrines, boutiques et outils web sur mesure.',
-    href: '/siteweb',
+    href: getRoute.solutionSiteweb(),
     image: '/siteweb_application.webp',
     background: '#F5F5F7',
     textColor: '#111111',
@@ -18,7 +19,7 @@ const serviceCards = [
   {
     title: 'Réseaux Sociaux',
     subtitle: 'Stratégie de contenu, engagement et croissance digitale.',
-    href: '/solutions/reseaux-sociaux',
+    href: getRoute.solutionDetail('reseaux-sociaux'),
     image: '/greseaux.webp',
     background: '#ECEEF4',
     textColor: '#111111',
@@ -27,7 +28,7 @@ const serviceCards = [
   {
     title: 'Couverture Événementielle',
     subtitle: 'Captation visuelle, diffusion et présence sur scène.',
-    href: '/solutions/couverture-evenementielle',
+    href: getRoute.solutionDetail('couverture-evenementielle'),
     image: '/cevent.webp',
     background: '#F5F5F7',
     textColor: '#111111',
@@ -36,7 +37,7 @@ const serviceCards = [
   {
     title: 'Automatisation & IA',
     subtitle: 'Workflows, outils et systèmes qui font gagner du temps.',
-    href: '/solutions/automatisation-ia',
+    href: getRoute.solutionDetail('automatisation-ia'),
     image: '/autoia.webp',
     background: '#191970',
     textColor: '#FFFFFF',
@@ -47,34 +48,34 @@ const serviceCards = [
 const siteWebOffers = [
   {
     slug: 'vitrine',
-    name: 'Site Vitrine',
-    description: 'Présentez votre entreprise avec crédibilité. 5 à 7 pages sur mesure, formulaire de contact, intégration WhatsApp et nom de domaine inclus.',
+    name: 'Présenter son entreprise & ses services',
+    description: 'Site sur-mesure de 5 à 7 pages avec contact WhatsApp.',
     price: '75 000 FCFA',
-    href: '/siteweb/vitrine',
+    href: getRoute.solutionSitewebDetail('vitrine'),
     image: '/site_vitrine_placeholder.webp',
   },
   {
     slug: 'e-commerce',
-    name: 'Site E-commerce',
-    description: 'Vendez vos produits 24h/24. Catalogue complet, gestion des commandes et paiement intégré Mobile Money (MTN, Moov, Wave) & Carte.',
+    name: 'Vendre en ligne (local & international)',
+    description: 'Boutique en ligne complète avec paiement Mobile Money.',
     price: '150 000 FCFA',
-    href: '/siteweb/e-commerce',
+    href: getRoute.solutionSitewebDetail('e-commerce'),
     image: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80',
   },
   {
     slug: 'application-web',
-    name: 'Application Web',
-    description: 'Digitalisez la gestion de votre activité. Espace client sécurisé, tableaux de bord, gestion de dossiers et automatisations sur mesure.',
+    name: 'Logiciel & outil de gestion interne',
+    description: 'Portail client, tableaux de bord et outils de gestion.',
     price: '250 000 FCFA',
-    href: '/siteweb/application-web',
+    href: getRoute.solutionSitewebDetail('application-web'),
     image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
   },
   {
     slug: 'application-mobile',
-    name: 'Application Mobile',
-    description: 'Déployez vos services directement sur les smartphones de vos utilisateurs (iOS & Android) avec une interface fluide et rapide.',
+    name: 'Application mobile iOS & Android',
+    description: 'Application fluide sur les stores pour vos utilisateurs.',
     price: 'Sur devis',
-    href: '/siteweb/application-mobile',
+    href: getRoute.solutionSitewebDetail('application-mobile'),
     image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=1200&q=80',
   },
 ];
@@ -136,56 +137,49 @@ export const SiteWebPage = () => {
         >
           <div className="max-w-[1200px] mx-auto px-6 lg:px-12 w-full">
 
-            <p className="text-sm uppercase text-center"
-              style={{ letterSpacing: '0.26em', color: 'var(--color-text-secondary)', marginBottom: '1.25rem' }}>
-              Création Web &amp; Sur-Mesure
-            </p>
+            
 
             <h1 className="font-bold text-center mx-auto"
               style={{ fontSize: 'clamp(36px, 7vw, 62px)', lineHeight: 1.06, letterSpacing: '-0.04em', color: 'var(--color-text-primary)', maxWidth: '820px' }}>
-              <span style={{ display: 'block' }}>Sites web &amp; applications</span>
+              <span style={{ display: 'block' }}>Vous voulez un site web pourquoi ?</span>
             </h1>
-
 
           </div>
         </section>
 
         <div className="w-full bg-white" style={{ height: '20px', margin: '0 0 1px 0' }} />
 
-        {/* ═══════════════ OFFRES ═══════════════ */}
+        {/* ═══════════════ OFFRES : SITES WEB ═══════════════ */}
         <section
           data-siteweb-reveal
           style={{ backgroundColor: '#FAFAFA', paddingTop: 'clamp(30px, 4vh, 60px)', paddingBottom: 'clamp(30px, 4vh, 60px)' }}
         >
           <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
-            <div className="grid gap-8 md:grid-cols-2">
-              {siteWebOffers.map((offer, i) => (
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 md:gap-8">
+              {siteWebOffers.slice(0, 2).map((offer, i) => (
                 <Link
                   key={offer.slug}
                   to={offer.href}
-                  className="group relative block h-[420px] sm:h-[460px] w-full overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1"
+                  className="group relative block h-[240px] xs:h-[300px] sm:h-[400px] md:h-[460px] w-full overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1"
                   style={{ boxShadow: '0 24px 60px rgba(15,23,42,0.08)', transitionDelay: `${i * 80}ms` }}
                 >
                   <img src={offer.image} alt={offer.name} loading="lazy"
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                  <div className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-90"
-                    style={{ background: 'linear-gradient(180deg,rgba(0,0,0,0.82) 0%,rgba(0,0,0,0.48) 50%,rgba(0,0,0,0.78) 100%)' }} />
-                  <div className="relative z-10 flex h-full flex-col justify-between p-8 sm:p-10 text-white">
+                  <div className="relative z-10 flex h-full flex-col justify-between p-4 xs:p-6 sm:p-8 md:p-10 text-white"
+                    style={{ textShadow: '0 2px 8px rgba(0,0,0,0.85)' }}>
                     <div>
-                      <h2 className="font-extrabold text-white"
-                        style={{ fontSize: 'clamp(24px, 4vw, 36px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+                      <h2 className="font-extrabold text-white text-xs xs:text-sm sm:text-xl md:text-2xl lg:text-3xl tracking-tight leading-tight">
                         {offer.name}
                       </h2>
-                      <p className="mt-3 font-medium leading-relaxed max-w-md"
-                        style={{ fontSize: 'clamp(13px, 1.6vw, 15px)', color: 'rgba(255,255,255,0.85)' }}>
+                      <p className="hidden xs:block mt-1.5 sm:mt-3 text-[10px] sm:text-xs md:text-sm lg:text-base font-medium leading-relaxed max-w-md text-white/85">
                         {offer.description}
                       </p>
-                      <div className="mt-6 inline-block rounded-lg px-4 py-2 font-bold backdrop-blur-md"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.2)', color: '#FFD700', fontSize: '15px' }}>
+                      <div className="mt-2.5 sm:mt-6 inline-block rounded-lg px-2.5 py-1 sm:px-4 sm:py-2 font-bold text-[10px] xs:text-xs sm:text-sm"
+                        style={{ backgroundColor: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.25)', color: '#FFD700' }}>
                         {offer.price}
                       </div>
                     </div>
-                    <div className="flex items-center font-bold transition-colors group-hover:text-[#FFD700]" style={{ fontSize: '14px' }}>
+                    <div className="flex items-center font-bold transition-colors group-hover:text-[#FFD700] text-[10px] xs:text-xs sm:text-sm">
                       Découvrir l'offre →
                     </div>
                   </div>
@@ -197,41 +191,70 @@ export const SiteWebPage = () => {
 
         <div className="w-full bg-white" style={{ height: '20px', margin: '0 0 1px 0' }} />
 
-        {/* ═══════════════ ENGAGEMENTS ═══════════════ */}
+        {/* ═══════════════ OFFRES : APPLICATIONS ═══════════════ */}
         <section
           data-siteweb-reveal
-          style={{ backgroundColor: '#F5F5F7', paddingTop: 'clamp(30px, 4vh, 60px)', paddingBottom: 'clamp(30px, 4vh, 60px)' }}
+          style={{ backgroundColor: '#FAFAFA', paddingTop: 'clamp(30px, 4vh, 60px)', paddingBottom: 'clamp(30px, 4vh, 60px)' }}
         >
           <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
-            <h2 className="font-bold mb-8 text-center"
-              style={{ fontSize: 'clamp(22px, 3vw, 30px)', color: '#111827', letterSpacing: '-0.02em' }}>
-              Ce qui est inclus dans chaque projet
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                { title: 'Vitesse mobile 3G/4G', body: 'Site optimisé pour charger en moins de 2 secondes sur tous les réseaux locaux.' },
-                { title: 'Hébergement & SSL offert', body: 'Nom de domaine et certificat de sécurité inclus pendant les 12 premiers mois.' },
-                { title: 'Paiement échelonné', body: 'Possibilité de régler votre commande en 2 ou 3 tranches pour votre trésorerie.' },
-                { title: 'Suivi & Support local', body: 'Une équipe basée au Bénin disponible pour mettre à jour et faire évoluer votre outil.' },
-              ].map((item) => (
-                <div key={item.title} className="bg-white rounded-2xl p-6 border border-[#E5E7EB]"
-                  style={{ boxShadow: '0 4px 16px rgba(15,23,42,0.04)' }}>
-                  <strong className="block font-semibold mb-2" style={{ color: '#111111', fontSize: '15px' }}>{item.title}</strong>
-                  <p className="text-sm leading-relaxed" style={{ color: '#4B5563' }}>{item.body}</p>
-                </div>
+            <div className="text-center mb-12">
+              
+              <h2 className="font-bold text-center mx-auto text-[var(--color-text-primary)]"
+                style={{ fontSize: 'clamp(36px, 7vw, 62px)', lineHeight: 1.06, letterSpacing: '-0.04em', maxWidth: '820px' }}>
+                Vous voulez une application mobile pourquoi ?
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 md:gap-8">
+              {siteWebOffers.slice(2, 4).map((offer, i) => (
+                <Link
+                  key={offer.slug}
+                  to={offer.href}
+                  className="group relative block h-[240px] xs:h-[300px] sm:h-[400px] md:h-[460px] w-full overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1"
+                  style={{ boxShadow: '0 24px 60px rgba(15,23,42,0.08)', transitionDelay: `${i * 80}ms` }}
+                >
+                  <img src={offer.image} alt={offer.name} loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <div className="relative z-10 flex h-full flex-col justify-between p-4 xs:p-6 sm:p-8 md:p-10 text-white"
+                    style={{ textShadow: '0 2px 8px rgba(0,0,0,0.85)' }}>
+                    <div>
+                      <h2 className="font-extrabold text-white text-xs xs:text-sm sm:text-xl md:text-2xl lg:text-3xl tracking-tight leading-tight">
+                        {offer.name}
+                      </h2>
+                      <p className="hidden xs:block mt-1.5 sm:mt-3 text-[10px] sm:text-xs md:text-sm lg:text-base font-medium leading-relaxed max-w-md text-white/85">
+                        {offer.description}
+                      </p>
+                      <div className="mt-2.5 sm:mt-6 inline-block rounded-lg px-2.5 py-1 sm:px-4 sm:py-2 font-bold text-[10px] xs:text-xs sm:text-sm"
+                        style={{ backgroundColor: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.25)', color: '#FFD700' }}>
+                        {offer.price}
+                      </div>
+                    </div>
+                    <div className="flex items-center font-bold transition-colors group-hover:text-[#FFD700] text-[10px] xs:text-xs sm:text-sm">
+                      Découvrir l'offre →
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
+          </div>
+        </section>
 
-            <div className="mt-10 bg-white border border-[#E5E7EB] rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+        <div className="w-full bg-white" style={{ height: '20px', margin: '0 0 1px 0' }} />
+
+        {/* ═══════════════ CONTACT / BESOIN SPÉCIFIQUE ═══════════════ */}
+        <section
+          data-siteweb-reveal
+          style={{ backgroundColor: '#F5F5F7', paddingTop: 'clamp(20px, 3vh, 40px)', paddingBottom: 'clamp(20px, 3vh, 40px)' }}
+        >
+          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-4"
               style={{ boxShadow: '0 4px 16px rgba(15,23,42,0.04)' }}>
               <span className="text-sm font-medium text-center sm:text-left" style={{ color: '#6B7280' }}>
-                Vous avez un besoin spécifique ou un projet sur-mesure ?
+                Un projet spécifique ou sur-mesure ?
               </span>
-              <Link to="/contact"
+              <Link to={getRoute.contact()}
                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl font-semibold text-sm transition-transform duration-200 hover:scale-105 hover:shadow-xl flex-shrink-0"
                 style={{ backgroundColor: '#191970', color: '#FFFFFF' }}>
-                Parler de mon projet
+                Nous contacter
               </Link>
             </div>
           </div>
@@ -363,9 +386,9 @@ const Solutions = () => {
                                 {card.subtitle}
                               </p>
                               <div className="mt-4">
-                                <Link to={card.href} className={`inline-flex items-center gap-2 px-4 py-2 rounded-md font-semibold ${card.textColor === '#FFFFFF' ? 'bg-white text-[#191970]' : 'm-btn-primary'}`}>
+                                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-md font-semibold ${card.textColor === '#FFFFFF' ? 'bg-white text-[#191970]' : 'm-btn-primary'}`}>
                                   En savoir plus
-                                </Link>
+                                </span>
                               </div>
                             </div>
                           );

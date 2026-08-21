@@ -1,20 +1,40 @@
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useLocation, useNavigationType } from 'react-router-dom';
 
 const ScrollToTop = () => {
-  const { pathname, hash } = useLocation();
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const scrollPositions = useRef(new Map<string, number>());
 
   useEffect(() => {
-    try {
-      // Force immediate jump to top on route change to mimic <a href> behavior
-      if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      }
-    } catch (err) {
-      // ignore
+    const { key, hash } = location;
+    let animationFrameId: number | undefined;
+    let isActive = true;
+
+    if (navigationType === 'POP') {
+      const savedPosition = scrollPositions.current.get(key);
+      window.scrollTo({ top: savedPosition ?? 0, left: 0, behavior: 'auto' });
+    } else if (hash) {
+      let attempts = 0;
+      const scrollToAnchor = () => {
+        const target = document.getElementById(hash.slice(1));
+        if (target) {
+          target.scrollIntoView({ behavior: 'auto', block: 'start' });
+        } else if (isActive && attempts++ < 10) {
+          animationFrameId = window.requestAnimationFrame(scrollToAnchor);
+        }
+      };
+      scrollToAnchor();
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }
-  // we intentionally ignore hash here to always go to top on navigation
-  }, [pathname]);
+
+    return () => {
+      isActive = false;
+      if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
+      scrollPositions.current.set(key, window.scrollY);
+    };
+  }, [location, navigationType]);
 
   return null;
 };

@@ -87,7 +87,6 @@
 
 @layer base {
   html {
-    scroll-behavior: smooth;
     scroll-padding-top: 5rem;
     background-color: var(--color-bg-primary);
     color: var(--color-text-primary);
@@ -453,7 +452,6 @@
 .backdrop-blur-3xl {
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
-  will-change: transform;
   isolation: isolate;
 }
 

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '../contexts/NavigationContext';
 import { Avatar } from './ui/Avatar';
 import CommandPalette from './CommandPalette';
+import { getRoute } from '../utils/routes';
 
 /* ── Types ── */
 interface DropdownItem {
@@ -19,22 +20,22 @@ const mideessiMenu: DropdownItem[] = [
   {
     label: 'Notre mission',
     description: "L'histoire et la raison d'être",
-    href: '/about',
+    href: getRoute.about(),
   },
   {
     label: 'Notre méthode',
     description: 'Observer → Comprendre → Construire',
-    href: '/about#methode',
+    href: getRoute.about() + '#methode',
   },
   {
     label: "L'équipe",
     description: 'Les personnes derrière MIDEESSI',
-    href: '/about#team',
+    href: getRoute.about() + '#team',
   },
   {
     label: 'Nos projets',
     description: 'Les initiatives en cours',
-    href: '/projects',
+    href: getRoute.projects(),
   },
 ];
 
@@ -42,17 +43,17 @@ const servicesMenu: DropdownItem[] = [
   {
     label: 'Sites web & applications',
     description: 'Création de sites web, applications et boutiques en ligne',
-    href: '/siteweb',
+    href: getRoute.solutionSiteweb(),
   },
   {
     label: 'Réseaux sociaux & événements',
     description: 'Communication digitale, réseaux sociaux et couverture événementnelle',
-    href: '/solutions/reseaux-sociaux',
+    href: getRoute.solutionDetail('reseaux-sociaux'),
   },
   {
     label: 'Automatisation & IA',
     description: 'Workflows automatisés et outils IA adaptés à vos besoins',
-    href: '/solutions/automatisation-ia',
+    href: getRoute.solutionDetail('automatisation-ia'),
     highlight: 'À partir de 100 000 FCFA',
   },
 ];
@@ -61,12 +62,12 @@ const servicesMenu: DropdownItem[] = [
   {
     label: 'Formations',
     description: 'Parcourez nos formations numériques adaptées',
-    href: '/apprendre#formations',
+    href: getRoute.apprendre() + '#formations',
   },
   {
     label: 'Livres',
     description: 'Consultez nos ressources et livres numériques',
-    href: '/apprendre#livres',
+    href: getRoute.apprendre() + '#livres',
   },
 ];
 
@@ -287,14 +288,7 @@ const Navbar = () => {
               <img
                 src="/mideessi-light.webp"
                 alt="MIDEESSI"
-                className="h-8 w-auto object-contain dark:hidden"
-                loading="eager"
-                decoding="async"
-              />
-              <img
-                src="/mideessi.webp"
-                alt="MIDEESSI"
-                className="h-8 w-auto object-contain hidden dark:block"
+                className="h-8 w-auto object-contain"
                 loading="eager"
                 decoding="async"
               />
@@ -310,7 +304,7 @@ const Navbar = () => {
                 onMouseEnter={() => handleDropdownMouseEnter('solutions')}
                 onMouseLeave={handleDropdownMouseLeave}
               >
-                <Link to="/solutions" className={navLinkClass('/solutions')}>Services</Link>
+                <Link to={getRoute.solutions()} className={navLinkClass(getRoute.solutions())}>Services</Link>
                 <button
                   onClick={() => {
                     setSolutionsOpen(!solutionsOpen);
@@ -326,7 +320,7 @@ const Navbar = () => {
                     className={`transition-transform duration-200 ${solutionsOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
-                {isActive('/solutions') && (
+                {isActive(getRoute.solutions()) && (
                   <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-[#FFD700]" />
                 )}
                 <NavDropdown items={servicesMenu} isOpen={solutionsOpen} />
@@ -339,7 +333,7 @@ const Navbar = () => {
                 onMouseEnter={() => handleDropdownMouseEnter('apprendre')}
                 onMouseLeave={handleDropdownMouseLeave}
               >
-                <Link to="/apprendre" className={navLinkClass('/apprendre')}>Apprendre</Link>
+                <Link to={getRoute.apprendre()} className={navLinkClass(getRoute.apprendre())}>Apprendre</Link>
                 <button
                   onClick={() => {
                     setApprendreOpen(!apprendreOpen);
@@ -355,27 +349,27 @@ const Navbar = () => {
                     className={`transition-transform duration-200 ${apprendreOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
-                {isActive('/apprendre') && (
+                {isActive(getRoute.apprendre()) && (
                   <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-[#FFD700]" />
                 )}
                 <NavDropdown items={apprendreMenu} isOpen={apprendreOpen} />
               </div>
 
               <div className="relative">
-                <Link to="/laboratoire" className={navLinkClass('/laboratoire')}>
+                <Link to={getRoute.laboratoire()} className={navLinkClass(getRoute.laboratoire())}>
                   Laboratoire
                 </Link>
-                {isActive('/laboratoire') && (
+                {isActive(getRoute.laboratoire()) && (
                   <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-[#FFD700]" />
                 )}
               </div>
 
               {/* Blog */}
               <div className="relative">
-                <Link to="/article" className={navLinkClass('/article')}>
+                <Link to={getRoute.blog()} className={navLinkClass(getRoute.blog())}>
                   Articles
                 </Link>
-                {isActive('/article') && (
+                {isActive(getRoute.blog()) && (
                   <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-[#FFD700]" />
                 )}
               </div>
@@ -387,7 +381,7 @@ const Navbar = () => {
                 onMouseEnter={() => handleDropdownMouseEnter('mideessi')}
                 onMouseLeave={handleDropdownMouseLeave}
               >
-                <Link to="/about" className={navLinkClass('/about')}>
+                <Link to={getRoute.about()} className={navLinkClass(getRoute.about())}>
                   MIDEESSI
                 </Link>
                 <button
@@ -405,7 +399,7 @@ const Navbar = () => {
                     className={`transition-transform duration-200 ${mideessiOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
-                {isActive('/about') && (
+                {isActive(getRoute.about()) && (
                   <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-[#FFD700]" />
                 )}
                 <NavDropdown items={mideessiMenu} isOpen={mideessiOpen} />
@@ -604,7 +598,7 @@ const Navbar = () => {
             {/* Services accordion */}
           <div className="flex items-center justify-between px-6">
             <Link
-              to="/solutions"
+              to={getRoute.solutions()}
               className="flex items-center gap-3 py-3.5 text-sm font-semibold text-[#111111] hover:text-[#191970] transition-colors"
               onClick={() => setMobileOpen(false)}
             >
@@ -639,7 +633,7 @@ const Navbar = () => {
           {/* Apprendre */}
           <div className="flex items-center justify-between px-6">
             <Link
-              to="/apprendre"
+              to={getRoute.apprendre()}
               className="flex items-center gap-3 py-3.5 text-sm font-semibold text-[#111111] hover:text-[#191970] transition-colors"
               onClick={() => setMobileOpen(false)}
             >
@@ -659,14 +653,14 @@ const Navbar = () => {
           {mobileAccordion === 'apprendre' && (
             <div className="bg-white border-y border-[#E5E7EB]">
               <Link
-                to="/apprendre#formations"
+                to={getRoute.apprendre() + '#formations'}
                 className="block px-8 py-3 text-sm text-[#4B5563] hover:text-[#191970] hover:bg-[#F3F4F6] transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
                 Formations
               </Link>
               <Link
-                to="/apprendre#livres"
+                to={getRoute.apprendre() + '#livres'}
                 className="block px-8 py-3 text-sm text-[#4B5563] hover:text-[#191970] hover:bg-[#F3F4F6] transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
@@ -676,7 +670,7 @@ const Navbar = () => {
           )}
 
           <Link
-            to="/labs"
+            to={getRoute.laboratoire()}
             className="flex items-center px-6 py-3.5 text-sm font-semibold text-[#111111] hover:bg-[#F3F4F6] hover:text-[#191970] transition-colors"
             onClick={() => setMobileOpen(false)}
           >
@@ -685,7 +679,7 @@ const Navbar = () => {
 
           {/* Blog */}
           <Link
-            to="/blog"
+            to={getRoute.blog()}
             className="flex items-center px-6 py-3.5 text-sm font-semibold text-[#111111] hover:bg-[#F3F4F6] hover:text-[#191970] transition-colors"
             onClick={() => setMobileOpen(false)}
           >
@@ -695,7 +689,7 @@ const Navbar = () => {
           {/* MIDEESSI accordion */}
           <div className="flex items-center justify-between px-6">
             <Link
-              to="/about"
+              to={getRoute.about()}
               className="flex items-center gap-3 py-3.5 text-sm font-semibold text-[#111111] hover:text-[#191970] transition-colors"
               onClick={() => setMobileOpen(false)}
             >
@@ -822,3 +816,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

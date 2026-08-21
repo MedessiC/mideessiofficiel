@@ -44,6 +44,9 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Check for existing session on mount
   useEffect(() => {
+    // Safety timeout: never stay loading more than 5 seconds
+    const safetyTimer = setTimeout(() => setLoading(false), 5000);
+
     const checkSession = async () => {
       try {
         const parsedUser = safeReadClientSession();
@@ -73,11 +76,14 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         console.error('Session check error:', err);
         localStorage.removeItem(CLIENT_SESSION_KEY);
       } finally {
+        clearTimeout(safetyTimer);
         setLoading(false);
       }
     };
 
     checkSession();
+
+    return () => clearTimeout(safetyTimer);
   }, []);
 
   const signIn = async (email: string, password: string) => {

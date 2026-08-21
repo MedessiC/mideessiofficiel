@@ -17,7 +17,7 @@ interface SEOProps {
 }
 
 const SEO = ({
-  title = 'MIDEESSI - Nous sommes indépendant',
+  title = 'MIDEESSI - Nous sommes indépendants',
   description = 'MIDEESSI est une startup béninoise dédiée à l\'autonomie numérique. Nous créons des solutions d\'automatisation, d\'apprentissage et d\'intelligence artificielle accessibles à tous. Notre mission : rendre la technologie simple, utile et locale.',
   image = '/og-image.jpg',
   type = 'website',
@@ -109,12 +109,9 @@ const SEO = ({
       { name: 'twitter:image:alt', content: title },
       { name: 'twitter:domain', content: 'mideessi.com' },
 
-      // Mobile & PWA
+      // Mobile
       { name: 'theme-color', content: '#191970' },
       { name: 'msapplication-TileColor', content: '#191970' },
-      { name: 'apple-mobile-web-app-capable', content: 'yes' },
-      { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
-      { name: 'apple-mobile-web-app-title', content: 'MIDEESSI' },
       { name: 'format-detection', content: 'telephone=no' },
 
       // Sécurité

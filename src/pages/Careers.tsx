@@ -145,7 +145,7 @@ const Careers = () => {
                     </div>
                   </div>
                   {offer.imageUrl && (
-                    <img src={offer.imageUrl} alt={offer.title} className="mt-4 h-36 w-full rounded-2xl object-cover sm:h-40" />
+                    <img src={offer.imageUrl} alt={offer.title} loading="lazy" className="mt-4 h-36 w-full rounded-2xl object-cover sm:h-40" />
                   )}
                   <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                     <MapPin className="h-4 w-4 shrink-0" />

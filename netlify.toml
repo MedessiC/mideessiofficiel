@@ -19,13 +19,6 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# Manifest - No cache
-[[headers]]
-  for = "/site.webmanifest"
-  [headers.values]
-    Content-Type = "application/manifest+json"
-    Cache-Control = "no-cache"
-
 # Assets - Cache 1 year
 [[headers]]
   for = "/assets/*"

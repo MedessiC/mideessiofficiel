@@ -426,7 +426,7 @@ export default function BookDetail() {
               <div className="flex-shrink-0 w-36 sm:w-44 lg:w-52">
                 <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/20 aspect-[3/4]">
                   {book.cover_image ? (
-                    <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" />
+                    <img src={book.cover_image} alt={book.title} loading="lazy" className="w-full h-full object-cover" />
                   ) : (
                     <div className={`w-full h-full ${heroGradient} flex items-center justify-center`}>
                       <BookOpen className="w-12 h-12 text-white/40" />
@@ -817,7 +817,7 @@ export default function BookDetail() {
                       >
                         <div className={`w-12 h-16 rounded-lg flex-shrink-0 overflow-hidden bg-gradient-to-br ${rb.cover_color || 'from-[var(--brand-midnight)] to-[#2d2daa]'}`}>
                           {rb.cover_image && (
-                            <img src={rb.cover_image} alt={rb.title} className="w-full h-full object-cover" />
+                            <img src={rb.cover_image} alt={rb.title} loading="lazy" className="w-full h-full object-cover" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">

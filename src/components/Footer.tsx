@@ -1,5 +1,6 @@
 import { Facebook, Linkedin, Github, Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getRoute } from '../utils/routes';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -25,7 +26,7 @@ const Footer = () => {
           </h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              to="/contact"
+              to={getRoute.contact()}
               className="inline-flex items-center gap-2 bg-[#FAFAFA] text-[#191970] px-7 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-white hover:-translate-y-px"
               style={{ boxShadow: '0 2px 12px rgba(250,250,250,0.15)' }}
             >
@@ -64,7 +65,7 @@ const Footer = () => {
             {/* Social */}
             <div className="flex items-center gap-3">
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/profile.php?id=61578393594703&mibextid=wwXIfr"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
@@ -119,12 +120,12 @@ const Footer = () => {
             </h4>
             <ul className="space-y-3">
               {[
-                { label: 'Notre mission', href: '/about' },
-                { label: 'Solutions', href: '/solutions' },
-                { label: 'MIDEESSI Learn', href: '/apprendre' },
-                { label: 'Nos projets', href: '/projects' },
-                { label: 'Articles', href: '/article' },
-                { label: 'Ateliers', href: '/ateliers' },
+                { label: 'Notre mission', href: getRoute.about() },
+                { label: 'Solutions', href: getRoute.solutions() },
+                { label: 'MIDEESSI Learn', href: getRoute.apprendre() },
+                { label: 'Nos projets', href: getRoute.projects() },
+                { label: 'Articles', href: getRoute.blog() },
+                { label: 'Ateliers', href: getRoute.ateliers() },
               ].map(item => (
                 <li key={item.href}>
                   <Link
@@ -148,10 +149,10 @@ const Footer = () => {
             </h4>
             <ul className="space-y-3">
               {[
-                { label: 'Mentions légales', href: '/legal' },
-                { label: 'Confidentialité', href: '/legal#confidentialite' },
-                { label: "Conditions d'utilisation", href: '/legal#conditions' },
-                { label: 'Contact', href: '/contact' },
+                { label: 'Mentions légales', href: getRoute.legal() },
+                { label: 'Confidentialité', href: getRoute.legal() + '#confidentialite' },
+                { label: "Conditions d'utilisation", href: getRoute.legal() + '#conditions' },
+                { label: 'Contact', href: getRoute.contact() },
               ].map(item => (
                 <li key={item.href}>
                   <Link

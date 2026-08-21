@@ -207,7 +207,7 @@ const Library = () => {
           {/* Background image decoration */}
           {book.cover_image && (
             <div className="absolute inset-0 pointer-events-none">
-              <img src={book.cover_image} alt="" aria-hidden="true" className="w-full h-full object-cover opacity-15 blur-[2px]" />
+              <img src={book.cover_image} alt="" aria-hidden="true" loading="lazy" className="w-full h-full object-cover opacity-15 blur-[2px]" />
               <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-midnight)] via-[var(--brand-midnight)]/90 to-transparent" />
             </div>
           )}
@@ -216,7 +216,7 @@ const Library = () => {
             {/* Cover image */}
             <div className="w-32 sm:w-36 md:w-44 lg:w-48 aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-white/10 group-hover:scale-102 transition-transform flex-shrink-0">
               {book.cover_image ? (
-                <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover" />
+                <img src={book.cover_image} alt={book.title} loading="lazy" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
                   <BookOpen className="w-10 h-10 sm:w-12 sm:h-12 text-gold/60" />

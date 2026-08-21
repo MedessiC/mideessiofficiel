@@ -78,7 +78,7 @@ export default {
         'glow-gold': '0 0 20px rgba(255, 215, 0, 0.3)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'fade-in': 'fadeIn 0.18s ease-out',
         'fade-in-up': 'fadeInUp 0.6s ease-out',
         'fade-in-down': 'fadeInDown 0.6s ease-out',
         'slide-in-right': 'slideInRight 0.5s ease-out',

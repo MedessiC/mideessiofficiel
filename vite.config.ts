@@ -24,6 +24,12 @@ export default defineConfig({
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
         manualChunks(id) {
+          if (id.includes('/src/pages/Client')) {
+            return 'client-pages';
+          }
+          if (id.includes('/src/pages/Admin')) {
+            return 'admin-pages';
+          }
           if (id.includes('node_modules/pdfjs-dist')) {
             return 'pdf-vendor';
           }

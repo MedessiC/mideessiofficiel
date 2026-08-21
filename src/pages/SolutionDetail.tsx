@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react';
 import SEO from '../components/SEO';
+import { useProjects } from '../contexts/ProjectContext';
+import { getRoute } from '../utils/routes';
 
 type ProductDefinition = {
   name: string;
@@ -14,7 +15,6 @@ type ProductDefinition = {
   accessInstallment: string;
   cta: string;
   isDark?: boolean;
-  stories: { text: string; image: string }[];
   projects?: { name: string; detail: string; image: string }[];
   otherSolutions: { name: string; description: string; href: string }[];
 };
@@ -30,24 +30,10 @@ const siteVitrineProduct: ProductDefinition = {
   accessInstallment: '× 3 mois',
   cta: 'Commander',
   isDark: false,
-  stories: [
-    {
-      text: 'Une intelligence artificielle m’a recommandé votre entreprise.',
-      image: '/avis1_site_vitrine.webp',
-    },
-    {
-      text: 'J’ai compris vos services avant même de me déplacer.',
-      image: '/avis2_site_vitrine.webp',
-    },
-    {
-      text: 'Votre site m’a donné confiance immédiatement.',
-      image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80',
-    },
-  ],
   otherSolutions: [
-    { name: 'Site E-Commerce', description: 'Vendez vos produits en ligne 24h/24.', href: '/siteweb/e-commerce' },
-    { name: 'Application Web', description: 'Centralisez et automatisez votre gestion.', href: '/siteweb/application-web' },
-    { name: 'Application Mobile', description: 'Vos services directement sur smartphone.', href: '/siteweb/application-mobile' },
+    { name: 'Site E-Commerce', description: 'Vendez vos produits en ligne 24h/24.', href: '/solution/siteweb/e-commerce' },
+    { name: 'Application Web', description: 'Centralisez et automatisez votre gestion.', href: '/solution/siteweb/application-web' },
+    { name: 'Application Mobile', description: 'Vos services directement sur smartphone.', href: '/solution/siteweb/application-mobile' },
   ],
 };
 
@@ -62,20 +48,6 @@ const siteECommerceProduct: ProductDefinition = {
   accessInstallment: '× 3 mois',
   cta: 'Commander',
   isDark: true,
-  stories: [
-    {
-      text: 'Mes clients au Bénin et dans la sous-région payent par Mobile Money même à 2h du matin.',
-      image: 'https://images.unsplash.com/photo-1556742049-0a670f4a4591?auto=format&fit=crop&w=900&q=80',
-    },
-    {
-      text: 'Le catalogue produit et la gestion automatique des stocks m’ont fait gagner un temps précieux.',
-      image: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80',
-    },
-    {
-      text: 'Mes ventes en ligne dépassent désormais les commandes physiques.',
-      image: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=900&q=80',
-    },
-  ],
   projects: [
     {
       name: 'AfriqShop',
@@ -94,9 +66,9 @@ const siteECommerceProduct: ProductDefinition = {
     },
   ],
   otherSolutions: [
-    { name: 'Site Vitrine', description: 'Présentez votre entreprise.', href: '/siteweb/vitrine' },
-    { name: 'Application Web', description: 'Centralisez votre activité.', href: '/siteweb/application-web' },
-    { name: 'Application Mobile', description: 'Un service dans la poche.', href: '/siteweb/application-mobile' },
+    { name: 'Site Vitrine', description: 'Présentez votre entreprise.', href: '/solution/siteweb/vitrine' },
+    { name: 'Application Web', description: 'Centralisez votre activité.', href: '/solution/siteweb/application-web' },
+    { name: 'Application Mobile', description: 'Un service dans la poche.', href: '/solution/siteweb/application-mobile' },
   ],
 };
 
@@ -111,16 +83,6 @@ const applicationWebProduct: ProductDefinition = {
   accessInstallment: 'Sur mesure',
   cta: 'Commander',
   isDark: false,
-  stories: [
-    {
-      text: 'Nos équipes gèrent leurs tâches et dossiers en temps réel sans perdre de temps.',
-      image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=900&q=80',
-    },
-    {
-      text: 'L’espace client automatisé a réduit nos appels de support de 80%.',
-      image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=900&q=80',
-    },
-  ],
   projects: [
     {
       name: 'Sira Portal',
@@ -134,9 +96,9 @@ const applicationWebProduct: ProductDefinition = {
     },
   ],
   otherSolutions: [
-    { name: 'Site Vitrine', description: 'Présentez votre entreprise.', href: '/siteweb/vitrine' },
-    { name: 'Site E-Commerce', description: 'Vendez vos produits en ligne.', href: '/siteweb/e-commerce' },
-    { name: 'Application Mobile', description: 'Un service dans la poche.', href: '/siteweb/application-mobile' },
+    { name: 'Site Vitrine', description: 'Présentez votre entreprise.', href: '/solution/siteweb/vitrine' },
+    { name: 'Site E-Commerce', description: 'Vendez vos produits en ligne.', href: '/solution/siteweb/e-commerce' },
+    { name: 'Application Mobile', description: 'Un service dans la poche.', href: '/solution/siteweb/application-mobile' },
   ],
 };
 
@@ -151,12 +113,6 @@ const applicationMobileProduct: ProductDefinition = {
   accessInstallment: 'Sur mesure',
   cta: 'Commander',
   isDark: true,
-  stories: [
-    {
-      text: 'Nos utilisateurs accèdent à nos services d’un simple clic sur leur téléphone.',
-      image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=900&q=80',
-    },
-  ],
   projects: [
     {
       name: 'PassMobile',
@@ -165,9 +121,9 @@ const applicationMobileProduct: ProductDefinition = {
     },
   ],
   otherSolutions: [
-    { name: 'Site Vitrine', description: 'Présentez votre entreprise.', href: '/siteweb/vitrine' },
-    { name: 'Site E-Commerce', description: 'Vendez vos produits en ligne.', href: '/siteweb/e-commerce' },
-    { name: 'Application Web', description: 'Centralisez votre activité.', href: '/siteweb/application-web' },
+    { name: 'Site Vitrine', description: 'Présentez votre entreprise.', href: '/solution/siteweb/vitrine' },
+    { name: 'Site E-Commerce', description: 'Vendez vos produits en ligne.', href: '/solution/siteweb/e-commerce' },
+    { name: 'Application Web', description: 'Centralisez votre activité.', href: '/solution/siteweb/application-web' },
   ],
 };
 
@@ -182,16 +138,6 @@ const automatisationIAProduct: ProductDefinition = {
   accessInstallment: '× 3 mois',
   cta: 'Commander',
   isDark: true,
-  stories: [
-    {
-      text: 'L’automatisation de notre facturation et de la relance WhatsApp nous fait gagner 8 heures par semaine.',
-      image: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=900&q=80',
-    },
-    {
-      text: 'L’assistant IA qualifie nos prospects automatiquement avant de passer la hand à nos commerciaux.',
-      image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
-    },
-  ],
   projects: [
     {
       name: 'FlowAuto CRM',
@@ -205,7 +151,7 @@ const automatisationIAProduct: ProductDefinition = {
     },
   ],
   otherSolutions: [
-    { name: 'Site Web & Applications', description: 'Sites vitrines et e-commerce.', href: '/siteweb' },
+    { name: 'Site Web & Applications', description: 'Sites vitrines et e-commerce.', href: '/solution/siteweb' },
     { name: 'Réseaux Sociaux', description: 'Engagement et croissance digitale.', href: '/solutions/reseaux-sociaux' },
     { name: 'Couverture Événementielle', description: 'Captation et présence sur scène.', href: '/solutions/couverture-evenementielle' },
   ],
@@ -222,16 +168,6 @@ const reseauxSociauxProduct: ProductDefinition = {
   accessInstallment: '/ mois',
   cta: 'Commander',
   isDark: false,
-  stories: [
-    {
-      text: 'Notre communauté a triplé en 3 mois et nous recevons des demandes de devis chaque jour sur Instagram.',
-      image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=900&q=80',
-    },
-    {
-      text: 'La qualité des visuels et des vidéos publiées a totalement transformé l’image de notre marque.',
-      image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=900&q=80',
-    },
-  ],
   projects: [
     {
       name: 'Campagne Brand+',
@@ -245,7 +181,7 @@ const reseauxSociauxProduct: ProductDefinition = {
     },
   ],
   otherSolutions: [
-    { name: 'Site Web & Applications', description: 'Sites vitrines et e-commerce.', href: '/siteweb' },
+    { name: 'Site Web & Applications', description: 'Sites vitrines et e-commerce.', href: '/solution/siteweb' },
     { name: 'Automatisation & IA', description: 'Optimisez vos processus métier.', href: '/solutions/automatisation-ia' },
     { name: 'Couverture Événementielle', description: 'Captation et présence sur scène.', href: '/solutions/couverture-evenementielle' },
   ],
@@ -262,16 +198,6 @@ const couvertureEvenementielleProduct: ProductDefinition = {
   accessInstallment: 'par événement',
   cta: 'Commander',
   isDark: true,
-  stories: [
-    {
-      text: 'La vidéo aftermovie de notre conférence a fait un carton sur LinkedIn et YouTube.',
-      image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=900&q=80',
-    },
-    {
-      text: 'Une équipe réactive sur le terrain qui a couvert tout notre forum avec un professionnalisme irréprochable.',
-      image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=900&q=80',
-    },
-  ],
   projects: [
     {
       name: 'Forum Tech Cotonou',
@@ -285,7 +211,7 @@ const couvertureEvenementielleProduct: ProductDefinition = {
     },
   ],
   otherSolutions: [
-    { name: 'Site Web & Applications', description: 'Sites vitrines et e-commerce.', href: '/siteweb' },
+    { name: 'Site Web & Applications', description: 'Sites vitrines et e-commerce.', href: '/solution/siteweb' },
     { name: 'Automatisation & IA', description: 'Optimisez vos processus métier.', href: '/solutions/automatisation-ia' },
     { name: 'Réseaux Sociaux', description: 'Engagement et croissance digitale.', href: '/solutions/reseaux-sociaux' },
   ],
@@ -320,16 +246,19 @@ const slugAliases: Record<string, string> = {
 const SolutionDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { openWizard } = useProjects();
   const resolvedSlug = slug ? slugAliases[slug] ?? slug : null;
   const product = resolvedSlug ? productCatalog[resolvedSlug] : null;
 
-  const [activeStory, setActiveStory] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const handleCommander = () => {
+    navigate(`/commander?offer=${slug || 'vitrine'}`);
+  };
+
   const [showStickyBar, setShowStickyBar] = useState(false);
 
   useEffect(() => {
     if (slug && !productCatalog[resolvedSlug ?? slug]) {
-      navigate('/siteweb');
+      navigate(getRoute.solutionSiteweb());
     }
   }, [slug, resolvedSlug, navigate]);
 
@@ -343,18 +272,6 @@ const SolutionDetail = () => {
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  useEffect(() => {
-    if (!isAutoPlaying || !product || product.stories.length <= 1) {
-      return undefined;
-    }
-
-    const timer = window.setInterval(() => {
-      setActiveStory((prev) => (prev + 1) % product.stories.length);
-    }, 4000);
-
-    return () => window.clearInterval(timer);
-  }, [isAutoPlaying, product]);
 
   if (!product) {
     return (
@@ -384,8 +301,9 @@ const SolutionDetail = () => {
               {product.name}
             </div>
 
-            <Link
-              to="/contact"
+            <button
+              type="button"
+              onClick={handleCommander}
               className={`inline-flex min-h-[42px] items-center justify-center rounded-full px-5 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition ${
                 isDark
                   ? 'bg-[#FFD700] text-[#0F172A] hover:bg-yellow-400'
@@ -393,7 +311,7 @@ const SolutionDetail = () => {
               }`}
             >
               Commander
-            </Link>
+            </button>
           </div>
         </div>
       )}
@@ -415,8 +333,9 @@ const SolutionDetail = () => {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/contact"
+              <button
+                type="button"
+                onClick={handleCommander}
                 className={`inline-flex min-h-[48px] items-center justify-center rounded-xl px-6 py-3 text-[11px] font-bold uppercase tracking-[0.1em] transition ${
                   isDark
                     ? 'bg-[#FFD700] text-[#0F172A] hover:bg-yellow-400 shadow-md'
@@ -424,7 +343,7 @@ const SolutionDetail = () => {
                 }`}
               >
                 Commander maintenant
-              </Link>
+              </button>
               <a
                 href="#exemples"
                 className={`inline-flex min-h-[48px] items-center justify-center rounded-xl border px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.1em] transition ${
@@ -502,14 +421,15 @@ const SolutionDetail = () => {
           </div>
 
           <div className="mt-6 flex flex-col gap-3">
-            <Link
-              to="/contact"
+            <button
+              type="button"
+              onClick={handleCommander}
               className={`inline-flex min-h-[48px] items-center justify-center rounded-xl px-5 py-3 text-[11px] font-bold uppercase tracking-[0.1em] transition ${
                 isDark ? 'bg-[#FFD700] text-[#0F172A] hover:bg-yellow-400' : 'bg-[#191970] text-white hover:bg-[#141560]'
               }`}
             >
               Commander maintenant
-            </Link>
+            </button>
             <a
               href="#exemples"
               className={`inline-flex min-h-[48px] items-center justify-center rounded-xl border px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.1em] transition ${
@@ -555,116 +475,19 @@ const SolutionDetail = () => {
                 </div>
               </div>
 
-              <Link
-                to="/contact"
+              <button
+                type="button"
+                onClick={handleCommander}
                 className={`inline-flex min-h-[52px] items-center justify-center rounded-[18px] px-6 py-3 text-[14px] font-bold transition ${
                   isDark ? 'bg-[#FFD700] text-[#0F172A] hover:bg-yellow-400' : 'bg-[#191970] text-white hover:bg-[#141560]'
                 }`}
               >
                 Commander
-              </Link>
+              </button>
             </div>
           </div>
         </div>
       </section>
-
-      {/* ── Stories / Testimonials Carousel ── */}
-      {product.stories.length > 0 && (
-        <section className="mx-auto max-w-[1200px] px-4 py-16 sm:px-6 lg:px-12">
-          <div className="mb-8 text-center">
-            <div className={`text-[11px] font-bold uppercase tracking-[0.16em] ${isDark ? 'text-[#8E9AB4]' : 'text-[#8E9AB4]'}`}>
-              Témoignages &amp; REX
-            </div>
-            <h2 className={`mt-3 text-[32px] font-black tracking-[-0.06em] sm:text-[42px] ${isDark ? 'text-white' : 'text-[#111111]'}`}>
-              Ce qu&apos;ils diront de vous
-            </h2>
-          </div>
-
-          <div className="relative overflow-hidden bg-transparent">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveStory((prev) => (prev - 1 + product.stories.length) % product.stories.length);
-                setIsAutoPlaying(false);
-              }}
-              className={`absolute left-4 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border shadow-md md:left-6 ${
-                isDark ? 'border-slate-700 bg-slate-800 text-white' : 'border-[#191970]/15 bg-white text-[#191970]'
-              }`}
-              aria-label="Précédent"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveStory((prev) => (prev + 1) % product.stories.length);
-                setIsAutoPlaying(false);
-              }}
-              className={`absolute right-4 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border shadow-md md:right-6 ${
-                isDark ? 'border-amber-400 bg-[#FFD700] text-[#0F172A]' : 'border-[#191970]/15 bg-[#191970] text-white'
-              }`}
-              aria-label="Suivant"
-            >
-              <ArrowRight className="h-4 w-4" />
-            </button>
-
-            {product.stories.map((story, index) => (
-              <div
-                key={story.text}
-                className={`transition-opacity duration-500 ${index === activeStory ? 'block opacity-100' : 'hidden opacity-0'}`}
-              >
-                <div className="flex min-h-[120px] items-start justify-center px-10 md:px-16">
-                  <div className={`text-[26px] leading-none ${isDark ? 'text-[#FFD700]' : 'text-[#191970]'}`}>&ldquo;</div>
-                  <p className={`ml-2 max-w-[680px] text-center text-[18px] font-medium leading-snug tracking-[-0.04em] md:text-[24px] ${isDark ? 'text-white' : 'text-[#111111]'}`}>
-                    {story.text}
-                  </p>
-                </div>
-
-                <div className="mx-auto -mt-2 max-w-[680px] md:-mt-3">
-                  <img
-                    src={story.image}
-                    alt={story.text}
-                    className="w-full rounded-2xl object-contain object-center max-h-[420px] md:max-h-[480px]"
-                  />
-                </div>
-              </div>
-            ))}
-
-            <div className="mt-5 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsAutoPlaying((prev) => !prev)}
-                className={`flex h-9 w-9 items-center justify-center rounded-full border shadow-sm ${
-                  isDark ? 'border-slate-700 bg-slate-800 text-white' : 'border-[#191970]/10 bg-white text-[#191970]'
-                }`}
-                aria-label={isAutoPlaying ? 'Pause le diaporama' : 'Lecture du diaporama'}
-              >
-                {isAutoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-              </button>
-
-              <div className="flex items-center gap-2">
-                {product.stories.map((story, index) => (
-                  <button
-                    key={`${story.text}-dot`}
-                    type="button"
-                    className={`h-2.5 w-2.5 rounded-full transition ${
-                      index === activeStory
-                        ? (isDark ? 'bg-[#FFD700]' : 'bg-[#191970]')
-                        : (isDark ? 'bg-slate-700' : 'bg-[#8E9AB4]/40')
-                    }`}
-                    aria-label={`Afficher le témoignage ${index + 1}`}
-                    onClick={() => {
-                      setActiveStory(index);
-                      setIsAutoPlaying(false);
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ── Réalisations / Examples Section ── */}
       {product.projects && product.projects.length > 0 && (
@@ -732,7 +555,7 @@ const SolutionDetail = () => {
                 <div className={`mt-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] ${
                   isDark ? 'text-[#FFD700]' : 'text-[#111111]'
                 }`}>
-                  Voir la solution &rarr;
+                  Voir la solution 
                 </div>
               </Link>
             ))}

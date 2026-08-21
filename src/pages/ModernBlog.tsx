@@ -149,6 +149,7 @@ const ModernBlog = () => {
                           <img
                             src={toCloudinaryUrl(featuredPost.image_url, { width: 1200, height: 800, quality: 80, crop: 'fill' })}
                             alt={featuredPost.title}
+                            loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (

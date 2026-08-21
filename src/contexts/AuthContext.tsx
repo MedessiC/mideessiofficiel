@@ -104,6 +104,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Initialisation au montage ─────────────────────────────
   useEffect(() => {
+    let isInitializing = true;
+
+    // Safety net: never block the UI more than 1.5 seconds
+    const safetyTimer = setTimeout(() => {
+      if (isInitializing) {
+        isInitializing = false;
+        setLoading(false);
+      }
+    }, 1500);
+
     const init = async () => {
       try {
         // Gère le retour OAuth (hash #access_token)
@@ -112,18 +122,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (!error && data?.session) {
             await handleSession(data.session);
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
-            return;
+            // ⚠️ Ne pas faire return ici — on doit toujours atteindre le finally
           }
+        } else {
+          const { data } = await supabase.auth.getSession();
+          await handleSession(data.session);
         }
-
-        const { data } = await supabase.auth.getSession();
-        await handleSession(data.session);
       } catch (err) {
         console.error('[Auth] Erreur initialisation:', err);
         setUser(null);
         setSession(null);
         setProfile(null);
       } finally {
+        clearTimeout(safetyTimer);
+        isInitializing = false;
         setLoading(false);
       }
     };
@@ -136,11 +148,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.error('[Auth] Erreur onAuthStateChange:', err);
       } finally {
-        setLoading(false);
+        if (!isInitializing) {
+          setLoading(false);
+        }
       }
     });
 
-    return () => subscription?.unsubscribe();
+    return () => {
+      clearTimeout(safetyTimer);
+      subscription?.unsubscribe();
+    };
   }, []);
 
   // ── Inscription ───────────────────────────────────────────

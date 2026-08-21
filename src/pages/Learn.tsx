@@ -105,6 +105,7 @@ const Learn = () => {
       const { data, error } = await supabase
         .from('formations')
         .select('*')
+        .eq('is_published', true)
         .order('created_at', { ascending: false });
       if (error) { console.error('Erreur Supabase formations:', error); setCourses([]); }
       else setCourses((data as Course[]) || []);

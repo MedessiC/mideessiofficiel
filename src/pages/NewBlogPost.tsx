@@ -635,7 +635,7 @@ const NewBlogPost = () => {
           </header>
 
           <div className="rounded-3xl overflow-hidden mb-12 shadow-2xl bg-gray-100 dark:bg-gray-800">
-            <img src={toCloudinaryUrl(post.image_url, { width: 1600, height: 900, quality: 80, crop: 'fill' })} alt={post.title} className="w-full h-auto object-cover max-h-[600px]" />
+            <img src={toCloudinaryUrl(post.image_url, { width: 1600, height: 900, quality: 80, crop: 'fill' })} alt={post.title} loading="lazy" className="w-full h-auto object-cover max-h-[600px]" />
           </div>
 
           <div className="prose-container">
@@ -671,7 +671,7 @@ const NewBlogPost = () => {
               {relatedPosts.map(related => (
                 <Link key={related.id} to={`/article/${related.slug}`} className="group block">
                   <div className="aspect-video rounded-xl overflow-hidden mb-3 bg-gray-100">
-                    <img src={toCloudinaryUrl(related.image_url, { width: 600, height: 340, quality: 80, crop: 'fill' })} alt={related.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img src={toCloudinaryUrl(related.image_url, { width: 600, height: 340, quality: 80, crop: 'fill' })} alt={related.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   </div>
                   <h4 className="font-bold text-sm text-[var(--brand-midnight)] dark:text-white line-clamp-2 group-hover:text-gold transition-colors">{related.title}</h4>
                 </Link>

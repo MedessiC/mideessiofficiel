@@ -30,7 +30,6 @@ const SideDrawer = ({ isOpen, onClose }: SideDrawerProps) => {
       title: 'Services',
       icon: <Wrench className="w-3.5 h-3.5" />,
       items: [
-        { id: 'offres',    label: 'Offres',   href: '/offres',    icon: <Tag className="w-5 h-5" /> },
         { id: 'solutions', label: 'Solutions', href: '/solutions', icon: <Lightbulb className="w-5 h-5" /> },
         { id: 'projects',  label: 'Projets',   href: '/projects',  icon: <Rocket className="w-5 h-5" /> },
         { id: 'ateliers',  label: 'Ateliers',  href: '/ateliers',  icon: <BookOpen className="w-5 h-5" /> },
@@ -85,19 +84,11 @@ const SideDrawer = ({ isOpen, onClose }: SideDrawerProps) => {
               <X className="w-4 h-4" />
             </button>
 
-            {/* Logo — light mode uses dark logo, dark mode uses light logo */}
             <div className="relative h-9 mb-3">
-              {/* Logo pour mode CLAIR */}
               <img
                 src="/mideessi-light.webp"
                 alt="MIDEESSI"
-                className="h-9 w-auto object-contain dark:hidden"
-              />
-              {/* Logo pour mode SOMBRE */}
-              <img
-                src="/mideessi.webp"
-                alt="MIDEESSI"
-                className="h-9 w-auto object-contain hidden dark:block"
+                className="h-9 w-auto object-contain"
               />
             </div>
 

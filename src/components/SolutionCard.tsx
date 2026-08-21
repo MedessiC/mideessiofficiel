@@ -47,6 +47,7 @@ const SolutionCard = ({ solution, variant = 'default' }: SolutionCardProps) => {
         <img
           src={solution.image}
           alt={solution.name}
+          loading="lazy"
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent"></div>

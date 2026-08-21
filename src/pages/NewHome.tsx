@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { useProjects } from '../contexts/ProjectContext';
+import { getRoute } from '../utils/routes';
 
 /* ============================================================
    TYPES
@@ -113,6 +115,7 @@ function HeroSection() {
   }, [prefersReducedMotion]);
 
   const navigate = useNavigate();
+  const { openWizard } = useProjects();
   const activeProfile = DOMAIN_PROFILES[profileIndex];
 
   return (
@@ -131,7 +134,7 @@ function HeroSection() {
           className="absolute inset-0 z-0 cursor-pointer"
           role="link"
           aria-label="Voir le site vitrine"
-          onClick={() => navigate('/siteweb/vitrine')}
+          onClick={() => navigate(getRoute.solutionSitewebDetail('vitrine'))}
         />
         <div className="relative z-10 max-w-[1200px] mx-auto px-6 lg:px-12 w-full flex flex-wrap items-center justify-center gap-6 md:justify-between md:flex-nowrap pointer-events-none">
           <div
@@ -214,11 +217,14 @@ function HeroSection() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-4 md:justify-start pointer-events-auto">
-            <Link to="/siteweb/vitrine" className="m-btn-secondary relative z-20 transition-transform duration-200 hover:scale-105 hover:shadow-xl">
+            <Link to={getRoute.solutionSitewebDetail('vitrine')} className="m-btn-secondary relative z-20 transition-transform duration-200 hover:scale-105 hover:shadow-xl">
               En savoir plus
               <ArrowRight size={16} />
             </Link>
-            <Link to="/siteweb/vitrine" className="m-btn-primary relative z-20 transition-transform duration-200 hover:scale-105 hover:shadow-xl">
+            <Link
+              to={getRoute.commander()}
+              className="m-btn-primary relative z-20 transition-transform duration-200 hover:scale-105 hover:shadow-xl cursor-pointer"
+            >
               Commander
             </Link>
           </div>
@@ -393,7 +399,7 @@ function FullwidthCardSection({
 function ServicesSection() {
   return (
     <FullwidthCardSection
-      to="/solutions"
+      to={getRoute.solutions()}
       imageSrc="/mideessi_services.webp"
       imageAlt="Illustration de services numériques MIDEESSI"
       title="Développez vos activités"
@@ -453,7 +459,7 @@ function TrustBarSection() {
 function LearnSection() {
   return (
     <FullwidthCardSection
-      to="/apprendre"
+      to={getRoute.apprendre()}
       imageSrc="/mideessi_learn.webp"
       imageAlt="Illustration d’apprentissage numérique MIDEESSI"
       title="Formations et Livres"
@@ -470,7 +476,7 @@ function LearnSection() {
 function LabsSection() {
   return (
     <FullwidthCardSection
-      to="/laboratoire"
+      to={getRoute.laboratoire()}
       imageSrc="/mideessi_labs.webp"
       imageAlt="Illustration MIDEESSI Labs"
       title="Nos Innovations Maison"
