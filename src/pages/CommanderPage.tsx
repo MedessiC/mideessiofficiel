@@ -350,9 +350,7 @@ export default function CommanderPage() {
                 >
                   <div>
                     <h3 className="text-base sm:text-lg font-black mb-1">Un Rendez-vous</h3>
-                    <p className={`text-xs leading-relaxed ${fulfillmentMode === 'rdv' ? 'text-white/80' : 'text-[#6B7280]'}`}>
-                      Choisissez un créneau et échangez avec nous en personne avant de lancer le projet.
-                    </p>
+          
                   </div>
                 </button>
 
@@ -371,9 +369,7 @@ export default function CommanderPage() {
                 >
                   <div>
                     <h3 className="text-base sm:text-lg font-black mb-1">À distance</h3>
-                    <p className={`text-xs leading-relaxed ${fulfillmentMode === 'distance' ? 'text-white/80' : 'text-[#6B7280]'}`}>
-                      Envoyez votre besoin maintenant ; votre espace de suivi sera ensuite activé.
-                    </p>
+              
                   </div>
                 </button>
               </div>
