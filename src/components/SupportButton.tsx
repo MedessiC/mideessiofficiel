@@ -1,9 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useNavigation } from '../contexts/NavigationContext';
 
 export default function SupportButton(): JSX.Element {
-  const { bottomNavHidden } = useNavigation();
   const location = useLocation();
 
   // Hide button on specific pages where it would be redundant or intrusive
@@ -11,17 +9,13 @@ export default function SupportButton(): JSX.Element {
   const pathname = location.pathname || '/';
   if (hideOnPaths.some((p) => pathname === p || pathname.startsWith(p))) return null;
 
-  const bottomStyle = bottomNavHidden
-    ? 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)'
-    : 'calc(env(safe-area-inset-bottom, 0px) + 5.2rem + 1rem)';
-
   return (
     <Link
       to="/contact"
       aria-label="Support MIDEESSI"
       title="Support"
-      className="fixed right-6 flex items-center justify-center rounded-full bg-[#FAFAFA] shadow-lg border border-[#E6E6EA] hover:scale-105 overflow-hidden motion-safe:transition-all motion-safe:duration-200"
-      style={{ boxShadow: '0 6px 24px rgba(15,23,42,0.08)', zIndex: 9999, bottom: bottomStyle }}
+      className="fixed right-4 bottom-[8.5rem] lg:right-6 lg:bottom-6 flex items-center justify-center rounded-full bg-[#FAFAFA] shadow-lg border border-[#E6E6EA] hover:scale-105 overflow-hidden motion-safe:transition-all motion-safe:duration-200"
+      style={{ boxShadow: '0 6px 24px rgba(15,23,42,0.08)', zIndex: 9999 }}
     >
       <img
         src="/support.png"

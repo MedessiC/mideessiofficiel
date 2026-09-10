@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Search, Star, ArrowRight } from 'lucide-react';
+import { BookOpen, Search, Star, ArrowRight, CheckCircle2, Clock, CreditCard, X, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import SEO from '../components/SEO';
 
@@ -28,27 +28,53 @@ interface Book {
 
 interface Course {
   id: string;
+  slug?: string;
   title: string;
   description?: string;
   level?: string;
   duration?: string;
   price?: string | number;
+  payment_option?: string;
   category?: string;
   cover?: string;
+  modules?: string[];
 }
+
+const DEFAULT_COURSES: Course[] = [
+  {
+    id: 'formation-dev-web-3-mois',
+    slug: 'developpement-web',
+    title: 'Formation en Développement Web',
+    description: 'Une formation intensive et pratique de 3 mois pour maîtriser la création de sites et d’applications web modernes (HTML5, CSS3, JavaScript ES6+). Bénéficiez d’un accompagnement concret et de projets réels.',
+    level: 'Tous niveaux',
+    duration: '3 mois',
+    price: '45 000 FCFA',
+    payment_option: '15 000 FCFA / mois (sur 3 mois avec engagement)',
+    category: 'Développement Web',
+    cover: '/formation_dev.webp',
+    modules: [
+      'Bases du Web & HTML5 / CSS3 Responsive (Flexbox, Grid)',
+      'JavaScript ES6+ & Algorithmique (Manipulation du DOM, Fetch / Async)',
+      'Développement Frontend Moderne avec React.js & Tailwind CSS',
+      'Initiation Backend, API REST & Stockage de données',
+      'Conception et Déploiement d’un Projet Réel de Fin de Formation',
+    ],
+  },
+];
 
 /* ============================================================
    LEARN PAGE
    ============================================================ */
 const Learn = () => {
   const [books, setBooks] = useState<Book[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<Course[]>(DEFAULT_COURSES);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'formations' | 'livres'>('formations');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    document.title = 'MIDEESSI Learn — Bibliothèque numérique';
+    document.title = 'MIDEESSI Learn — Formations & Bibliothèque';
     fetchBooks();
     fetchFormations();
   }, []);
@@ -107,11 +133,19 @@ const Learn = () => {
         .select('*')
         .eq('is_published', true)
         .order('created_at', { ascending: false });
-      if (error) { console.error('Erreur Supabase formations:', error); setCourses([]); }
-      else setCourses((data as Course[]) || []);
+      if (error || !data || data.length === 0) {
+        setCourses(DEFAULT_COURSES);
+      } else {
+        // Combiner ou prioriser les formations demandées
+        const dbCourses = data as Course[];
+        const filteredDb = dbCourses.filter(c =>
+          !DEFAULT_COURSES.some(dc => dc.id === c.id || dc.title.toLowerCase() === c.title.toLowerCase())
+        );
+        setCourses([...DEFAULT_COURSES, ...filteredDb].filter(c => c.slug === 'developpement-web'));
+      }
     } catch (err) {
       console.error('Erreur chargement formations:', err);
-      setCourses([]);
+      setCourses(DEFAULT_COURSES);
     }
   };
 
@@ -154,6 +188,42 @@ const Learn = () => {
         }
         @media (prefers-reduced-motion: reduce) {
           [data-scroll-reveal] { opacity:1; transform:none; transition:none; }
+        }
+        @media (max-width: 767px) {
+          .formation-dev-card {
+            min-height: auto !important;
+            background-color: #FAFAFA !important;
+          }
+          .formation-dev-card .formation-card-media {
+            position: relative;
+            inset: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: calc(100% + 2rem);
+            margin-left: -1rem;
+            height: auto;
+            background-color: #FAFAFA;
+          }
+          .formation-dev-card .formation-card-media img {
+            display: block;
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            transform: scale(1.15);
+            transform-origin: center;
+          }
+          .formation-dev-card .formation-card-content {
+            position: relative !important;
+            z-index: 2;
+            flex: none;
+          }
+        }
+        @media (min-width: 768px) {
+          .formation-card-content > div:not(.formation-card-media) {
+            position: relative;
+            z-index: 2;
+          }
         }
       `}</style>
 
@@ -219,20 +289,6 @@ const Learn = () => {
               Accédez à des connaissances qui vous correspondent et vous font évoluer.
             </p>
 
-            {/* Divider décoratif */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-                marginTop: 'clamp(36px, 5vh, 56px)',
-              }}
-            >
-              <div style={{ height: '1px', width: '56px', backgroundColor: '#E5E7EB' }} />
-              <div style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: 'var(--color-brand)' }} />
-              <div style={{ height: '1px', width: '56px', backgroundColor: '#E5E7EB' }} />
-            </div>
           </div>
         </section>
 
@@ -321,15 +377,16 @@ const Learn = () => {
                   FORMATIONS EN VEDETTE
                 </h2>
                 <div
-                  className="flex gap-6 overflow-x-auto py-2 snap-x snap-mandatory items-stretch"
+                  className="flex justify-center gap-6 overflow-x-auto py-2 snap-x snap-mandatory items-stretch"
                   role="list"
                   aria-label="Formations en vedette"
                   style={{ scrollbarWidth: 'none' }}
                 >
                   {featuredCourses.map((c) => (
-                    <div
+                    <Link
                       key={c.id}
-                      className="w-[90%] max-w-[520px] snap-center flex-shrink-0 rounded-2xl overflow-hidden flex flex-col"
+                      to={`/apprendre/formations/${c.slug || c.id}`}
+                      className={`w-[90%] max-w-[520px] snap-center flex-shrink-0 rounded-2xl overflow-hidden flex flex-col ${c.slug === 'developpement-web' ? 'formation-dev-card' : ''}`}
                       style={{
                         position: 'relative',
                         minHeight: '480px',
@@ -338,39 +395,41 @@ const Learn = () => {
                       }}
                       role="listitem"
                     >
-                      <div
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${c.cover})` }}
-                        aria-hidden
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'linear-gradient(180deg, rgba(2,6,23,0.12) 0%, rgba(2,6,23,0.65) 70%)',
-                        }}
-                        aria-hidden
-                      />
-                      <div className="p-6 flex-1 flex flex-col justify-between" style={{ position: 'relative', zIndex: 2 }}>
+                      <div className="p-6 flex-1 flex flex-col justify-between formation-card-content" style={{ position: 'relative', zIndex: 2 }}>
                         <div>
-                          <div className="text-sm mb-1" style={{ color: 'rgba(255,255,255,0.7)' }}>{c.level}</div>
-                          <h3 className="font-bold text-2xl mb-2" style={{ color: '#FFFFFF', letterSpacing: '-0.02em' }}>{c.title}</h3>
-                          <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.75)' }}>{c.description}</p>
+                          <div className="text-sm mb-1" style={{ color: '#111111' }}>{c.level}</div>
+                          <h3 className="font-bold text-2xl mb-2" style={{ color: '#191970', letterSpacing: '-0.02em' }}>{c.title}</h3>
+                          <p className="text-sm mb-4" style={{ color: '#111111' }}>{c.description}</p>
                         </div>
-                        <div className="mt-4 flex items-center justify-between">
-                          <div className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>{c.duration}</div>
+                        <picture className={`absolute inset-0 block formation-card-media ${c.slug === 'developpement-web' ? 'formation-dev-card-media' : ''}`} aria-hidden="true">
+                          <source
+                            media="(max-width: 767px)"
+                            srcSet={c.slug === 'developpement-web' ? '/formation_dev_mobile-removebg-preview.webp' : c.cover}
+                          />
+                          <img
+                            src={c.slug === 'developpement-web' ? '/formation_dev_mobile.webp' : c.cover}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        </picture>
+                        <div className="mt-4 flex items-center justify-between gap-3">
+                          <div className="text-sm" style={{ color: '#111111' }}>{c.duration}</div>
                           <div className="flex items-center gap-3">
-                            <div className="font-semibold" style={{ color: '#FFD700' }}>{c.price}</div>
-                            <Link
-                              to={`/apprendre/formations/${c.id}`}
-                              className="m-btn-primary transition-transform duration-200 hover:scale-105"
-                            >
-                              Voir
-                            </Link>
+                            <div className="text-right">
+                              <div className="font-semibold text-sm" style={{ color: '#191970' }}>{c.price}</div>
+                              {c.payment_option && (
+                                <div className="text-[11px] font-medium" style={{ color: '#111111' }}>
+                                  ou 15 000 FCFA/mois
+                                </div>
+                              )}
+                            </div>
+                            <span className="m-btn-primary transition-transform duration-200 hover:scale-105">
+                              Voir la formation
+                            </span>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -401,9 +460,10 @@ const Learn = () => {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
                   {filteredCourses.map((c) => (
-                    <div
+                    <Link
                       key={c.id}
-                      className="w-full max-w-[420px] rounded-2xl overflow-hidden flex flex-col"
+                      to={`/apprendre/formations/${c.slug || c.id}`}
+                      className={`w-full max-w-[420px] rounded-2xl overflow-hidden flex flex-col ${c.slug === 'developpement-web' ? 'formation-dev-card' : ''}`}
                       style={{
                         position: 'relative',
                         minHeight: '420px',
@@ -411,34 +471,39 @@ const Learn = () => {
                         boxShadow: '0 4px 16px rgba(15,23,42,0.06)',
                       }}
                     >
-                      <div
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${c.cover})` }}
-                        aria-hidden
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'linear-gradient(180deg, rgba(245,245,247,0.06) 0%, rgba(245,245,247,0.78) 70%)',
-                        }}
-                        aria-hidden
-                      />
-                      <div className="p-5 flex-1 flex flex-col justify-between" style={{ position: 'relative', zIndex: 2 }}>
+                      <div className="p-5 flex-1 flex flex-col justify-between formation-card-content" style={{ position: 'relative', zIndex: 2 }}>
                         <div>
                           <div className="text-xs mb-1" style={{ color: '#6B7280' }}>Niveau : {c.level}</div>
                           <h3 className="font-bold text-lg mb-2" style={{ color: '#191970', letterSpacing: '-0.01em' }}>{c.title}</h3>
                           <p className="text-sm mb-4" style={{ color: '#4B5563', lineHeight: 1.6 }}>{c.description}</p>
                         </div>
-                        <div className="flex items-center justify-between">
+                        <picture className={`absolute inset-0 block formation-card-media ${c.slug === 'developpement-web' ? 'formation-dev-card-media' : ''}`} aria-hidden="true">
+                          <source
+                            media="(max-width: 767px)"
+                            srcSet={c.slug === 'developpement-web' ? '/formation_dev_mobile-removebg-preview.webp' : c.cover}
+                          />
+                          <img
+                            src={c.slug === 'developpement-web' ? '/formation_dev_mobile.webp' : c.cover}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        </picture>
+                        <div className="flex items-center justify-between gap-2">
                           <div className="text-sm" style={{ color: '#6B7280' }}>{c.duration}</div>
                           <div className="flex items-center gap-3">
-                            <div className="font-semibold" style={{ color: '#111111' }}>{c.price}</div>
-                            <Link to={`/apprendre/formations/${c.id}`} className="m-btn-primary">Voir</Link>
+                            <div className="text-right">
+                              <div className="font-bold text-sm" style={{ color: '#111111' }}>{c.price}</div>
+                              {c.payment_option && (
+                                <div className="text-[10px] font-semibold text-[#191970]">
+                                  ou 15k FCFA/mois
+                                </div>
+                              )}
+                            </div>
+                            <span className="m-btn-primary">Voir la formation</span>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
 
@@ -573,6 +638,125 @@ const Learn = () => {
               )}
             </div>
           </section>
+        )}
+
+        {/* ═══════════════════════════════════════════════
+            MODAL DETAILS FORMATION
+            ═══════════════════════════════════════════════ */}
+        {selectedCourse && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 flex flex-col">
+              {/* Image d'en-tête */}
+              <div className="relative h-48 sm:h-60 w-full overflow-hidden rounded-t-3xl bg-slate-900">
+                <img
+                  src={selectedCourse.cover || 'https://images.unsplash.com/photo-1593720213428-28a5b9e94613?auto=format&fit=crop&w=1200&q=80'}
+                  alt={selectedCourse.title}
+                  className="w-full h-full object-cover opacity-80"
+                />
+                <button
+                  onClick={() => setSelectedCourse(null)}
+                  className="absolute top-4 right-4 bg-black/60 hover:bg-black/90 text-white rounded-full p-2 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+                <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center gap-2">
+                  {selectedCourse.category && (
+                    <span className="bg-[#191970] text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
+                      {selectedCourse.category}
+                    </span>
+                  )}
+                  {selectedCourse.duration && (
+                    <span className="bg-white/90 text-slate-800 text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1">
+                      <Clock size={13} />
+                      {selectedCourse.duration}
+                    </span>
+                  )}
+                  {selectedCourse.level && (
+                    <span className="bg-white/90 text-slate-800 text-xs font-medium px-3 py-1 rounded-full">
+                      {selectedCourse.level}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Corps */}
+              <div className="p-6 sm:p-8 flex-1 space-y-6">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">{selectedCourse.title}</h2>
+                  <p className="text-slate-600 text-sm sm:text-base leading-relaxed">{selectedCourse.description}</p>
+                </div>
+
+                {/* Bloc Tarification & Offre Accès */}
+                <div className="bg-gradient-to-br from-slate-50 to-indigo-50/50 p-5 rounded-2xl border border-indigo-100 space-y-3">
+                  <h3 className="text-xs uppercase tracking-wider font-bold text-slate-700 flex items-center gap-2">
+                    <CreditCard size={16} className="text-[#191970]" />
+                    Tarifs & Modalités de paiement
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {/* Tarif Comptant */}
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tarif Comptant</span>
+                        <div className="text-2xl font-bold text-slate-900 mt-1">{selectedCourse.price}</div>
+                      </div>
+                      <span className="text-[11px] text-slate-500 mt-2 block">Paiement unique au démarrage</span>
+                    </div>
+
+                    {/* Offre Accès */}
+                    {selectedCourse.payment_option && (
+                      <div className="bg-white p-4 rounded-xl border-2 border-[#191970] shadow-sm flex flex-col justify-between relative overflow-hidden">
+                        <span className="absolute top-0 right-0 bg-[#191970] text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+                          Offre Accès
+                        </span>
+                        <div>
+                          <span className="text-[11px] font-bold text-[#191970] uppercase flex items-center gap-1">
+                            <Sparkles size={13} /> Paiement Échelonné
+                          </span>
+                          <div className="text-lg font-bold text-slate-900 mt-1">15 000 FCFA / mois</div>
+                          <span className="text-xs text-slate-600 font-medium block mt-0.5">Sur 3 mois avec engagement</span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 mt-2 block">Facilité d'accès progressive</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Modules du programme */}
+                {selectedCourse.modules && selectedCourse.modules.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-3">Programme de la formation</h3>
+                    <ul className="space-y-2.5">
+                      {selectedCourse.modules.map((m, idx) => (
+                        <li key={idx} className="flex items-start gap-3 text-sm text-slate-700">
+                          <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                          <span>{m}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Action Inscription */}
+                <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
+                  <Link
+                    to={`/apprendre/formations/${selectedCourse.slug || selectedCourse.id}`}
+                    onClick={() => setSelectedCourse(null)}
+                    className="flex-1 bg-[#191970] hover:bg-[#121250] text-white font-semibold py-3.5 px-6 rounded-xl text-center text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                  >
+                    Voir la formation
+                    <ArrowRight size={16} />
+                  </Link>
+                  <button
+                    onClick={() => setSelectedCourse(null)}
+                    className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-sm transition-colors text-center"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
       </div>

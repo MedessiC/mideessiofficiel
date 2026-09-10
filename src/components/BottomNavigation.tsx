@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigation } from '../contexts/NavigationContext';
@@ -131,7 +131,12 @@ const BottomNavigation = () => {
   const location = useLocation();
   const { bottomNavHidden, setBottomNavHidden } = useNavigation();
 
-  const [hidden, setHidden] = useState(() => bottomNavHidden);
+  const [hidden, setHidden] = useState(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(min-width: 768px) and (max-width: 1023px)').matches) {
+      return true;
+    }
+    return bottomNavHidden;
+  });
   const [showHoldHint, setShowHoldHint] = useState(false);
   const [showRevealHint, setShowRevealHint] = useState(false);
   const startX = useRef<number | null>(null);
@@ -141,6 +146,12 @@ const BottomNavigation = () => {
   useEffect(() => {
     setBottomNavHidden(hidden);
   }, [hidden, setBottomNavHidden]);
+
+  useEffect(() => {
+    if (hidden || !window.matchMedia('(min-width: 768px) and (max-width: 1023px)').matches) return;
+    const timer = window.setTimeout(() => setHidden(true), 5000);
+    return () => window.clearTimeout(timer);
+  }, [hidden]);
 
   useEffect(() => {
     if (!hidden) {
@@ -179,13 +190,13 @@ const BottomNavigation = () => {
       holdTimer.current = null;
       setShowHoldHint(false);
     }
-    // swipe left -> dx negative
-    if (dx < -60) {
+    // swipe right -> dx positive
+    if (dx > 60) {
       setHidden(true);
       setShowHoldHint(false);
       dragging.current = false;
     }
-    if (dx > 80) {
+    if (dx < -80) {
       setHidden(false);
       setShowHoldHint(false);
       dragging.current = false;
@@ -217,12 +228,12 @@ const BottomNavigation = () => {
       holdTimer.current = null;
       setShowHoldHint(false);
     }
-    if (dx < -60) {
+    if (dx > 60) {
       setHidden(true);
       setShowHoldHint(false);
       dragging.current = false;
     }
-    if (dx > 80) {
+    if (dx < -80) {
       setHidden(false);
       setShowHoldHint(false);
       dragging.current = false;
@@ -240,9 +251,15 @@ const BottomNavigation = () => {
 
   return (
     <>
+      <style>{`
+        @keyframes bottom-nav-handle-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
       <nav
         aria-label="Navigation principale"
-        className={`fixed inset-x-0 bottom-0 z-40 md:hidden transform transition-transform duration-300 ${hidden ? '-translate-x-full' : 'translate-x-0'}`}
+        className={`fixed inset-x-0 bottom-0 z-40 box-border overflow-hidden md:inset-x-auto md:bottom-auto md:left-auto md:right-4 md:top-1/2 md:w-[84px] md:max-w-[84px] md:-translate-y-1/2 lg:hidden transform transition-transform duration-500 ease-in-out ${hidden ? 'translate-x-full md:!translate-x-[calc(100%+1rem)]' : 'translate-x-0'}`}
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -251,8 +268,8 @@ const BottomNavigation = () => {
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
       >
-        <div className="mx-3 mb-2 rounded-[1.5rem] border border-white/40 bg-white/70 backdrop-blur-xl shadow-[0_-6px_24px_rgba(17,17,17,0.08)] supports-[backdrop-filter]:bg-white/60">
-          <div className="grid grid-cols-4 items-center gap-1 px-1 py-1">
+        <div className="mx-3 mb-2 box-border overflow-hidden rounded-[1.5rem] border border-white/40 bg-white/70 backdrop-blur-xl shadow-[0_-6px_24px_rgba(17,17,17,0.08)] supports-[backdrop-filter]:bg-white/60 md:mx-0 md:mb-0">
+          <div className="grid grid-cols-4 items-center gap-1 px-1 py-1 md:grid-cols-1 md:gap-2 md:py-2">
             {navItems.map(({ label, href, Icon3D }) => {
               const active = isActive(href);
 
@@ -261,12 +278,8 @@ const BottomNavigation = () => {
                   key={href}
                   to={href}
                   aria-current={active ? 'page' : undefined}
-                  className={`relative flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-[1.1rem] px-1 py-2 transition-all duration-200 hover:bg-white/50`}
+                  className={`relative flex min-h-[48px] flex-col items-center justify-center gap-0 rounded-[1.1rem] px-1 py-0 transition-all duration-200 hover:bg-white/50 md:min-h-[68px] md:gap-1 md:py-2`}
                 >
-                  {active && (
-                    <span className="absolute inset-x-4 top-0 h-[2px] rounded-full bg-[#FFD700]" />
-                  )}
-
                   <span
                     className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200 ${
                       active ? 'bg-[#F3F4F6]' : 'bg-transparent'
@@ -334,14 +347,15 @@ const BottomNavigation = () => {
               }
             }}
             onMouseUp={() => { dragging.current = false; startX.current = null; }}
-            className="fixed left-0 bottom-6 z-50 -ml-6 flex h-12 w-12 items-center justify-center rounded-r-full border border-[#191970]/15 bg-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-sm transition-colors hover:bg-white motion-safe:animate-pulse"
+            className="fixed bottom-[5rem] left-auto right-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-[#191970]/15 bg-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-sm transition-colors hover:bg-white md:bottom-6 md:right-4"
+            style={{ animation: 'bottom-nav-handle-in 420ms cubic-bezier(0.22,1,0.36,1) both' }}
           >
-            <ChevronRight className="text-[#191970]" />
+            <ChevronLeft className="h-4 w-4 text-[#191970]" />
           </button>
         </>
       )}
 
-      <div className="h-[5.2rem] md:h-0 md:hidden" aria-hidden />
+      <div className="h-[3.8rem] md:h-0 lg:hidden" aria-hidden />
     </>
   );
 };

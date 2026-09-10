@@ -20,6 +20,7 @@ export const ROUTES = {
   BLOG: '/article',
   BLOG_POST: '/article/:slug',
   APPRENDRE: '/apprendre',
+  FORMATION_DETAIL: '/apprendre/formations/:slug',
   LABORATOIRE: '/laboratoire',
   LABS: '/labs',
   LIBRARY: '/library',
