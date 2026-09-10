@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import SEO from '../components/SEO';
 import { getFormationBySlug } from '../data/formationsData';
 
@@ -105,16 +105,6 @@ const FormationDetail = () => {
           }}
         >
           <div className="max-w-[1200px] mx-auto px-6 lg:px-12 w-full text-center">
-
-            <img
-              src="/mideessi_learn_logo.svg"
-              alt="MIDEESSI Learn"
-              className="mx-auto mb-8 h-auto w-[150px] object-contain"
-              onError={(event) => {
-                event.currentTarget.onerror = null;
-                event.currentTarget.src = '/mideessi_learn.webp';
-              }}
-            />
 
             {/* H1 — centré */}
             <h1
