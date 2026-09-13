@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useProjects } from '../contexts/ProjectContext';
@@ -336,16 +336,82 @@ function HeroSection() {
    FULLWIDTH CARD SECTION
    ============================================================ */
 
+function ScrollTriggeredVideo({
+  videoSrc,
+  imageSrc,
+  imageAlt,
+}: {
+  videoSrc: string;
+  imageSrc?: string;
+  imageAlt: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasPlayed, setHasPlayed] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || hasPlayed) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // Déclenche la lecture dès que la vidéo apparaît à l'écran
+          if (entry.isIntersecting && !hasPlayed) {
+            video
+              .play()
+              .then(() => {
+                setHasPlayed(true);
+              })
+              .catch(() => {});
+          }
+        });
+      },
+      {
+        threshold: 0.25,
+        rootMargin: '0px 0px -20px 0px',
+      }
+    );
+
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [hasPlayed]);
+
+  return (
+    <video
+      ref={videoRef}
+      muted
+      playsInline
+      preload="metadata"
+      poster={imageSrc}
+      aria-label={imageAlt}
+      className="w-full h-full object-contain object-center transition-transform duration-700 ease-out group-hover:scale-105"
+    >
+      <source src={videoSrc} type="video/webm" />
+      {imageSrc && (
+        <img
+          src={imageSrc}
+          alt={imageAlt}
+          width="1600"
+          height="900"
+          className="w-full h-full object-contain object-center"
+        />
+      )}
+    </video>
+  );
+}
+
 function FullwidthCardSection({
   to,
   imageSrc,
+  videoSrc,
   imageAlt,
   title,
   description,
   ctaLabel = 'Découvrir',
 }: {
   to: string;
-  imageSrc: string;
+  imageSrc?: string;
+  videoSrc?: string;
   imageAlt: string;
   title: string;
   description: string;
@@ -354,37 +420,48 @@ function FullwidthCardSection({
   return (
     <section
       data-scroll-reveal
-      style={{ backgroundColor: '#FAFAFA', paddingTop: 'clamp(30px, 4vh, 60px)', paddingBottom: 'clamp(30px, 4vh, 60px)' }}
+      style={{ backgroundColor: '#FAFAFA', paddingTop: 'clamp(16px, 2.5vh, 36px)', paddingBottom: 'clamp(16px, 2.5vh, 36px)' }}
     >
       <div className="w-full">
         <Link
           to={to}
-          className="group block w-full overflow-hidden bg-[#FAFAFA] shadow-[0_24px_60px_rgba(15,23,42,0.08)] transition-shadow duration-500 hover:shadow-[0_28px_80px_rgba(15,23,42,0.14)]"
+          className="group block w-full overflow-hidden bg-[#FAFAFA] shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-shadow duration-500 hover:shadow-[0_22px_60px_rgba(15,23,42,0.12)]"
         >
-          <div className="px-6 py-8 md:px-8 md:py-10 text-center relative z-10">
-            <h2 className="font-bold mb-3 text-[clamp(28px,6vw,36px)] md:text-[clamp(36px,5vw,44px)]" style={{ color: '#111827', lineHeight: 1.1, letterSpacing: '-0.01em' }}>
+          <div className="px-6 pt-5 md:px-8 md:pt-6 text-center relative z-10">
+            <h2 className="font-bold mb-2 text-[clamp(24px,5vw,32px)] md:text-[clamp(30px,4vw,38px)]" style={{ color: '#111827', lineHeight: 1.1, letterSpacing: '-0.01em' }}>
               {title}
             </h2>
-            <p className="text-sm md:text-base mx-auto" style={{ lineHeight: 1.6, color: '#000000', maxWidth: '520px' }}>
+            <p className="text-sm md:text-base mx-auto" style={{ lineHeight: 1.5, color: '#000000', maxWidth: '520px' }}>
               {description}
             </p>
+          </div>
+
+          <div className="relative w-full h-[210px] sm:h-[250px] md:h-[270px] bg-[#F8FAFC] overflow-hidden mt-3 mb-4 flex items-center justify-center">
+            {videoSrc ? (
+              <ScrollTriggeredVideo
+                videoSrc={videoSrc}
+                imageSrc={imageSrc}
+                imageAlt={imageAlt}
+              />
+            ) : (
+              <img
+                src={imageSrc}
+                alt={imageAlt}
+                loading="lazy"
+                width="1600"
+                height="900"
+                className="w-full h-full object-contain object-center transition-transform duration-700 ease-out group-hover:scale-105"
+              />
+            )}
+          </div>
+
+          <div className="pb-5 md:pb-6 text-center relative z-10">
             <div
-              className="relative z-10 mt-6 inline-flex cursor-pointer items-center justify-center rounded-lg bg-[#191970] px-6 py-3 font-semibold text-white transition-all duration-200 group-hover:scale-105"
+              className="relative z-10 inline-flex cursor-pointer items-center justify-center rounded-lg bg-[#191970] px-5 py-2.5 font-semibold text-white transition-all duration-200 group-hover:scale-105"
               style={{ fontSize: '14px' }}
             >
               {ctaLabel}
             </div>
-          </div>
-
-          <div className="relative w-full h-[340px] bg-[#F8FAFC] overflow-hidden -mt-12 md:-mt-20">
-            <img
-              src={imageSrc}
-              alt={imageAlt}
-              loading="lazy"
-              width="1600"
-              height="900"
-              className="w-full h-full object-contain object-center transition-transform duration-700 ease-out group-hover:scale-105"
-            />
           </div>
         </Link>
       </div>
@@ -460,8 +537,9 @@ function LearnSection() {
   return (
     <FullwidthCardSection
       to={getRoute.apprendre()}
+      videoSrc="/mideessi_learn.webm"
       imageSrc="/mideessi_learn.webp"
-      imageAlt="Illustration d’apprentissage numérique MIDEESSI"
+      imageAlt="Animation d’apprentissage numérique MIDEESSI"
       title="Formations et Livres"
       description="Accédez à des connaissances qui vous correspondent et vous font évoluer"
       ctaLabel="Apprendre"

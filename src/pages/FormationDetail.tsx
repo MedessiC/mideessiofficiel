@@ -97,7 +97,7 @@ const FormationDetail = () => {
             ═══════════════════════════════════════════════ */}
         <section
           style={{
-            backgroundColor: 'var(--color-bg-primary)',
+            backgroundColor: '#FAFAFA',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',

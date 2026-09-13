@@ -199,6 +199,7 @@ const SEO = ({
             '@context': 'https://schema.org',
             '@type': 'Organization',
             name: 'MIDEESSI',
+            legalName: 'MIDEESSI TECH SARL',
             alternateName: 'MIDEESSI Tech Community',
             url: siteUrl,
             logo: `${siteUrl}/logo.png`,

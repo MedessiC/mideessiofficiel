@@ -11,10 +11,10 @@ export const VERSION = {
   patch: 0,
   
   // Cache bust timestamp - auto-update on each deployment
-  timestamp: new Date('2026-09-10T01:24:47.000Z').toISOString(),
+  timestamp: new Date('2026-09-13T00:46:53.816Z').toISOString(),
   
   // Build number - increment for each deployment
-  build: 290,
+  build: 291,
   
   // Full version string for debugging
   get fullVersion() {

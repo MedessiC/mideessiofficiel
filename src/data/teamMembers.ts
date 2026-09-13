@@ -31,14 +31,40 @@ export interface Project {
 
 export const teamMembers: TeamMember[] = [
   {
+    id: 'coovi-medessi',
+    name: 'Coovi Vivotin MEDESSI',
+    role: 'Fondateur & CEO',
+    shortDescription: 'Fondateur et CEO de MIDEESSI TECH SARL. Passionné par la création d\'outils numériques utiles, simples et ancrés au Bénin.',
+    fullBio: `Coovi Vivotin MEDESSI est le fondateur et CEO de MIDEESSI TECH SARL. Né à Cotonou, il a appris à coder en autodidacte dès son plus jeune âge, guidé par une passion viscérale pour la simplicité, la rigueur de conception et la création de solutions numériques utiles pour le quotidien des Béninois. Convaincu que la technologie doit être accessible et digne, il conçoit chaque projet avec une obsession du détail millimétré.`,
+    joinDate: '2024',
+    education: 'Autodidacte & Développeur',
+    skills: ['Python', 'TypeScript', 'React', 'Automatisation', 'Architecture logicielle'],
+    specialties: ['Direction générale', 'Conception produit', 'Architecture système'],
+    passions: ['Création', 'Python', 'Lecture & Recherche', 'Simplicité numérique'],
+    image: '/medessicoovi.webp',
+    location: 'Cotonou, Bénin',
+    email: 'contact@mideessi.com',
+    socialLinks: {
+      twitter: 'https://twitter.com/coovimedessi',
+      linkedin: 'https://linkedin.com/in/coovimedessi',
+      github: 'https://github.com/medessic'
+    },
+    projects: [
+      {
+        title: 'Écosystème MIDEESSI',
+        description: 'Conception et développement de la suite MIDEESSI et de ses solutions pour les entreprises locales.',
+        technologies: ['React', 'TypeScript', 'Node.js', 'Supabase']
+      }
+    ]
+  },
+  {
     id: 'richy-anguilet-zinvo',
-    name: 'Richy ANGUILET ZINVO',
-    role: 'Cofondateur',
-    shortDescription: 'Cofondateur de MIDEESSI, passionné d\'informatique et des technologies modernes.',
-    fullBio: `Richy ANGUILET ZINVO est cofondateur de MIDEESSI et l'un des piliers de la vision qui anime la plateforme. 
-    Passionné d'informatique et de technologies modernes, il s'implique activement dans la définition de la direction 
-    stratégique et technique de MIDEESSI depuis les premières heures du projet. Son énergie, sa vision et sa 
-    détermination sont au cœur du développement de solutions numériques innovantes pour le Bénin et l'Afrique.`,
+    name: 'Zinvo Anguilet Basthios Richy',
+    role: 'Cofondateur & Responsable MIDEESSI Learn',
+    shortDescription: 'Cofondateur de MIDEESSI et responsable de la section MIDEESSI Learn.',
+    fullBio: `Zinvo Anguilet Basthios Richy est cofondateur de MIDEESSI et dirige la section MIDEESSI Learn. 
+    Passionné d'informatique, de transmission et des technologies modernes, il s'assure de démocratiser l'apprentissage 
+    numérique pour la jeunesse et les professionnels, tout en veillant à l'excellence technique et au design des projets.`,
     joinDate: 'septembre 2025',
     education: 'Étudiant en 2ème année - Informatique',
     skills: ['React', 'TypeScript', 'JavaScript', 'Tailwind CSS', 'HTML/CSS', 'Node.js'],
