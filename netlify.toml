@@ -25,31 +25,31 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Images - Cache 1 year
+# Images & media - short cache to avoid stale assets after deploy
 [[headers]]
   for = "/*.webp"
   [headers.values]
-    Cache-Control = "public, max-age=31536000"
+    Cache-Control = "public, max-age=300, must-revalidate"
 
 [[headers]]
   for = "/*.webm"
   [headers.values]
-    Cache-Control = "public, max-age=31536000"
+    Cache-Control = "public, max-age=300, must-revalidate"
 
 [[headers]]
   for = "/*.png"
   [headers.values]
-    Cache-Control = "public, max-age=31536000"
+    Cache-Control = "public, max-age=300, must-revalidate"
 
 [[headers]]
   for = "/*.jpg"
   [headers.values]
-    Cache-Control = "public, max-age=31536000"
+    Cache-Control = "public, max-age=300, must-revalidate"
 
 [[headers]]
   for = "/*.svg"
   [headers.values]
-    Cache-Control = "public, max-age=31536000"
+    Cache-Control = "public, max-age=300, must-revalidate"
 
 [[headers]]
   for = "/*.ico"
