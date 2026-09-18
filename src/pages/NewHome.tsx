@@ -347,10 +347,11 @@ function ScrollTriggeredVideo({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasPlayed, setHasPlayed] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || hasPlayed) return;
+    if (!video || hasPlayed || videoFailed) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -374,7 +375,19 @@ function ScrollTriggeredVideo({
 
     observer.observe(video);
     return () => observer.disconnect();
-  }, [hasPlayed]);
+  }, [hasPlayed, videoFailed]);
+
+  if (videoFailed && imageSrc) {
+    return (
+      <img
+        src={imageSrc}
+        alt={imageAlt}
+        width="1600"
+        height="900"
+        className="w-full h-full object-contain object-center"
+      />
+    );
+  }
 
   return (
     <video
@@ -384,6 +397,8 @@ function ScrollTriggeredVideo({
       preload="metadata"
       poster={imageSrc}
       aria-label={imageAlt}
+      onError={() => setVideoFailed(true)}
+      style={{ backgroundColor: '#F8FAFC' }}
       className="w-full h-full object-contain object-center transition-transform duration-700 ease-out group-hover:scale-105"
     >
       <source src={videoSrc} type="video/webm" />

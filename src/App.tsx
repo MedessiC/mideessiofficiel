@@ -20,6 +20,8 @@ import { ProjectProvider } from './contexts/ProjectContext';
 const About = lazy(() => import('./pages/About'));
 const Learn = lazy(() => import('./pages/Learn'));
 const FormationDetail = lazy(() => import('./pages/FormationDetail'));
+const FormationParcours = lazy(() => import('./pages/FormationParcours'));
+const FondamentauxWeb = lazy(() => import('./pages/FondamentauxWeb'));
 const Laboratoire = lazy(() => import('./pages/Laboratoire'));
 const Library = lazy(() => import('./pages/Library'));
 const BookDetail = lazy(() => import('./pages/BookDetail'));
@@ -139,6 +141,8 @@ function AppContent() {
             <Route path={ROUTES.BLOG_POST} element={<NewBlogPost />} />
             <Route path={ROUTES.APPRENDRE} element={<Learn />} />
             <Route path={ROUTES.FORMATION_DETAIL} element={<FormationDetail />} />
+            <Route path={ROUTES.FORMATION_PARCOURS} element={<FormationParcours />} />
+            <Route path={ROUTES.FORMATION_BLOC_FONDAMENTAUX} element={<FondamentauxWeb />} />
             <Route path={ROUTES.LABORATOIRE} element={<Laboratoire />} />
             <Route path={ROUTES.LABS} element={<Navigate to="/laboratoire" replace />} />
             <Route path={ROUTES.LIBRARY} element={<Library />} />

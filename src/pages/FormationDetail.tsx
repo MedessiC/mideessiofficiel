@@ -66,6 +66,10 @@ const FormationDetail = () => {
     navigate('/contact');
   };
 
+  const handleStartParcours = () => {
+    navigate(`/apprendre/formations/${formation.slug}/parcours`);
+  };
+
   return (
     <>
       <style>{`
@@ -150,18 +154,24 @@ const FormationDetail = () => {
 
             {/* Boutons d'action — centrés */}
             <div
-              className="flex flex-wrap items-center justify-center gap-4"
+              className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center"
               style={{ marginTop: 'clamp(28px, 4vh, 40px)' }}
             >
               <button
+                onClick={handleStartParcours}
+                className="m-btn-primary w-full sm:w-auto transition-transform duration-200 hover:scale-[1.01]"
+              >
+                Commencer le parcours
+              </button>
+              <button
                 onClick={handleInscription}
-                className="m-btn-primary transition-transform duration-200 hover:scale-105"
+                className="m-btn-secondary w-full sm:w-auto transition-transform duration-200 hover:scale-[1.01]"
               >
                 S'inscrire à la formation
               </button>
               <button
                 onClick={() => navigate('/contact')}
-                className="m-btn-secondary transition-transform duration-200 hover:scale-105"
+                className="m-btn-secondary w-full sm:w-auto transition-transform duration-200 hover:scale-[1.01]"
               >
                 Nous contacter
               </button>
@@ -180,14 +190,14 @@ const FormationDetail = () => {
             padding: 'clamp(24px, 4vw, 48px) 0',
           }}
         >
-          <div className="w-full max-w-[1200px] mx-auto px-0 sm:px-6 lg:px-12">
-            <h2 className="font-bold mb-6 text-center text-[clamp(28px,6vw,36px)] md:text-[clamp(36px,5vw,44px)] text-[#111827]">
+          <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-12">
+            <h2 className="font-bold mb-4 text-center text-[clamp(26px,6vw,36px)] md:text-[clamp(36px,5vw,44px)] text-[#111827]">
               Pour qui est cette formation ?
             </h2>
             <p className="mb-6 text-center text-sm sm:text-base font-medium text-[#4B5563]">
               À partir de 12 ans
             </p>
-            <div className="flex w-full items-center justify-center">
+            <div className="flex w-full items-center justify-center gap-2 sm:gap-4">
               <div className="relative flex w-1/2 max-w-[300px] items-center justify-center md:w-1/4 md:max-w-[300px]">
                 <picture className="hidden md:block">
                   <img src="/eleve_formation.webp" alt="Élève en formation" className="block h-auto w-full" />
@@ -240,7 +250,7 @@ const FormationDetail = () => {
             <div className="mt-8 text-center">
               <button
                 onClick={() => navigate('/search-profiles')}
-                className="m-btn-primary transition-transform duration-200 hover:scale-105"
+                className="m-btn-primary w-full sm:w-auto transition-transform duration-200 hover:scale-[1.01]"
               >
                 Rencontrez nos élèves
               </button>
@@ -259,9 +269,9 @@ const FormationDetail = () => {
             paddingBottom: 'clamp(40px, 6vh, 64px)',
           }}
         >
-          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-12">
             <div className="max-w-3xl mx-auto">
-              <h2 className="font-bold mb-6 text-center text-[clamp(28px,6vw,36px)] md:text-[clamp(36px,5vw,44px)] text-[#111827]">
+              <h2 className="font-bold mb-5 text-center text-[clamp(26px,6vw,36px)] md:text-[clamp(36px,5vw,44px)] text-[#111827]">
                 Prérequis
               </h2>
               <ul className="mx-auto max-w-2xl space-y-3">
@@ -289,8 +299,8 @@ const FormationDetail = () => {
             paddingBottom: 'clamp(40px, 6vh, 64px)',
           }}
         >
-          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
-            <div className="max-w-2xl mx-auto text-center mb-12">
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-12">
+            <div className="max-w-2xl mx-auto text-center mb-8 sm:mb-12">
               <p
                 className="text-xs uppercase font-semibold tracking-[0.2em] mb-2"
                 style={{ color: 'var(--color-text-secondary)' }}
@@ -309,18 +319,18 @@ const FormationDetail = () => {
               {formation.modules.map((mod) => (
                 <div
                   key={mod.number}
-                  className="bg-[#FAFAFA] p-6 rounded-2xl border border-[#E5E7EB]"
+                  className="bg-[#FAFAFA] p-4 sm:p-6 rounded-2xl border border-[#E5E7EB]"
                   style={{ boxShadow: '0 2px 8px rgba(15,23,42,0.03)' }}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3 sm:gap-4">
                     <span
-                      className="font-bold text-sm px-3 py-1 rounded-lg flex-shrink-0"
+                      className="font-bold text-xs sm:text-sm px-2.5 py-1 sm:px-3 rounded-lg flex-shrink-0"
                       style={{ backgroundColor: '#191970', color: '#FFFFFF' }}
                     >
                       {mod.number}
                     </span>
                     <div>
-                      <h3 className="font-bold text-base text-[#111827] mb-1">{mod.title}</h3>
+                      <h3 className="font-bold text-sm sm:text-base text-[#111827] mb-1">{mod.title}</h3>
                       <p className="text-sm text-[#4B5563] leading-relaxed">{mod.description}</p>
                     </div>
                   </div>
@@ -329,13 +339,60 @@ const FormationDetail = () => {
             </div>
 
             {/* CTA bas de page */}
-            <div className="mt-12 text-center">
+            <div className="mt-10 sm:mt-12 text-center">
               <button
-                onClick={handleInscription}
-                className="m-btn-primary transition-transform duration-200 hover:scale-105"
+                onClick={handleStartParcours}
+                className="m-btn-primary w-full sm:w-auto transition-transform duration-200 hover:scale-[1.01]"
               >
-                S'inscrire à la formation
+                Commencer le parcours
               </button>
+            </div>
+          </div>
+        </section>
+
+        <section
+          data-scroll-reveal
+          style={{
+            backgroundColor: '#FAFAFA',
+            paddingTop: 'clamp(36px, 5vh, 56px)',
+            paddingBottom: 'clamp(36px, 5vh, 56px)',
+          }}
+        >
+          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+            <div className="max-w-3xl mx-auto mb-10 text-center">
+              <p className="text-xs uppercase font-semibold tracking-[0.2em] mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                PARCOURS
+              </p>
+              <h2 className="font-bold text-[clamp(28px,6vw,40px)] text-[#111827]" style={{ letterSpacing: '-0.02em' }}>
+                Ton parcours d’apprentissage
+              </h2>
+            </div>
+
+            <div className="space-y-4 max-w-4xl mx-auto">
+              {(formation.roadmap || []).map((block, index) => (
+                <div key={block.id} className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#191970] text-sm font-bold text-white">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <h3 className="text-lg font-bold text-[#111827]">{block.title}</h3>
+                        <p className="text-sm text-[#4B5563] mt-1">{block.objective}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[#6B7280]">{block.duration}</span>
+                      <button
+                        onClick={handleStartParcours}
+                        className="px-4 py-2 text-sm font-semibold rounded-xl bg-[#191970] text-white"
+                      >
+                        Ouvrir
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
